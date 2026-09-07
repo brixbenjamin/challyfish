@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 
 import 'l10n/app_localizations.dart';
+import 'src/app/providers.dart';
+import 'src/core/zone_provider.dart';
 import 'src/data/remote/supabase_bootstrap.dart';
 import 'src/niche/brand.dart';
 
@@ -10,9 +12,18 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tzdata.initializeTimeZones();
   await initializeSupabase();
-  await ensureAnonymousSession();
+  final userId = await ensureAnonymousSession();
+  final zone = await deviceZone();
 
-  runApp(const ProviderScope(child: FeralApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        userIdProvider.overrideWithValue(userId),
+        zoneProvider.overrideWithValue(zone),
+      ],
+      child: const FeralApp(),
+    ),
+  );
 }
 
 class FeralApp extends StatelessWidget {
