@@ -1,0 +1,6 @@
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+# Non-nullable, so call sites carry no `!` and a missing delegate fails loudly
+# at wiring time rather than quietly at the first string.
+nullable-getter: false

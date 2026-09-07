@@ -1,0 +1,53 @@
+{
+  "@@locale": "en",
+
+  "commitButton": "Commit",
+  "@commitButton": {
+    "description": "[niche] Button that acknowledges today's action before doing it. The commit/report verbs are the product's vocabulary."
+  },
+
+  "campaignsTitle": "Campaigns",
+  "@campaignsTitle": {
+    "description": "[niche] App bar title of the campaign list."
+  },
+
+  "contentUnavailable": "Content unavailable. Your run is safe — pull again when you have signal.",
+  "@contentUnavailable": {
+    "description": "Shown on the dashboard when today's action has not synced. Must reassure, never alarm."
+  },
+
+  "dayOfLength": "Day {day} of {length}",
+  "@dayOfLength": {
+    "description": "Progress through the current run, on the dashboard.",
+    "placeholders": { "day": { "type": "int" }, "length": { "type": "int" } }
+  },
+
+  "missesUsed": "{used} of {allowed} misses used",
+  "@missesUsed": {
+    "description": "Stated plainly on the dashboard. Never a warning and never a countdown (ADR-0010).",
+    "placeholders": { "used": { "type": "int" }, "allowed": { "type": "int" } }
+  },
+
+  "reportedOutcome": "Reported: {outcome}",
+  "@reportedOutcome": {
+    "description": "Shown once today has been reported.",
+    "placeholders": { "outcome": { "type": "String" } }
+  },
+
+  "lengthInDays": "{days} days",
+  "@lengthInDays": {
+    "description": "A campaign's length, in lists and on detail screens.",
+    "placeholders": { "days": { "type": "int" } }
+  },
+
+  "outcomeDone": "Done",
+  "@outcomeDone": { "description": "Report option." },
+  "outcomePartial": "Partial",
+  "@outcomePartial": { "description": "Report option." },
+  "outcomeSkipped": "Skipped",
+  "@outcomeSkipped": {
+    "description": "Report option. Must read exactly as easy as Done — if skipping feels like a confession, users stop reporting instead of skipping and the record stops being honest (R6)."
+  },
+  "outcomeMissed": "Missed",
+  "@outcomeMissed": { "description": "Written by rollover, never chosen by the user." }
+}
