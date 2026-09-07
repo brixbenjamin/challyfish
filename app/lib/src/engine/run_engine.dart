@@ -1,5 +1,9 @@
 import 'package:timezone/timezone.dart' as tz;
 
+import '../domain/day_log.dart';
+import '../domain/grade.dart';
+import 'grade_thresholds.dart';
+
 /// Every rule that decides where a user stands in a run.
 ///
 /// Pure: no I/O, no framework types, no ambient clock. Given the same inputs it
@@ -39,4 +43,23 @@ class RunEngine {
     if (day > lengthDays) return lengthDays;
     return day;
   }
+
+  /// Days that count against the user: skipped (reported) and missed (rolled
+  /// over). The difference between them is honesty, not consequence.
+  int missCount(Iterable<DayLog> logs) =>
+      logs.where((log) => log.outcome?.isMiss ?? false).length;
+
+  /// How many misses this campaign length tolerates before Broken.
+  int missAllowance(
+    int lengthDays, {
+    GradeThresholds thresholds = GradeThresholds.standard,
+  }) => thresholds.allowanceFor(lengthDays);
+
+  /// The grade a run currently stands at. Derived, always — never read from a
+  /// column. Needs the campaign length, because the length sets the allowance.
+  Grade grade(
+    Iterable<DayLog> logs, {
+    required int lengthDays,
+    GradeThresholds thresholds = GradeThresholds.standard,
+  }) => thresholds.gradeFor(missCount: missCount(logs), lengthDays: lengthDays);
 }
