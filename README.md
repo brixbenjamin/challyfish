@@ -19,6 +19,10 @@ worth testing.
   `docs/technical/architecture.md` (planning workspace).
 - `supabase start` brings up the local Postgres/Auth/Storage stack; `supabase test db`
   runs the pgTAP suite against it.
+- The app reads its Supabase URL and anon key via `--dart-define`, never from a
+  committed file. Copy the variable names from `app/.env.example` (values come from
+  `supabase status`):
+  `flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...`.
 
 ## Provenance
 
