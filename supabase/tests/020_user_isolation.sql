@@ -1,5 +1,5 @@
 begin;
-select plan(4);
+select plan(10);
 
 -- Two users, created directly in auth.users as the postgres role.
 insert into auth.users (id, email)
@@ -10,6 +10,38 @@ values
 insert into public.profiles (user_id) values
   ('11111111-1111-1111-1111-111111111111'),
   ('22222222-2222-2222-2222-222222222222');
+
+-- Minimal content fixtures so user B can hold a run, a day log, and an
+-- entitlement. Inserted as the default (superuser, RLS-bypassing) role.
+insert into public.archetypes (id, key, name, blurb, color, sort)
+values ('cccccccc-0000-0000-0000-000000000001', 'arch1', 'Archetype One', 'b', '#fff', 1);
+
+insert into public.packs (id, key, title, description, is_core, sort)
+values ('aaaaaaaa-0000-0000-0000-000000000001', 'core', 'Core', 'd', true, 1);
+
+insert into public.campaigns (id, pack_id, key, title, intro_md, length_days, sort)
+values ('bbbbbbbb-0000-0000-0000-000000000001',
+        'aaaaaaaa-0000-0000-0000-000000000001', 'c1', 'One', 'i', 21, 1);
+
+insert into public.actions (id, campaign_id, day_index, title, body_md, archetype_id)
+values ('dddddddd-0000-0000-0000-000000000001',
+        'bbbbbbbb-0000-0000-0000-000000000001', 1, 'Do the thing', 'b',
+        'cccccccc-0000-0000-0000-000000000001');
+
+-- User B's own rows in the three tables the spec names explicitly.
+insert into public.campaign_runs (user_id, campaign_id, status, started_at)
+values ('22222222-2222-2222-2222-222222222222',
+        'bbbbbbbb-0000-0000-0000-000000000001', 'active', now());
+
+insert into public.day_logs (user_id, run_id, day_index, action_id)
+values ('22222222-2222-2222-2222-222222222222',
+        (select id from public.campaign_runs
+           where user_id = '22222222-2222-2222-2222-222222222222'),
+        1, 'dddddddd-0000-0000-0000-000000000001');
+
+insert into public.entitlements (user_id, pack_id, source)
+values ('22222222-2222-2222-2222-222222222222',
+        'aaaaaaaa-0000-0000-0000-000000000001', 'fixture');
 
 -- Act as user A.
 set local role authenticated;
@@ -45,6 +77,60 @@ select results_eq(
      ) select count(*)::int from attempt $$,
   array[0],
   'user A''s update of user B''s profile affects no rows'
+);
+
+-- campaign_runs
+select results_eq(
+  $$ select count(*)::int from public.campaign_runs
+     where user_id = '22222222-2222-2222-2222-222222222222' $$,
+  array[0],
+  'user A cannot read user B''s campaign run'
+);
+
+select results_eq(
+  $$ with attempt as (
+       update public.campaign_runs set status = 'abandoned'
+       where user_id = '22222222-2222-2222-2222-222222222222'
+       returning 1
+     ) select count(*)::int from attempt $$,
+  array[0],
+  'user A''s update of user B''s campaign run affects no rows'
+);
+
+-- day_logs
+select results_eq(
+  $$ select count(*)::int from public.day_logs
+     where user_id = '22222222-2222-2222-2222-222222222222' $$,
+  array[0],
+  'user A cannot read user B''s day log'
+);
+
+select results_eq(
+  $$ with attempt as (
+       update public.day_logs set note = 'pwned'
+       where user_id = '22222222-2222-2222-2222-222222222222'
+       returning 1
+     ) select count(*)::int from attempt $$,
+  array[0],
+  'user A''s update of user B''s day log affects no rows'
+);
+
+-- entitlements: no owner-generator loop covers this table (hand-written policy),
+-- and it is the one where a mistake means a client granting itself paid content.
+select results_eq(
+  $$ select count(*)::int from public.entitlements
+     where user_id = '22222222-2222-2222-2222-222222222222' $$,
+  array[0],
+  'user A cannot read user B''s entitlement'
+);
+
+select throws_ok(
+  $$ insert into public.entitlements (user_id, pack_id, source)
+     values ('11111111-1111-1111-1111-111111111111',
+             'aaaaaaaa-0000-0000-0000-000000000001', 'self-granted') $$,
+  '42501',
+  null,
+  'user A cannot insert an entitlement at all, even for themself'
 );
 
 select * from finish();
