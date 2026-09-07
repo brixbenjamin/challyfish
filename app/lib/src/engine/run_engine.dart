@@ -62,4 +62,25 @@ class RunEngine {
     required int lengthDays,
     GradeThresholds thresholds = GradeThresholds.standard,
   }) => thresholds.gradeFor(missCount: missCount(logs), lengthDays: lengthDays);
+
+  /// The day indices that must be written as `missed`, given where the run
+  /// stands now.
+  ///
+  /// Idempotent by construction: it returns only days with no outcome, so
+  /// applying the result and asking again yields an empty list. Today is never
+  /// included — the user still has the day.
+  List<int> daysNeedingMissed({
+    required int currentDay,
+    required Iterable<DayLog> logs,
+  }) {
+    final reported = <int>{
+      for (final log in logs)
+        if (log.isReported) log.dayIndex,
+    };
+
+    return [
+      for (var day = 1; day < currentDay; day++)
+        if (!reported.contains(day)) day,
+    ];
+  }
 }
