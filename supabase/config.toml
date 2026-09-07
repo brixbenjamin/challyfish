@@ -68,7 +68,20 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+#
+# supabase/seed.sql is the human-readable index (ADR-0021): it documents insertion
+# order with `\i` includes and is a valid target for `psql -f supabase/seed.sql`.
+# The CLI's own seeder sends files over the wire protocol rather than shelling out
+# to psql, so it cannot interpret `\i` (confirmed against supabase/cli#3615, the
+# same root cause for `COPY ... FROM STDIN`). This list is therefore the literal,
+# CLI-executable expansion of seed.sql's includes and must be kept in the same
+# order as that file.
+sql_paths = [
+  "./seed/axes.sql",
+  "./seed/packs.sql",
+  "./seed/campaigns.sql",
+  "./seed/actions.sql",
+]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
