@@ -109,6 +109,12 @@ class ProgressRepository {
     committedAt: Value(clock.nowUtc()),
   );
 
+  /// Records a user-reported outcome for a day.
+  ///
+  /// `outcome` must be `done`, `partial`, or `skipped` — never `missed`.
+  /// `missed` is written only by [applyRollover]; this method writes whatever
+  /// it is given unchanged, so passing `Outcome.missed` here would be a
+  /// call-site bug, not a caught one.
   Future<void> report({
     required CampaignRun run,
     required int dayIndex,
@@ -181,6 +187,10 @@ class ProgressRepository {
               outcome: outcome,
               note: note,
               updatedAt: now,
+              // Explicit, not left to the schema default: the push worker
+              // (Plan 3) drains purely on this flag, so a silently changed
+              // default must never make a first write invisible to sync.
+              dirty: const Value(true),
             ),
           );
       return;

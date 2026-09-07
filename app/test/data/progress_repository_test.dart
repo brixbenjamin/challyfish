@@ -98,6 +98,32 @@ void main() {
     );
   });
 
+  test('a freshly committed day log is dirty for later sync', () async {
+    final repo = repoAt(day1);
+    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+
+    await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
+
+    final stored = await db.select(db.dayLogs).getSingle();
+    expect(stored.dirty, isTrue);
+  });
+
+  test('reporting after committing keeps the day log dirty', () async {
+    final repo = repoAt(day1);
+    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+
+    await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
+    await repo.report(
+      run: run,
+      dayIndex: 1,
+      actionId: 'action-1',
+      outcome: Outcome.done,
+    );
+
+    final stored = await db.select(db.dayLogs).getSingle();
+    expect(stored.dirty, isTrue);
+  });
+
   test(
     'rollover writes missed for elapsed unreported days and is idempotent',
     () async {
