@@ -4,3 +4,9 @@
 # Editors
 .idea/
 .vscode/
+
+# Secrets. The client may only ever carry SUPABASE_URL and the anon key, and
+# the service role key never enters this repository — an unignored .env is
+# exactly how that rule gets broken by accident.
+.env*
+!.env.example
