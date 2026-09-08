@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -114,6 +116,8 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     final userId = ref.read(userIdProvider);
 
     await _configurePurchases(userId);
+    // Deliberately not awaited: a slow store must not delay the first frame.
+    unawaited(_restoreOnLaunch(userId));
 
     if (await diagnostic.hasCompleted(userId)) {
       await _loadHome();
@@ -137,6 +141,21 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   Future<void> _configurePurchases(String userId) async {
     try {
       await ref.read(purchaseGatewayProvider).configure(userId);
+    } catch (_) {}
+  }
+
+  /// Once per launch, so a reinstall recovers without anyone having to find a
+  /// settings row (US26).
+  ///
+  /// Fire and forget: it never blocks the router and a failure is invisible —
+  /// the settings row is the visible path, and it reports honestly.
+  Future<void> _restoreOnLaunch(String userId) async {
+    try {
+      final packs = await ref.read(contentRepositoryProvider).packs();
+      await ref
+          .read(entitlementRepositoryProvider)
+          .restore(userId: userId, packs: packs);
+      ref.invalidate(unlockedPackIdsProvider);
     } catch (_) {}
   }
 
@@ -617,7 +636,15 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
               if (settingsContext.mounted) refreshSettings(() {});
             },
             onDeleteAccount: _openDeleteAccount,
-            onRestorePurchases: () {},
+            onRestorePurchases: () async {
+              final userId = ref.read(userIdProvider);
+              final packs = await ref.read(contentRepositoryProvider).packs();
+              final summary = await ref
+                  .read(purchaseControllerProvider)
+                  .restore(userId: userId, packs: packs);
+              ref.invalidate(unlockedPackIdsProvider);
+              return summary;
+            },
           ),
         ),
       ),

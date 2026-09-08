@@ -777,6 +777,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The store could not be reached. Try again.'**
   String get restoreUnreachable;
+
+  /// Result of a restore that unlocked something. A real plural, not one string with a number in it — the same rule missesAllowed follows.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Restored 1 pack.} other{Restored {count} packs.}}'**
+  String restoredPacks(int count);
 }
 
 class _AppLocalizationsDelegate

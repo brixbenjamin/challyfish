@@ -1,4 +1,5 @@
 import 'package:feral/src/domain/identity.dart';
+import 'package:feral/src/data/repositories/entitlement_repository.dart';
 import 'package:feral/src/ui/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +21,7 @@ void main() {
           linkedIdentity: identity,
           onLink: () => links++,
           onDeleteAccount: () => deletes++,
-          onRestorePurchases: () {},
+          onRestorePurchases: () async => const RestoreSummary(succeeded: true),
         ),
       ),
     );

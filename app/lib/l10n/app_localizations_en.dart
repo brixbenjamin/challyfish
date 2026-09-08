@@ -417,4 +417,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restoreUnreachable => 'The store could not be reached. Try again.';
+
+  @override
+  String restoredPacks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Restored $count packs.',
+      one: 'Restored 1 pack.',
+    );
+    return '$_temp0';
+  }
 }

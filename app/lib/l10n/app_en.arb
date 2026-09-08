@@ -557,5 +557,14 @@
   "restoreUnreachable": "The store could not be reached. Try again.",
   "@restoreUnreachable": {
     "description": "A restore that failed to reach the store at all."
+  },
+  "restoredPacks": "{count, plural, =1{Restored 1 pack.} other{Restored {count} packs.}}",
+  "@restoredPacks": {
+    "description": "Result of a restore that unlocked something. A real plural, not one string with a number in it — the same rule missesAllowed follows.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

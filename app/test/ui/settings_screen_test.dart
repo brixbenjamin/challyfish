@@ -1,5 +1,6 @@
 import 'package:feral/l10n/app_localizations.dart';
 import 'package:feral/src/notifications/reminder_scheduler.dart';
+import 'package:feral/src/data/repositories/entitlement_repository.dart';
 import 'package:feral/src/ui/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,7 +64,7 @@ void main() {
           linkedIdentity: null,
           onLink: () {},
           onDeleteAccount: () {},
-          onRestorePurchases: () {},
+          onRestorePurchases: () async => const RestoreSummary(succeeded: true),
           pickTime: (_, initial) async {
             pickerOpens++;
             return offeredTime;

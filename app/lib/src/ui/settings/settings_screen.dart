@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/l10n_ext.dart';
+import '../../data/repositories/entitlement_repository.dart';
 import '../../domain/identity.dart';
 import '../../notifications/reminder_scheduler.dart';
 
@@ -22,7 +23,12 @@ class SettingsScreen extends StatefulWidget {
   final LinkedIdentity? linkedIdentity;
   final VoidCallback onLink;
   final VoidCallback onDeleteAccount;
-  final VoidCallback onRestorePurchases;
+
+  /// Returns what happened, because the three outcomes need three different
+  /// sentences (US26). A user who owns nothing and a user whose store is
+  /// unreachable must not read the same message: one of them should try again
+  /// and the other should not.
+  final Future<RestoreSummary> Function() onRestorePurchases;
 
   static const linkRowKey = Key('settings-link'); // niche:allow widget key
   static const identityRowKey = Key('settings-identity'); // niche:allow key
@@ -31,6 +37,9 @@ class SettingsScreen extends StatefulWidget {
   /// New here: plan 2 built the reminder row without a key, and the ordering
   /// test needs to find it.
   static const reminderRowKey = Key('settings-reminder'); // niche:allow key
+  static const restoreRowKey = Key('settings-restore'); // niche:allow key
+  static const restoreResultKey = Key('settings-restored'); // niche:allow key
+  static const restoreProgressKey = Key('settings-busy'); // niche:allow
 
   /// Injected so the picker can be driven in a widget test. Defaults to
   /// Material's showTimePicker.
@@ -43,6 +52,8 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _enabled = false;
+  bool _restoring = false;
+  String? _restoreMessage;
   bool _permissionDenied = false;
   bool _loading = true;
   TimeOfDay _at = const TimeOfDay(hour: 8, minute: 0);
@@ -106,6 +117,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String get _formattedTime =>
       '${_at.hour.toString().padLeft(2, '0')}:${_at.minute.toString().padLeft(2, '0')}'; // niche:allow — a clock format, not copy
 
+  Future<void> _restore() async {
+    if (_restoring) return; // a second tap is a second store round trip
+    setState(() {
+      _restoring = true;
+      _restoreMessage = null;
+    });
+
+    final summary = await widget.onRestorePurchases();
+
+    if (!mounted) return;
+    final l10n = context.l10n;
+    setState(() {
+      _restoring = false;
+      _restoreMessage = switch (summary) {
+        RestoreSummary(succeeded: false) => l10n.restoreUnreachable,
+        RestoreSummary(unlockedPacks: 0) => l10n.restoreNothingFound,
+        RestoreSummary(unlockedPacks: final n) => l10n.restoredPacks(n),
+      };
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -160,9 +192,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: Text(widget.linkedIdentity!.label),
             ),
           ListTile(
+            key: SettingsScreen.restoreRowKey,
             title: Text(l10n.restorePurchases),
-            onTap: widget.onRestorePurchases,
+            subtitle: Text(l10n.restorePurchasesSubtitle),
+            trailing: _restoring
+                ? const SizedBox(
+                    key: SettingsScreen.restoreProgressKey,
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
+            onTap: _restore,
           ),
+          if (_restoreMessage != null)
+            Padding(
+              key: SettingsScreen.restoreResultKey,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(_restoreMessage!),
+            ),
           _SectionHeading(l10n.settingsPrivacySection),
           ListTile(
             key: SettingsScreen.deleteRowKey,
