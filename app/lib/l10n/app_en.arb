@@ -359,6 +359,26 @@
     "description": "Shown when requesting a code fails. Names the likely cause and the next step, never blames."
   },
 
+  "codeRejected": "That code is not right, or it has expired. Ask for a new one.",
+  "@codeRejected": {
+    "description": "Shown on the code step when six digits are refused. Covers wrong, expired, and used-up in one sentence, because the server does not say which and guessing would be worse than not saying."
+  },
+
+  "linkFailed": "That did not work, and nothing on this phone changed.",
+  "@linkFailed": {
+    "description": "Shown when attaching an identity fails for any reason other than the address being taken. The second clause is the part that matters: a failed link is not a lost record."
+  },
+
+  "appleAccountName": "your Apple ID",
+  "@appleAccountName": {
+    "description": "Names the account in the replace confirmation when signing in with Apple, where no address is known to show instead."
+  },
+
+  "googleAccountName": "your Google account",
+  "@googleAccountName": {
+    "description": "Names the account in the replace confirmation when signing in with Google, where no address is known to show instead."
+  },
+
   "linkSheetTitle": "Keep this record",
   "@linkSheetTitle": {
     "description": "[niche] Title of the identity-link sheet. 'Record' is the product's vocabulary."

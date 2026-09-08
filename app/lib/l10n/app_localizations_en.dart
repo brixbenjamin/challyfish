@@ -271,6 +271,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'That did not send. Check the address and try again.';
 
   @override
+  String get codeRejected =>
+      'That code is not right, or it has expired. Ask for a new one.';
+
+  @override
+  String get linkFailed =>
+      'That did not work, and nothing on this phone changed.';
+
+  @override
+  String get appleAccountName => 'your Apple ID';
+
+  @override
+  String get googleAccountName => 'your Google account';
+
+  @override
   String get linkSheetTitle => 'Keep this record';
 
   @override

@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/balance_state.dart';
+import '../app/link_flow.dart';
 import '../app/providers.dart';
 import '../app/run_state.dart';
 import '../app/sync_state.dart';
+import '../core/l10n_ext.dart';
 import '../data/repositories/diagnostic_repository.dart';
 import '../domain/archetype.dart';
 import '../domain/campaign.dart';
 import '../domain/diagnostic.dart';
 import '../domain/doctrine.dart';
 import '../domain/grade.dart';
+import '../domain/identity.dart';
 import '../domain/outcome.dart';
 import '../domain/sync_status.dart';
 import 'browse/campaign_detail_screen.dart';
@@ -19,6 +22,9 @@ import 'completion/completion_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'doctrine/doctrine_entry_screen.dart';
 import 'doctrine/doctrine_list_screen.dart';
+import 'identity/email_code_screen.dart';
+import 'identity/link_sheet.dart';
+import 'identity/replace_confirm_screen.dart';
 import 'onboarding/diagnostic_result_screen.dart';
 import 'onboarding/diagnostic_screen.dart';
 import 'onboarding/doctrine_intro_screen.dart';
@@ -317,6 +323,8 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
           onCancel: () => Navigator.of(routeContext).pop(),
           onDeleted: () async {
             await ref.read(identityRepositoryProvider).resetToFreshAnonymous();
+            // A different anonymous user than the one that launched the app.
+            ref.invalidate(userIdProvider);
             await ref.read(linkPromptStateProvider).reset();
             if (!mounted) return;
             // Land on first-run, never on a broken signed-out screen.
@@ -332,6 +340,176 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     await ref.read(linkPromptStateProvider).markDismissed();
     if (!mounted) return;
     setState(() => _showLinkPrompt = false);
+  }
+
+  // ---------------------------------------------------------------- identity
+
+  /// The linking flow, from the sheet down to whichever screens the chosen
+  /// provider needs. Returns true when the identity question was answered.
+  ///
+  /// The sequence lives in [LinkFlow]; this only knows how to ask on screen.
+  Future<bool> _openLinkFlow() async {
+    final l10n = context.l10n;
+    final flow = LinkFlow(
+      identity: ref.read(identityRepositoryProvider),
+      confirmReplacement: _confirmReplacement,
+    );
+
+    final chosen = await showModalBottomSheet<AuthProvider>(
+      context: context,
+      builder: (sheetContext) => LinkSheet(
+        providers: const [
+          AuthProvider.apple,
+          AuthProvider.google,
+          AuthProvider.email,
+        ],
+        onChoose: (provider) => Navigator.of(sheetContext).pop(provider),
+        onCancel: () => Navigator.of(sheetContext).pop(),
+      ),
+    );
+    if (chosen == null || !mounted) return false;
+
+    return switch (chosen) {
+      AuthProvider.email => _linkWithEmail(flow),
+      AuthProvider.apple => _linkWithProvider(
+        flow,
+        chosen,
+        l10n.appleAccountName,
+      ),
+      AuthProvider.google => _linkWithProvider(
+        flow,
+        chosen,
+        l10n.googleAccountName,
+      ),
+    };
+  }
+
+  /// Apple and Google: the credential is collected by the platform first, and
+  /// a user who backs out of that sheet has answered nothing.
+  Future<bool> _linkWithProvider(
+    LinkFlow flow,
+    AuthProvider provider,
+    String accountLabel,
+  ) async {
+    final AppleGoogleToken? credential;
+    try {
+      credential = provider == AuthProvider.apple
+          ? await AppleCredentials.request()
+          : await GoogleCredentials.request();
+    } catch (error) {
+      // A provider that is not configured on this build fails here, and it must
+      // fail as plainly as a wrong code does.
+      return _settle(Failed(error));
+    }
+
+    return _settle(
+      await flow.attach(
+        provider: provider,
+        credential: credential,
+        accountLabel: accountLabel,
+      ),
+    );
+  }
+
+  /// Email: two steps on one screen, and no deep link anywhere (ADR-0016).
+  Future<bool> _linkWithEmail(LinkFlow flow) async {
+    final l10n = context.l10n;
+    AttachOutcome? answered;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => EmailCodeScreen(
+          onSendCode: (email) async {
+            final outcome = await flow.sendEmailCode(email);
+            switch (outcome) {
+              case Cancelled():
+                // They declined the replacement. Leaving is the answer, so the
+                // screen closes rather than showing them an error they caused
+                // on purpose.
+                if (routeContext.mounted) Navigator.of(routeContext).pop();
+              case Failed(:final error):
+                throw error;
+              default:
+                break;
+            }
+          },
+          onVerify: (email, code) async {
+            final outcome = await flow.verifyEmailCode(
+              email: email,
+              code: code,
+            );
+            switch (outcome) {
+              case Linked():
+                answered = outcome;
+                return CodeAccepted(ref.read(userIdProvider));
+              case SignedIn(:final userId):
+                answered = outcome;
+                return CodeAccepted(userId);
+              default:
+                // Wrong, expired, already used, or no signal: one sentence for
+                // all of them, because the server does not say which.
+                return CodeRejected(l10n.codeRejected);
+            }
+          },
+          onAuthenticated: (_) => Navigator.of(routeContext).pop(),
+          onCancel: () => Navigator.of(routeContext).pop(),
+        ),
+      ),
+    );
+
+    final outcome = answered;
+    return outcome == null ? false : _settle(outcome);
+  }
+
+  /// The one screen standing between a user and losing a record.
+  Future<bool> _confirmReplacement(
+    LocalProgressSummary summary,
+    String accountLabel,
+  ) async {
+    if (!mounted) return false;
+    final confirmed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (routeContext) => ReplaceConfirmScreen(
+          summary: summary,
+          accountLabel: accountLabel,
+          onConfirm: () => Navigator.of(routeContext).pop(true),
+          onCancel: () => Navigator.of(routeContext).pop(false),
+        ),
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  /// Where the app lands once the identity question has an answer.
+  Future<bool> _settle(AttachOutcome outcome) async {
+    switch (outcome) {
+      case Linked():
+        // The record never moved; it just has an owner now. Reloading is what
+        // retires the completion prompt, which stops applying the moment the
+        // account is linked (ADR-0013).
+        if (mounted) await _reloadHome();
+        return true;
+      case SignedIn():
+        // The local rows are gone and this account's record has to be pulled.
+        // Invalidating the id is what repoints every repository at the account
+        // that just signed in.
+        ref.invalidate(userIdProvider);
+        if (!mounted) return true;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        await _boot();
+        return true;
+      case Failed():
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(context.l10n.linkFailed)));
+        }
+        return false;
+      case Cancelled():
+      case NeedsReplaceConfirmation():
+      case CodeSent():
+        return false;
+    }
   }
 
   Future<void> _reloadHome() async {
@@ -370,12 +548,21 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   Future<void> _openSettings() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => SettingsScreen(
-          scheduler: ref.read(reminderSchedulerProvider),
-          linkedIdentity: ref.read(identityRepositoryProvider).linkedIdentity,
-          onLink: () {},
-          onDeleteAccount: _openDeleteAccount,
-          onRestorePurchases: () {},
+        // Rebuilt after the link flow so the account row shows what just
+        // happened rather than what was true when settings opened.
+        builder: (_) => StatefulBuilder(
+          builder: (settingsContext, refreshSettings) => SettingsScreen(
+            scheduler: ref.read(reminderSchedulerProvider),
+            linkedIdentity: ref.read(identityRepositoryProvider).linkedIdentity,
+            onLink: () async {
+              await _openLinkFlow();
+              // A sign-in pops this route on its way to a fresh boot, so there
+              // may be nothing left to refresh.
+              if (settingsContext.mounted) refreshSettings(() {});
+            },
+            onDeleteAccount: _openDeleteAccount,
+            onRestorePurchases: () {},
+          ),
         ),
       ),
     );
@@ -472,7 +659,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         missAllowance: completed.missAllowance,
         marksEarned: completed.marksEarned,
         showLinkPrompt: _showLinkPrompt,
-        onLink: () {},
+        onLink: _openLinkFlow,
         onDismissLinkPrompt: _dismissLinkPrompt,
         onBrowse: _reloadHome,
       );

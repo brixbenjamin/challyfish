@@ -520,6 +520,30 @@ abstract class AppLocalizations {
   /// **'That did not send. Check the address and try again.'**
   String get codeSendFailed;
 
+  /// Shown on the code step when six digits are refused. Covers wrong, expired, and used-up in one sentence, because the server does not say which and guessing would be worse than not saying.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is not right, or it has expired. Ask for a new one.'**
+  String get codeRejected;
+
+  /// Shown when attaching an identity fails for any reason other than the address being taken. The second clause is the part that matters: a failed link is not a lost record.
+  ///
+  /// In en, this message translates to:
+  /// **'That did not work, and nothing on this phone changed.'**
+  String get linkFailed;
+
+  /// Names the account in the replace confirmation when signing in with Apple, where no address is known to show instead.
+  ///
+  /// In en, this message translates to:
+  /// **'your Apple ID'**
+  String get appleAccountName;
+
+  /// Names the account in the replace confirmation when signing in with Google, where no address is known to show instead.
+  ///
+  /// In en, this message translates to:
+  /// **'your Google account'**
+  String get googleAccountName;
+
   /// [niche] Title of the identity-link sheet. 'Record' is the product's vocabulary.
   ///
   /// In en, this message translates to:
