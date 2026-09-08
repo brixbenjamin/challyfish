@@ -1,0 +1,13 @@
+<!-- The only email this product sends. It carries a six-digit code and nothing
+     else: no link to tap, no button, and no address to come back to (ADR-0016).
+
+     The wording is deliberately brand-free. Q1 has not settled what this
+     product is called, and an email template is not a place to guess. -->
+<h2>Your code</h2>
+
+<p>Enter this code in the app to finish signing in:</p>
+
+<p style="font-size: 28px; letter-spacing: 4px; font-weight: bold;">{{ .Token }}</p>
+
+<p>It expires in an hour. If you did not ask for it, ignore this email — nothing
+happens until the code is entered.</p>

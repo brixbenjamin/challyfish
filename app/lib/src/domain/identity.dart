@@ -54,6 +54,19 @@ class SignedIn extends AttachOutcome {
   final LinkedIdentity identity;
 }
 
+/// A six-digit code is on its way, and the flow it belongs to is settled.
+///
+/// [link] carries which of the two it is, because the answer decides both what
+/// the code verifies against and what happens to this device's record once it
+/// does. Nobody downstream should have to guess it back.
+class CodeSent extends AttachOutcome {
+  const CodeSent({required this.link});
+
+  /// True when the address is being attached to the record already on this
+  /// device; false when it belongs to an account being signed in to.
+  final bool link;
+}
+
 class Cancelled extends AttachOutcome {
   const Cancelled();
 }

@@ -37,9 +37,20 @@ class FakeAuthGateway implements AuthGateway {
     return userId!;
   }
 
+  /// The address belongs to another account. Only the linking branch can see
+  /// this, exactly as GoTrue only refuses an email *change* to a taken address.
+  bool addressTaken = false;
+  bool codeIsWrong = false;
+
   @override
-  Future<void> sendEmailCode(String email) async =>
-      calls.add('sendCode:$email');
+  Future<void> sendEmailCode(String email, {required bool link}) async {
+    calls.add('sendCode:$email:link=$link');
+    if (link && addressTaken) {
+      throw const IdentityAlreadyAttached(
+        'that address belongs to another account',
+      );
+    }
+  }
 
   @override
   Future<String> verifyEmailCode({
@@ -48,6 +59,9 @@ class FakeAuthGateway implements AuthGateway {
     required bool link,
   }) async {
     calls.add('verify:$code:link=$link');
+    if (codeIsWrong) throw Exception('token has expired or is invalid');
+    identity = LinkedIdentity(provider: AuthProvider.email, label: email);
+    if (!link) userId = 'existing-user';
     return userId!;
   }
 
@@ -269,5 +283,119 @@ void main() {
     expect(auth.linkedIdentity, isNull);
     expect(auth.calls, isEmpty);
     expect(await db.select(db.campaignRuns).get(), hasLength(1));
+  });
+
+  // ------------------------------------------------------------------- email
+
+  test('a free address attaches to the record already on this phone', () async {
+    await seedLocalProgress();
+
+    final sent = await identity.sendEmailCode('you@example.com');
+    expect(sent, isA<CodeSent>());
+    expect((sent as CodeSent).link, isTrue);
+
+    final outcome = await identity.verifyEmailCode(
+      email: 'you@example.com',
+      code: '123456',
+      link: true,
+    );
+
+    expect(outcome, isA<Linked>());
+    expect(auth.currentUserId, 'anon-user', reason: 'the record does not move');
+    expect(await db.select(db.campaignRuns).get(), hasLength(1));
+  });
+
+  test('an address with an account asks before it sends anything', () async {
+    await seedLocalProgress();
+    auth.addressTaken = true;
+
+    final outcome = await identity.sendEmailCode('you@example.com');
+
+    expect(outcome, isA<NeedsReplaceConfirmation>());
+    expect(auth.calls, [
+      'sendCode:you@example.com:link=true',
+    ], reason: 'no sign-in code was sent to an address we may not use');
+    expect(await db.select(db.campaignRuns).get(), hasLength(1));
+  });
+
+  test('the confirmation carries what an email sign-in would cost', () async {
+    await seedLocalProgress();
+    auth.addressTaken = true;
+
+    final outcome =
+        await identity.sendEmailCode('you@example.com')
+            as NeedsReplaceConfirmation;
+
+    expect(outcome.summary.campaignTitle, 'Cold Approach');
+    expect(outcome.summary.reportedDays, 4);
+  });
+
+  test('with nothing to lose the sign-in code goes straight out', () async {
+    auth.addressTaken = true;
+
+    final outcome = await identity.sendEmailCode('you@example.com');
+
+    expect(outcome, isA<CodeSent>());
+    expect(
+      (outcome as CodeSent).link,
+      isFalse,
+      reason: 'the code that follows verifies as a sign-in, not a link',
+    );
+    expect(auth.calls, [
+      'sendCode:you@example.com:link=true',
+      'sendCode:you@example.com:link=false',
+    ]);
+  });
+
+  test('confirming the replacement is what sends the sign-in code', () async {
+    await seedLocalProgress();
+    auth.addressTaken = true;
+    await identity.sendEmailCode('you@example.com');
+
+    final outcome = await identity.confirmEmailReplacement('you@example.com');
+
+    expect(outcome, isA<CodeSent>());
+    expect((outcome as CodeSent).link, isFalse);
+    expect(auth.calls.last, 'sendCode:you@example.com:link=false');
+    expect(
+      await db.select(db.campaignRuns).get(),
+      hasLength(1),
+      reason: 'consent sends a code; it does not destroy anything yet',
+    );
+  });
+
+  test('an email sign-in clears user rows but never content', () async {
+    await seedLocalProgress();
+
+    final outcome = await identity.verifyEmailCode(
+      email: 'you@example.com',
+      code: '123456',
+      link: false,
+    );
+
+    expect(outcome, isA<SignedIn>());
+    expect((outcome as SignedIn).userId, 'existing-user');
+    expect(await db.select(db.campaignRuns).get(), isEmpty);
+    expect(await db.select(db.dayLogs).get(), isEmpty);
+    expect(await db.select(db.campaigns).get(), hasLength(1));
+  });
+
+  test('a rejected code changes nothing at all', () async {
+    await seedLocalProgress();
+    auth.codeIsWrong = true;
+
+    final outcome = await identity.verifyEmailCode(
+      email: 'you@example.com',
+      code: '000000',
+      link: false,
+    );
+
+    expect(outcome, isA<Failed>());
+    expect(
+      await db.select(db.campaignRuns).get(),
+      hasLength(1),
+      reason: 'a typo must not cost the user their record',
+    );
+    expect(auth.linkedIdentity, isNull);
   });
 }

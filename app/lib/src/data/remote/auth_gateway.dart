@@ -13,7 +13,16 @@ abstract class AuthGateway {
 
   /// Email is a six-digit code, never a magic link. No redirect URL is passed
   /// anywhere, because the app handles no deep links (ADR-0016).
-  Future<void> sendEmailCode(String email);
+  ///
+  /// [link] picks between the only two things this can mean: attaching the
+  /// address to the record already on this device, or asking the account that
+  /// owns the address for a way back in. They are different calls, they send
+  /// different mail, and their codes verify differently — so the caller says
+  /// which it wants rather than the gateway guessing.
+  ///
+  /// Throws [IdentityAlreadyAttached] when linking an address that belongs to
+  /// someone else. That is decided before any mail is sent.
+  Future<void> sendEmailCode(String email, {required bool link});
   Future<String> verifyEmailCode({
     required String email,
     required String code,
@@ -89,8 +98,27 @@ class SupabaseAuthGateway implements AuthGateway {
   }
 
   @override
-  Future<void> sendEmailCode(String email) =>
-      _client.auth.signInWithOtp(email: email);
+  Future<void> sendEmailCode(String email, {required bool link}) async {
+    if (!link) {
+      // shouldCreateUser is false because the only reason to be on this branch
+      // is an account that already exists. Letting a typo create a new empty
+      // account here would strand the record this device is holding in it.
+      await _client.auth.signInWithOtp(email: email, shouldCreateUser: false);
+      return;
+    }
+    try {
+      // Attaching an address to the anonymous user is an email *change* on that
+      // user, not a sign-in. It is the only form that keeps the user id, which
+      // is the whole point: the record does not move (ADR-0014).
+      await _client.auth.updateUser(UserAttributes(email: email));
+    } on AuthException catch (e) {
+      // 422 email_exists is the second-device branch, not a failure.
+      if (e.code == 'email_exists' || e.statusCode == '422') {
+        throw IdentityAlreadyAttached(e.message);
+      }
+      rethrow;
+    }
+  }
 
   @override
   Future<String> verifyEmailCode({
@@ -101,7 +129,10 @@ class SupabaseAuthGateway implements AuthGateway {
     final response = await _client.auth.verifyOTP(
       email: email,
       token: code,
-      type: OtpType.email,
+      // A code from an email change verifies as emailChange and a sign-in code
+      // as email. The wrong type here rejects a code the user typed correctly,
+      // which is indistinguishable from a wrong code at the screen.
+      type: link ? OtpType.emailChange : OtpType.email,
     );
     return response.user!.id;
   }

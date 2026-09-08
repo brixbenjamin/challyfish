@@ -191,8 +191,9 @@ refresh_token_reuse_interval = 10
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = true
-# Allow/disallow testing manual linking of accounts
-enable_manual_linking = false
+# Linking Apple or Google to an existing anonymous user goes through
+# auth.linkIdentityWithIdToken, which this switch gates (plan 3 Task 9).
+enable_manual_linking = true
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
 minimum_password_length = 6
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
@@ -237,8 +238,10 @@ enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
-# If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# The six-digit code IS the confirmation (ADR-0016). With this off, GoTrue
+# auto-confirms an email change and sends no mail at all, which would attach an
+# address nobody proved they own.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -257,6 +260,20 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# Feral sends codes, never links (ADR-0016). GoTrue's stock templates render
+# only {{ .ConfirmationURL }}, so without these two overrides the six-digit
+# token the app asks for appears in no email the user ever receives.
+#
+# `magic_link` is the sign-in code (an address that already has an account);
+# `email_change` is the linking code (attaching an address to this record).
+[auth.email.template.magic_link]
+subject = "Your sign-in code"
+content_path = "./supabase/templates/code.html"
+
+[auth.email.template.email_change]
+subject = "Your sign-in code"
+content_path = "./supabase/templates/code.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

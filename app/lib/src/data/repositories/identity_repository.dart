@@ -42,6 +42,69 @@ class IdentityRepository {
     }
   }
 
+  /// Step one of email: claim the address.
+  ///
+  /// Asking for the address IS the test of whether it is free, so this is where
+  /// the link-versus-sign-in branch is decided — before a code is sent, and
+  /// long before anything on this device is at risk. Apple and Google learn the
+  /// same thing from `attach`; email learns it one step earlier, because a
+  /// sign-in code must not be mailed to an address the user cannot use.
+  Future<AttachOutcome> sendEmailCode(String email) async {
+    try {
+      await auth.sendEmailCode(email, link: true);
+      return const CodeSent(link: true);
+    } on IdentityAlreadyAttached {
+      final summary = await localProgressSummary();
+      if (summary.hasProgress) {
+        // Stop here. Nothing is sent and nothing is destroyed before the user
+        // has seen what signing in would cost (ADR-0014).
+        return NeedsReplaceConfirmation(summary);
+      }
+      // The reinstall case again: nothing to lose, so nothing to ask.
+      return _sendSignInCode(email);
+    } catch (error) {
+      return Failed(error);
+    }
+  }
+
+  /// Called only after the user confirmed the replacement.
+  Future<AttachOutcome> confirmEmailReplacement(String email) =>
+      _sendSignInCode(email);
+
+  Future<AttachOutcome> _sendSignInCode(String email) async {
+    try {
+      await auth.sendEmailCode(email, link: false);
+      return const CodeSent(link: false);
+    } catch (error) {
+      return Failed(error);
+    }
+  }
+
+  /// Step two: the six digits.
+  ///
+  /// [link] is the answer `sendEmailCode` already worked out, carried back so
+  /// the code is verified against the flow that actually produced it.
+  Future<AttachOutcome> verifyEmailCode({
+    required String email,
+    required String code,
+    required bool link,
+  }) async {
+    try {
+      final userId = await auth.verifyEmailCode(
+        email: email,
+        code: code,
+        link: link,
+      );
+      if (link) return Linked(auth.linkedIdentity!);
+      await _replaceLocalUserState();
+      return SignedIn(userId, auth.linkedIdentity!);
+    } catch (error) {
+      // A wrong or expired code lands here, and it must cost nothing: the local
+      // wipe is deliberately downstream of a verification that succeeded.
+      return Failed(error);
+    }
+  }
+
   /// Called only after the user confirmed the replacement.
   Future<AttachOutcome> completeSignIn({
     required AuthProvider provider,
