@@ -1,22 +1,36 @@
 import 'package:flutter/material.dart';
 
 import '../../core/l10n_ext.dart';
+import '../../domain/identity.dart';
 import '../../notifications/reminder_scheduler.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.scheduler,
-    required this.isLinked,
+    required this.linkedIdentity,
     required this.onLink,
+    required this.onDeleteAccount,
     required this.onRestorePurchases,
     this.pickTime,
     super.key,
   });
 
   final ReminderScheduler scheduler;
-  final bool isLinked;
+
+  /// Null is an unlinked account. It subsumes the old isLinked flag rather than
+  /// sitting beside it, because two fields describing one fact can disagree.
+  final LinkedIdentity? linkedIdentity;
   final VoidCallback onLink;
+  final VoidCallback onDeleteAccount;
   final VoidCallback onRestorePurchases;
+
+  static const linkRowKey = Key('settings-link'); // niche:allow widget key
+  static const identityRowKey = Key('settings-identity'); // niche:allow key
+  static const deleteRowKey = Key('settings-delete'); // niche:allow widget key
+
+  /// New here: plan 2 built the reminder row without a key, and the ordering
+  /// test needs to find it.
+  static const reminderRowKey = Key('settings-reminder'); // niche:allow key
 
   /// Injected so the picker can be driven in a widget test. Defaults to
   /// Material's showTimePicker.
@@ -105,6 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         children: [
           SwitchListTile(
+            key: SettingsScreen.reminderRowKey,
             title: Text(l10n.reminderToggle),
             subtitle: Text(
               _enabled
@@ -126,18 +141,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(l10n.notificationsBlockedNotice),
             ),
           const Divider(),
-          if (!widget.isLinked)
+          _SectionHeading(l10n.settingsAccountSection),
+          if (widget.linkedIdentity == null)
             ListTile(
+              key: SettingsScreen.linkRowKey,
               title: Text(l10n.linkIdentityButton),
+              // Plain, not a warning. ADR-0013 rejected a standing warning
+              // here: parked in settings it becomes furniture nobody reads.
+              // The real consequence is stated in the link screen, at the
+              // moment of choice.
               subtitle: Text(l10n.linkIdentitySettingsSubtitle),
               onTap: widget.onLink,
+            )
+          else
+            ListTile(
+              key: SettingsScreen.identityRowKey,
+              title: Text(l10n.signedInRow),
+              subtitle: Text(widget.linkedIdentity!.label),
             ),
           ListTile(
             title: Text(l10n.restorePurchases),
             onTap: widget.onRestorePurchases,
           ),
+          _SectionHeading(l10n.settingsPrivacySection),
+          ListTile(
+            key: SettingsScreen.deleteRowKey,
+            title: Text(l10n.deleteAccountTitle),
+            subtitle: Text(l10n.deleteAccountSettingsSubtitle),
+            onTap: widget.onDeleteAccount,
+          ),
         ],
       ),
     );
   }
+}
+
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+    child: Text(text, style: Theme.of(context).textTheme.labelLarge),
+  );
 }

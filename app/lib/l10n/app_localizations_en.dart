@@ -316,5 +316,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get replaceWithAccountButton => 'Replace with my account';
 
   @override
+  String get settingsAccountSection => 'Account';
+
+  @override
+  String get settingsPrivacySection => 'Privacy';
+
+  @override
+  String get signedInRow => 'Signed in';
+
+  @override
+  String get deleteAccountTitle => 'Delete account';
+
+  @override
+  String get deleteAccountSettingsSubtitle =>
+      'Removes every run, day, and note. Immediate.';
+
+  @override
   String get understoodButton => 'Understood';
 }

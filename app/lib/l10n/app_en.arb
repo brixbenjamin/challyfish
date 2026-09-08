@@ -430,6 +430,31 @@
     "description": "[niche] Confirms the destructive replace."
   },
 
+  "settingsAccountSection": "Account",
+  "@settingsAccountSection": {
+    "description": "Settings section heading, above the identity and restore rows."
+  },
+
+  "settingsPrivacySection": "Privacy",
+  "@settingsPrivacySection": {
+    "description": "Settings section heading, above account deletion."
+  },
+
+  "signedInRow": "Signed in",
+  "@signedInRow": {
+    "description": "Settings row title once an identity is attached."
+  },
+
+  "deleteAccountTitle": "Delete account",
+  "@deleteAccountTitle": {
+    "description": "Settings row and screen title."
+  },
+
+  "deleteAccountSettingsSubtitle": "Removes every run, day, and note. Immediate.",
+  "@deleteAccountSettingsSubtitle": {
+    "description": "[niche] Names the product's nouns; states that it is not deferred."
+  },
+
   "understoodButton": "Understood",
   "@understoodButton": {
     "description": "Acknowledges the privacy notice."

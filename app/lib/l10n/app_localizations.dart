@@ -598,6 +598,36 @@ abstract class AppLocalizations {
   /// **'Replace with my account'**
   String get replaceWithAccountButton;
 
+  /// Settings section heading, above the identity and restore rows.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccountSection;
+
+  /// Settings section heading, above account deletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get settingsPrivacySection;
+
+  /// Settings row title once an identity is attached.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in'**
+  String get signedInRow;
+
+  /// Settings row and screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountTitle;
+
+  /// [niche] Names the product's nouns; states that it is not deferred.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes every run, day, and note. Immediate.'**
+  String get deleteAccountSettingsSubtitle;
+
   /// Acknowledges the privacy notice.
   ///
   /// In en, this message translates to:

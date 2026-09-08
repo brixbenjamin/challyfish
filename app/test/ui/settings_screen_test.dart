@@ -60,8 +60,9 @@ void main() {
       wrap(
         SettingsScreen(
           scheduler: scheduler,
-          isLinked: false,
+          linkedIdentity: null,
           onLink: () {},
+          onDeleteAccount: () {},
           onRestorePurchases: () {},
           pickTime: (_, initial) async {
             pickerOpens++;

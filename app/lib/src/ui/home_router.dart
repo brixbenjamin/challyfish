@@ -341,10 +341,10 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       MaterialPageRoute<void>(
         builder: (_) => SettingsScreen(
           scheduler: ref.read(reminderSchedulerProvider),
-          // Identity linking and purchases are plans 3 and 4; the rows are
-          // present and inert rather than absent, so the shape is honest.
-          isLinked: false,
+          linkedIdentity: ref.read(identityRepositoryProvider).linkedIdentity,
           onLink: () {},
+          // Deletion is wired in Task 14; purchases are plan 4.
+          onDeleteAccount: () {},
           onRestorePurchases: () {},
         ),
       ),
