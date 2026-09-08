@@ -53,6 +53,33 @@ void main() {
     expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
 
+  /// The purchase SDK stays behind one interface. ADR-0017 picked RevenueCat
+  /// with the explicit intent that the vendor stay replaceable, and that only
+  /// holds while exactly one file knows the SDK exists. The moment a screen
+  /// imports it to check something quickly, reversibility is gone and nobody
+  /// notices until the vendor question comes back.
+  test('only the gateway imports the purchases SDK', () {
+    const allowed = 'lib/src/data/remote/revenuecat_gateway.dart';
+    final offenders = <String>[];
+    final root = Directory('lib');
+
+    for (final file in root.listSync(recursive: true).whereType<File>()) {
+      if (!file.path.endsWith('.dart')) continue;
+      if (file.path == allowed) continue;
+      if (file.readAsStringSync().contains('package:purchases_flutter')) {
+        offenders.add(file.path);
+      }
+    }
+
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'purchases_flutter may only be imported by $allowed (ADR-0017).\n'
+          'Go through PurchaseGateway instead:\n${offenders.join('\n')}',
+    );
+  });
+
   /// No screen supplies a user-facing word of its own. This is the rule that is
   /// cheap to hold from the first screen and expensive to retrofit across a
   /// finished app, which is the whole reason it is enforced on day one rather
