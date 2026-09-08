@@ -73,11 +73,15 @@ class SyncRepository implements SyncRunner {
   ];
 
   /// Pull order mirrors push order for the same foreign-key reason.
+  ///
+  /// `entitlements` is pull-only and has no push counterpart: it is written by
+  /// the purchase webhook and is `select`-only to the client (ADR-0017).
   static const pullOrder = [
     'profiles',
     'campaign_runs',
     'day_logs',
     'diagnostic_results',
+    'entitlements',
   ];
 
   final List<SyncNotice> _notices = [];
@@ -419,6 +423,28 @@ class SyncRepository implements SyncRunner {
                 recommendedCampaignId: row['recommended_campaign_id'] as String,
                 updatedAt: _remoteUpdatedAt(row),
                 dirty: false,
+              ),
+            );
+
+      case 'entitlements':
+        // No _remoteWins check, and that is deliberate. Everywhere else it
+        // protects a local write the user already saw succeed; here the client
+        // has no writes to protect. It cannot push this table, and its only
+        // local rows are optimistic guesses about what the server is about to
+        // say. When the server speaks it is right — including when it says
+        // less than the cache did, which is what a refund looks like.
+        await db
+            .into(db.entitlements)
+            .insertOnConflictUpdate(
+              EntitlementRow(
+                userId: row['user_id'] as String,
+                packId: row['pack_id'] as String,
+                source: row['source'] as String,
+                acquiredAt: DateTime.parse(
+                  row['acquired_at'] as String,
+                ).toUtc(),
+                updatedAt: _remoteUpdatedAt(row),
+                local: false,
               ),
             );
     }
