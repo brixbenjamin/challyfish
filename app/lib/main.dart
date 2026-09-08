@@ -14,7 +14,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tzdata.initializeTimeZones();
   await initializeSupabase();
-  final userId = await ensureAnonymousSession();
+  // The id itself is not carried anywhere: userIdProvider reads whoever the
+  // session belongs to at the moment it is asked. This only guarantees there
+  // is one before the first screen builds.
+  await ensureAnonymousSession();
   final zone = await deviceZone();
   // Resolved once here so no screen has to await a preference mid-build.
   final prefs = await SharedPreferences.getInstance();
@@ -22,7 +25,6 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [
-        userIdProvider.overrideWithValue(userId),
         zoneProvider.overrideWithValue(zone),
         sharedPreferencesProvider.overrideWithValue(prefs),
       ],

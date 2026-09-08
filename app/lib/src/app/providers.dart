@@ -32,9 +32,19 @@ final clockProvider = Provider<Clock>((ref) => const SystemClock());
 /// Overridden in main() once the device zone has been read.
 final zoneProvider = Provider<tz.Location>((ref) => tz.UTC);
 
-/// Overridden in main() with the id from ensureAnonymousSession().
+/// Whoever the session belongs to right now.
+///
+/// Read from the gateway rather than captured at launch, because the id
+/// changes: signing in to an existing account and deleting an account both
+/// replace it. A value fixed in main() would leave every repository reading and
+/// writing rows under a user this device is no longer authenticated as. Callers
+/// that change the session invalidate this (see HomeRouter).
 final userIdProvider = Provider<String>((ref) {
-  throw UnimplementedError('userIdProvider must be overridden at bootstrap');
+  final userId = ref.watch(authGatewayProvider).currentUserId;
+  if (userId == null) {
+    throw StateError('no session: ensureAnonymousSession() runs before runApp');
+  }
+  return userId;
 });
 
 final contentRepositoryProvider = Provider<ContentRepository>((ref) {
