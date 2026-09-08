@@ -134,10 +134,9 @@ class SyncRepository implements SyncRunner {
   Future<List<DirtyRow>> _dirtyRows(String table, String userId) async {
     switch (table) {
       case 'profiles':
-        final rows = await (db.select(db.profiles)..where(
-              (p) => p.dirty.equals(true) & p.userId.equals(userId),
-            ))
-            .get();
+        final rows = await (db.select(
+          db.profiles,
+        )..where((p) => p.dirty.equals(true) & p.userId.equals(userId))).get();
         return [
           for (final r in rows)
             DirtyRow(
@@ -153,10 +152,9 @@ class SyncRepository implements SyncRunner {
         ];
 
       case 'campaign_runs':
-        final rows = await (db.select(db.campaignRuns)..where(
-              (r) => r.dirty.equals(true) & r.userId.equals(userId),
-            ))
-            .get();
+        final rows = await (db.select(
+          db.campaignRuns,
+        )..where((r) => r.dirty.equals(true) & r.userId.equals(userId))).get();
         return [
           for (final r in rows)
             DirtyRow(
@@ -177,10 +175,9 @@ class SyncRepository implements SyncRunner {
         ];
 
       case 'day_logs':
-        final rows = await (db.select(db.dayLogs)..where(
-              (l) => l.dirty.equals(true) & l.userId.equals(userId),
-            ))
-            .get();
+        final rows = await (db.select(
+          db.dayLogs,
+        )..where((l) => l.dirty.equals(true) & l.userId.equals(userId))).get();
         return [
           for (final r in rows)
             DirtyRow(
@@ -201,10 +198,9 @@ class SyncRepository implements SyncRunner {
         ];
 
       case 'diagnostic_results':
-        final rows = await (db.select(db.diagnosticResults)..where(
-              (d) => d.dirty.equals(true) & d.userId.equals(userId),
-            ))
-            .get();
+        final rows = await (db.select(
+          db.diagnosticResults,
+        )..where((d) => d.dirty.equals(true) & d.userId.equals(userId))).get();
         return [
           for (final r in rows)
             DirtyRow(
@@ -238,7 +234,8 @@ class SyncRepository implements SyncRunner {
         case 'profiles':
           await (db.update(db.profiles)..where(
                 (p) =>
-                    p.userId.equals(row.key) & p.updatedAt.equals(row.updatedAt),
+                    p.userId.equals(row.key) &
+                    p.updatedAt.equals(row.updatedAt),
               ))
               .write(const ProfilesCompanion(dirty: Value(false)));
         case 'campaign_runs':
@@ -265,7 +262,11 @@ class SyncRepository implements SyncRunner {
     for (final table in pullOrder) {
       final List<Map<String, dynamic>> rows;
       try {
-        rows = await api.fetchSince(table, await db.watermarkFor(table), userId);
+        rows = await api.fetchSince(
+          table,
+          await db.watermarkFor(table),
+          userId,
+        );
       } catch (error) {
         return PullResult(succeeded: false, mergedRows: merged, error: error);
       }
@@ -306,10 +307,10 @@ class SyncRepository implements SyncRunner {
   Future<void> _merge(String table, Map<String, dynamic> row) async {
     switch (table) {
       case 'profiles':
-        final local = await (db.select(db.profiles)..where(
-              (p) => p.userId.equals(row['user_id'] as String),
-            ))
-            .getSingleOrNull();
+        final local =
+            await (db.select(db.profiles)
+                  ..where((p) => p.userId.equals(row['user_id'] as String)))
+                .getSingleOrNull();
         if (!_remoteWins(
           local?.dirty,
           local?.updatedAt,
@@ -330,10 +331,9 @@ class SyncRepository implements SyncRunner {
             );
 
       case 'campaign_runs':
-        final local = await (db.select(db.campaignRuns)..where(
-              (r) => r.id.equals(row['id'] as String),
-            ))
-            .getSingleOrNull();
+        final local = await (db.select(
+          db.campaignRuns,
+        )..where((r) => r.id.equals(row['id'] as String))).getSingleOrNull();
         if (!_remoteWins(
           local?.dirty,
           local?.updatedAt,
@@ -380,10 +380,9 @@ class SyncRepository implements SyncRunner {
         // Adopt the server's id so both devices converge on one row rather
         // than each keeping its own uuid forever.
         if (local != null && local.id != row['id']) {
-          await (db.delete(db.dayLogs)..where(
-                (l) => l.id.equals(local.id),
-              ))
-              .go();
+          await (db.delete(
+            db.dayLogs,
+          )..where((l) => l.id.equals(local.id))).go();
         }
         await db
             .into(db.dayLogs)
@@ -403,10 +402,9 @@ class SyncRepository implements SyncRunner {
             );
 
       case 'diagnostic_results':
-        final local = await (db.select(db.diagnosticResults)..where(
-              (d) => d.id.equals(row['id'] as String),
-            ))
-            .getSingleOrNull();
+        final local = await (db.select(
+          db.diagnosticResults,
+        )..where((d) => d.id.equals(row['id'] as String))).getSingleOrNull();
         // Append-only: a diagnostic that has been taken never changes.
         if (local != null) return;
         await db
@@ -475,16 +473,15 @@ class SyncRepository implements SyncRunner {
     }
 
     // The loser stays dirty so the abandonment reaches the server.
-    await (db.update(db.campaignRuns)..where(
-          (r) => r.id.equals(result.abandon.id),
-        ))
-        .write(
-          CampaignRunsCompanion(
-            status: const Value('abandoned'),
-            updatedAt: Value(clock.nowUtc()),
-            dirty: const Value(true),
-          ),
-        );
+    await (db.update(
+      db.campaignRuns,
+    )..where((r) => r.id.equals(result.abandon.id))).write(
+      CampaignRunsCompanion(
+        status: const Value('abandoned'),
+        updatedAt: Value(clock.nowUtc()),
+        dirty: const Value(true),
+      ),
+    );
 
     _notices.add(
       SyncNotice(

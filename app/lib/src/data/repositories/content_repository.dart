@@ -181,7 +181,10 @@ class ContentRepository {
 
   Future<void> pull() async {
     for (final table in _tables) {
-      final rows = await api.fetchSince(table.name, await _watermark(table.name));
+      final rows = await api.fetchSince(
+        table.name,
+        await _watermark(table.name),
+      );
       if (rows.isEmpty) continue;
 
       await db.transaction(() async {
