@@ -14,6 +14,25 @@ class PushResult {
   final Object? error;
 }
 
+class PullResult {
+  const PullResult({required this.succeeded, this.mergedRows = 0, this.error});
+
+  final bool succeeded;
+  final int mergedRows;
+  final Object? error;
+}
+
+/// One round trip: what the push did, then what the pull did.
+class SyncOutcome {
+  const SyncOutcome({required this.push, required this.pull});
+
+  final PushResult push;
+  final PullResult pull;
+
+  bool get succeeded => push.succeeded && pull.succeeded;
+  Object? get error => push.error ?? pull.error;
+}
+
 /// One row read for pushing, remembered with the `updated_at` it was read at.
 class DirtyRow {
   const DirtyRow({
@@ -46,6 +65,23 @@ class SyncRepository {
     'day_logs',
     'diagnostic_results',
   ];
+
+  /// Pull order mirrors push order for the same foreign-key reason.
+  static const pullOrder = [
+    'profiles',
+    'campaign_runs',
+    'day_logs',
+    'diagnostic_results',
+  ];
+
+  Future<SyncOutcome> sync(String userId) async {
+    // Push first, always. Pulling first would merge a server row over a local
+    // change that has not been sent yet, and then send the merged result —
+    // quietly replacing the user's own write with an older one.
+    final pushResult = await push(userId);
+    final pullResult = await pull(userId);
+    return SyncOutcome(push: pushResult, pull: pullResult);
+  }
 
   Future<PushResult> push(String userId) async {
     var pushed = 0;
@@ -191,5 +227,186 @@ class SyncRepository {
               .write(const DiagnosticResultsCompanion(dirty: Value(false)));
       }
     }
+  }
+
+  Future<PullResult> pull(String userId) async {
+    var merged = 0;
+    for (final table in pullOrder) {
+      final List<Map<String, dynamic>> rows;
+      try {
+        rows = await api.fetchSince(table, await db.watermarkFor(table), userId);
+      } catch (error) {
+        return PullResult(succeeded: false, mergedRows: merged, error: error);
+      }
+      if (rows.isEmpty) continue;
+
+      for (final row in rows) {
+        await _merge(table, row);
+        merged++;
+      }
+      // Only after every row is committed. An interrupted pull is retried,
+      // never skipped: the watermark is the newest row written, not the newest
+      // row seen.
+      await _advanceWatermark(table, rows);
+    }
+    return PullResult(succeeded: true, mergedRows: merged);
+  }
+
+  Future<void> _advanceWatermark(
+    String table,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    var high =
+        await db.watermarkFor(table) ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    for (final row in rows) {
+      final updated = _remoteUpdatedAt(row);
+      if (updated.isAfter(high)) high = updated;
+    }
+    await db.setWatermark(table, high);
+  }
+
+  DateTime _remoteUpdatedAt(Map<String, dynamic> row) =>
+      DateTime.parse(row['updated_at'] as String).toUtc();
+
+  DateTime? _optional(Object? value) =>
+      value == null ? null : DateTime.parse(value as String).toUtc();
+
+  Future<void> _merge(String table, Map<String, dynamic> row) async {
+    switch (table) {
+      case 'profiles':
+        final local = await (db.select(db.profiles)..where(
+              (p) => p.userId.equals(row['user_id'] as String),
+            ))
+            .getSingleOrNull();
+        if (!_remoteWins(
+          local?.dirty,
+          local?.updatedAt,
+          _remoteUpdatedAt(row),
+        )) {
+          return;
+        }
+        await db
+            .into(db.profiles)
+            .insertOnConflictUpdate(
+              ProfileRow(
+                userId: row['user_id'] as String,
+                displayName: row['display_name'] as String?,
+                onboardedAt: _optional(row['onboarded_at']),
+                updatedAt: _remoteUpdatedAt(row),
+                dirty: false,
+              ),
+            );
+
+      case 'campaign_runs':
+        final local = await (db.select(db.campaignRuns)..where(
+              (r) => r.id.equals(row['id'] as String),
+            ))
+            .getSingleOrNull();
+        if (!_remoteWins(
+          local?.dirty,
+          local?.updatedAt,
+          _remoteUpdatedAt(row),
+        )) {
+          return;
+        }
+        await db
+            .into(db.campaignRuns)
+            .insertOnConflictUpdate(
+              CampaignRunRow(
+                id: row['id'] as String,
+                userId: row['user_id'] as String,
+                campaignId: row['campaign_id'] as String,
+                status: row['status'] as String,
+                isHardened: (row['is_hardened'] as bool?) ?? false,
+                startedAt: DateTime.parse(row['started_at'] as String).toUtc(),
+                completedAt: _optional(row['completed_at']),
+                grade: row['grade'] as String?,
+                updatedAt: _remoteUpdatedAt(row),
+                dirty: false,
+              ),
+            );
+
+      case 'day_logs':
+        // (run_id, day_index) is the identity, NOT id. Two offline devices
+        // generate different uuids for the same day; keying on id would insert
+        // a second row for that day and violate the local unique index.
+        final runId = row['run_id'] as String;
+        final dayIndex = row['day_index'] as int;
+        final local =
+            await (db.select(db.dayLogs)..where(
+                  (l) => l.runId.equals(runId) & l.dayIndex.equals(dayIndex),
+                ))
+                .getSingleOrNull();
+        if (!_remoteWins(
+          local?.dirty,
+          local?.updatedAt,
+          _remoteUpdatedAt(row),
+        )) {
+          return;
+        }
+
+        // Adopt the server's id so both devices converge on one row rather
+        // than each keeping its own uuid forever.
+        if (local != null && local.id != row['id']) {
+          await (db.delete(db.dayLogs)..where(
+                (l) => l.id.equals(local.id),
+              ))
+              .go();
+        }
+        await db
+            .into(db.dayLogs)
+            .insertOnConflictUpdate(
+              DayLogRow(
+                id: row['id'] as String,
+                userId: row['user_id'] as String,
+                runId: runId,
+                dayIndex: dayIndex,
+                actionId: row['action_id'] as String,
+                committedAt: _optional(row['committed_at']),
+                outcome: row['outcome'] as String?,
+                note: row['note'] as String?,
+                updatedAt: _remoteUpdatedAt(row),
+                dirty: false,
+              ),
+            );
+
+      case 'diagnostic_results':
+        final local = await (db.select(db.diagnosticResults)..where(
+              (d) => d.id.equals(row['id'] as String),
+            ))
+            .getSingleOrNull();
+        // Append-only: a diagnostic that has been taken never changes.
+        if (local != null) return;
+        await db
+            .into(db.diagnosticResults)
+            .insertOnConflictUpdate(
+              DiagnosticResultRow(
+                id: row['id'] as String,
+                userId: row['user_id'] as String,
+                takenAt: DateTime.parse(row['taken_at'] as String).toUtc(),
+                scores: row['scores'] as String,
+                weakestArchetypeId: row['weakest_archetype_id'] as String,
+                recommendedCampaignId: row['recommended_campaign_id'] as String,
+                updatedAt: _remoteUpdatedAt(row),
+                dirty: false,
+              ),
+            );
+    }
+  }
+
+  /// The whole conflict policy, in one place.
+  ///
+  /// A dirty local row always wins: it is a write the user already saw succeed
+  /// and the server has not acknowledged. Otherwise the newer `updated_at`
+  /// wins, which is what makes two devices converge.
+  bool _remoteWins(
+    bool? localDirty,
+    DateTime? localUpdatedAt,
+    DateTime remoteUpdatedAt,
+  ) {
+    if (localUpdatedAt == null) return true; // never seen on this device
+    if (localDirty == true) return false;
+    return remoteUpdatedAt.isAfter(localUpdatedAt);
   }
 }
