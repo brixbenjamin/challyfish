@@ -27,6 +27,12 @@ jobs:
           channel: stable
       - run: supabase start
       - run: supabase test db
+      # NOTE: integration_test needs a device target. A headless Linux runner
+      # has none, so these steps do not currently execute anywhere — verified
+      # locally on an iOS simulator instead (plan 4 Task 16). Giving CI a target
+      # means enabling a desktop platform or booting an Android emulator, which
+      # is a decision beyond plan 4's scope; leaving the steps here, honest and
+      # named, beats deleting the only record that they exist.
       - name: Two-device integration test
         run: |
           supabase db reset
@@ -35,6 +41,15 @@ jobs:
           flutter test integration_test/two_device_test.dart \
             --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
             --dart-define=SUPABASE_ANON_KEY="$(supabase status -o json | jq -r .ANON_KEY)"
+
+      - name: Money path integration test
+        run: |
+          supabase db reset
+          cd app
+          flutter test integration_test/money_path_test.dart \
+            --dart-define=SUPABASE_URL=http://127.0.0.1:54321 \
+            --dart-define=SUPABASE_ANON_KEY="$(supabase status -o json | jq -r .ANON_KEY)" \
+            --dart-define=SUPABASE_SERVICE_ROLE_KEY="$(supabase status -o json | jq -r .SERVICE_ROLE_KEY)"
 
   functions:
     runs-on: ubuntu-latest
