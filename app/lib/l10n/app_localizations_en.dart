@@ -290,5 +290,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueWithEmail => 'Continue with email';
 
   @override
+  String get signInTitle => 'Sign in';
+
+  @override
+  String get replaceHeadline => 'This phone has its own record';
+
+  @override
+  String get replaceSummaryUntitled =>
+      'There is progress recorded on this phone.';
+
+  @override
+  String replaceSummary(String title, int reported, int total) {
+    return '\"$title\" — $reported of $total days reported.';
+  }
+
+  @override
+  String replaceWarning(String account) {
+    return 'Signing in as $account replaces it with the record from that account. What is on this phone cannot be recovered afterwards.';
+  }
+
+  @override
+  String get keepThisRecordButton => 'Keep this record';
+
+  @override
+  String get replaceWithAccountButton => 'Replace with my account';
+
+  @override
   String get understoodButton => 'Understood';
 }

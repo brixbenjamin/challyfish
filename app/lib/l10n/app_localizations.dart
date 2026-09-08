@@ -556,6 +556,48 @@ abstract class AppLocalizations {
   /// **'Continue with email'**
   String get continueWithEmail;
 
+  /// App bar title of the replace-confirmation screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signInTitle;
+
+  /// [niche] LOAD-BEARING. Heading of the replace confirmation — the only screen standing between linking and signing in (ADR-0014). Must name what is on THIS phone.
+  ///
+  /// In en, this message translates to:
+  /// **'This phone has its own record'**
+  String get replaceHeadline;
+
+  /// [niche] Fallback when the local run has no campaign title.
+  ///
+  /// In en, this message translates to:
+  /// **'There is progress recorded on this phone.'**
+  String get replaceSummaryUntitled;
+
+  /// [niche] Names concretely what signing in would replace.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" — {reported} of {total} days reported.'**
+  String replaceSummary(String title, int reported, int total);
+
+  /// [niche] LOAD-BEARING. Every word matters: it must say plainly that this does not come back. Reword only with that in view.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in as {account} replaces it with the record from that account. What is on this phone cannot be recovered afterwards.'**
+  String replaceWarning(String account);
+
+  /// [niche] Cancels the replace. Cancel is the default in all three destructive flows.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this record'**
+  String get keepThisRecordButton;
+
+  /// [niche] Confirms the destructive replace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace with my account'**
+  String get replaceWithAccountButton;
+
   /// Acknowledges the privacy notice.
   ///
   /// In en, this message translates to:

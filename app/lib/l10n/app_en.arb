@@ -389,6 +389,47 @@
     "description": "Starts the six-digit code flow."
   },
 
+  "signInTitle": "Sign in",
+  "@signInTitle": {
+    "description": "App bar title of the replace-confirmation screen."
+  },
+
+  "replaceHeadline": "This phone has its own record",
+  "@replaceHeadline": {
+    "description": "[niche] LOAD-BEARING. Heading of the replace confirmation — the only screen standing between linking and signing in (ADR-0014). Must name what is on THIS phone."
+  },
+
+  "replaceSummaryUntitled": "There is progress recorded on this phone.",
+  "@replaceSummaryUntitled": {
+    "description": "[niche] Fallback when the local run has no campaign title."
+  },
+
+  "replaceSummary": "\"{title}\" — {reported} of {total} days reported.",
+  "@replaceSummary": {
+    "description": "[niche] Names concretely what signing in would replace.",
+    "placeholders": {
+      "title": { "type": "String" },
+      "reported": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+
+  "replaceWarning": "Signing in as {account} replaces it with the record from that account. What is on this phone cannot be recovered afterwards.",
+  "@replaceWarning": {
+    "description": "[niche] LOAD-BEARING. Every word matters: it must say plainly that this does not come back. Reword only with that in view.",
+    "placeholders": { "account": { "type": "String" } }
+  },
+
+  "keepThisRecordButton": "Keep this record",
+  "@keepThisRecordButton": {
+    "description": "[niche] Cancels the replace. Cancel is the default in all three destructive flows."
+  },
+
+  "replaceWithAccountButton": "Replace with my account",
+  "@replaceWithAccountButton": {
+    "description": "[niche] Confirms the destructive replace."
+  },
+
   "understoodButton": "Understood",
   "@understoodButton": {
     "description": "Acknowledges the privacy notice."
