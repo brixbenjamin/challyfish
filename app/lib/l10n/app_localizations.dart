@@ -448,6 +448,24 @@ abstract class AppLocalizations {
   /// **'That account lives on this phone only. If you lose the phone before attaching an identity, the record is gone and nothing can bring it back. You can attach one any time in settings.'**
   String get privacyNoticeLoss;
 
+  /// Dismisses the non-modal sync notice.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get dismissNoticeButton;
+
+  /// [niche] Quiet offline indicator on the dashboard. States a fact about the record, never a warning (US28).
+  ///
+  /// In en, this message translates to:
+  /// **'Offline. Your days are being recorded here.'**
+  String get syncOfflineNotice;
+
+  /// Shown only after repeated failures. The first clause is the important one: nothing is lost.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress is saved on this phone but has not reached the server yet. It will keep trying.'**
+  String get syncFailingNotice;
+
   /// Acknowledges the privacy notice.
   ///
   /// In en, this message translates to:

@@ -231,5 +231,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'That account lives on this phone only. If you lose the phone before attaching an identity, the record is gone and nothing can bring it back. You can attach one any time in settings.';
 
   @override
+  String get dismissNoticeButton => 'OK';
+
+  @override
+  String get syncOfflineNotice => 'Offline. Your days are being recorded here.';
+
+  @override
+  String get syncFailingNotice =>
+      'Your progress is saved on this phone but has not reached the server yet. It will keep trying.';
+
+  @override
   String get understoodButton => 'Understood';
 }

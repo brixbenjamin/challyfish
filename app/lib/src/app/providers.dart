@@ -7,11 +7,14 @@ import 'package:timezone/timezone.dart' as tz;
 import '../core/clock.dart';
 import '../data/local/database.dart';
 import '../data/remote/content_api.dart';
+import '../data/remote/progress_api.dart';
 import '../data/remote/seed_snapshot.dart';
 import '../data/repositories/content_repository.dart';
 import '../data/repositories/diagnostic_repository.dart';
 import '../data/repositories/progress_repository.dart';
+import '../data/repositories/sync_repository.dart';
 import '../notifications/reminder_scheduler.dart';
+import '../sync/sync_scheduler.dart';
 
 final databaseProvider = Provider<FeralDatabase>((ref) {
   final db = FeralDatabase(driftDatabase(name: 'feral'));
@@ -61,4 +64,30 @@ final seedSnapshotLoaderProvider = Provider<SeedSnapshotLoader>((ref) {
 
 final reminderSchedulerProvider = Provider<ReminderScheduler>((ref) {
   return LocalReminderScheduler(FlutterLocalNotificationsPlugin());
+});
+
+final progressApiProvider = Provider<ProgressApi>(
+  (ref) => SupabaseProgressApi(Supabase.instance.client),
+);
+
+final syncRepositoryProvider = Provider<SyncRepository>((ref) {
+  return SyncRepository(
+    db: ref.watch(databaseProvider),
+    api: ref.watch(progressApiProvider),
+    clock: ref.watch(clockProvider),
+  );
+});
+
+final connectivityGateProvider = Provider<ConnectivityGate>(
+  (ref) => ConnectivityPlusGate(),
+);
+
+final syncSchedulerProvider = Provider<SyncScheduler>((ref) {
+  final scheduler = SyncScheduler(
+    runner: ref.watch(syncRepositoryProvider),
+    gate: ref.watch(connectivityGateProvider),
+    clock: ref.watch(clockProvider),
+  );
+  ref.onDispose(scheduler.dispose);
+  return scheduler;
 });

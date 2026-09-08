@@ -21,6 +21,7 @@ class DashboardScreen extends StatelessWidget {
     required this.onReport,
     required this.onOpenDoctrine,
     required this.onOpenSettings,
+    this.banner,
     super.key,
   });
 
@@ -30,6 +31,11 @@ class DashboardScreen extends StatelessWidget {
   final void Function(Outcome outcome, String? note) onReport;
   final VoidCallback onOpenDoctrine;
   final VoidCallback onOpenSettings;
+
+  /// Chrome above today's action — the sync banner, when there is anything to
+  /// say. Passed in rather than watched here: this screen holds no rules and
+  /// reads no providers.
+  final Widget? banner;
 
   Future<void> _report(BuildContext context, Outcome outcome) async {
     final result = await showModalBottomSheet<(Outcome, String?)>(
@@ -61,66 +67,75 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
+      body: Column(
         children: [
-          Text(l10n.dayOfLength(state.currentDay, state.lengthDays)),
-          const SizedBox(height: 4),
-          // Stated plainly, never as a warning and never as a countdown.
-          Text(l10n.missesUsed(state.missCount, state.missAllowance)),
-          const SizedBox(height: 32),
+          // Above the scroll view, so it never covers today's action and never
+          // scrolls a message out from under the user mid-read.
+          ?banner,
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                Text(l10n.dayOfLength(state.currentDay, state.lengthDays)),
+                const SizedBox(height: 4),
+                // Stated plainly, never as a warning and never as a countdown.
+                Text(l10n.missesUsed(state.missCount, state.missAllowance)),
+                const SizedBox(height: 32),
 
-          // Today's action comes first. Anything competing with it for the top
-          // of the screen is wrong.
-          if (action == null)
-            Text(l10n.contentUnavailable)
-          else ...[
-            Text(
-              action.title,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 12),
-            Text(action.bodyMd),
-            const SizedBox(height: 24),
-            if (state.isReportedToday)
-              Text(
-                l10n.reportedOutcome(
-                  outcomeLabel(l10n, state.todayLog!.outcome!),
-                ),
-              )
-            else ...[
-              if (!state.isCommittedToday)
-                FilledButton(
-                  onPressed: onCommit,
-                  child: Text(l10n.commitButton),
-                ),
-              const SizedBox(height: 16),
-              // Every outcome is offered the same way, at the same size. If
-              // skipping feels like a confession, users stop reporting instead
-              // of skipping and the honest record dies (R6).
-              Row(
-                children: [
-                  for (final outcome in const [
-                    Outcome.done,
-                    Outcome.partial,
-                    Outcome.skipped,
-                  ])
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: OutlinedButton(
-                          onPressed: () => _report(context, outcome),
-                          child: Text(outcomeLabel(l10n, outcome)),
-                        ),
+                // Today's action comes first. Anything competing with it for the top
+                // of the screen is wrong.
+                if (action == null)
+                  Text(l10n.contentUnavailable)
+                else ...[
+                  Text(
+                    action.title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(action.bodyMd),
+                  const SizedBox(height: 24),
+                  if (state.isReportedToday)
+                    Text(
+                      l10n.reportedOutcome(
+                        outcomeLabel(l10n, state.todayLog!.outcome!),
                       ),
+                    )
+                  else ...[
+                    if (!state.isCommittedToday)
+                      FilledButton(
+                        onPressed: onCommit,
+                        child: Text(l10n.commitButton),
+                      ),
+                    const SizedBox(height: 16),
+                    // Every outcome is offered the same way, at the same size. If
+                    // skipping feels like a confession, users stop reporting instead
+                    // of skipping and the honest record dies (R6).
+                    Row(
+                      children: [
+                        for (final outcome in const [
+                          Outcome.done,
+                          Outcome.partial,
+                          Outcome.skipped,
+                        ])
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: OutlinedButton(
+                                onPressed: () => _report(context, outcome),
+                                child: Text(outcomeLabel(l10n, outcome)),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
+                  ],
                 ],
-              ),
-            ],
-          ],
 
-          const SizedBox(height: 48),
-          ArchetypeRadar(state: balance),
+                const SizedBox(height: 48),
+                ArchetypeRadar(state: balance),
+              ],
+            ),
+          ),
         ],
       ),
     );

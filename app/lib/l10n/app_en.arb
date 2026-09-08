@@ -298,6 +298,21 @@
     "description": "States the accepted cost of anonymous-first auth plainly (ADR-0013)."
   },
 
+  "dismissNoticeButton": "OK",
+  "@dismissNoticeButton": {
+    "description": "Dismisses the non-modal sync notice."
+  },
+
+  "syncOfflineNotice": "Offline. Your days are being recorded here.",
+  "@syncOfflineNotice": {
+    "description": "[niche] Quiet offline indicator on the dashboard. States a fact about the record, never a warning (US28)."
+  },
+
+  "syncFailingNotice": "Your progress is saved on this phone but has not reached the server yet. It will keep trying.",
+  "@syncFailingNotice": {
+    "description": "Shown only after repeated failures. The first clause is the important one: nothing is lost."
+  },
+
   "understoodButton": "Understood",
   "@understoodButton": {
     "description": "Acknowledges the privacy notice."

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/balance_state.dart';
 import '../app/providers.dart';
 import '../app/run_state.dart';
+import '../app/sync_state.dart';
 import '../data/repositories/diagnostic_repository.dart';
 import '../domain/archetype.dart';
 import '../domain/campaign.dart';
@@ -11,6 +12,7 @@ import '../domain/diagnostic.dart';
 import '../domain/doctrine.dart';
 import '../domain/grade.dart';
 import '../domain/outcome.dart';
+import '../domain/sync_status.dart';
 import 'browse/campaign_detail_screen.dart';
 import 'browse/pack_list_screen.dart';
 import 'completion/completion_screen.dart';
@@ -22,6 +24,7 @@ import 'onboarding/diagnostic_screen.dart';
 import 'onboarding/doctrine_intro_screen.dart';
 import 'onboarding/privacy_notice_screen.dart';
 import 'settings/settings_screen.dart';
+import 'sync/sync_banner.dart';
 
 /// Where the app is. Onboarding runs once; after that the user is either in a
 /// run, looking at a finished one, or browsing for the next.
@@ -448,6 +451,11 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     return DashboardScreen(
       state: run,
       balance: balance,
+      banner: SyncBanner(
+        status: ref.watch(syncStatusProvider).value ?? SyncStatus.idle,
+        notices: ref.watch(syncNoticeProvider),
+        onDismissNotice: ref.read(syncNoticeProvider.notifier).dismiss,
+      ),
       onOpenDoctrine: _openDoctrine,
       onOpenSettings: _openSettings,
       onCommit: () async {
