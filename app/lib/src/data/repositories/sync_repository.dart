@@ -7,6 +7,7 @@ import '../../domain/run.dart';
 import '../../domain/sync_status.dart';
 import '../../engine/run_reconciler.dart';
 import '../local/database.dart';
+import '../../sync/sync_scheduler.dart';
 import '../remote/progress_api.dart';
 
 /// What one push attempt did. [error] is carried rather than thrown so the
@@ -51,7 +52,7 @@ class DirtyRow {
   final Map<String, dynamic> payload;
 }
 
-class SyncRepository {
+class SyncRepository implements SyncRunner {
   // Fields are public, as in ContentRepository, so the constructor can use
   // initializing formals for its named parameters.
   SyncRepository({required this.db, required this.api, required this.clock});
@@ -85,6 +86,7 @@ class SyncRepository {
 
   /// Returns the queued notices and empties the queue, so a reconciliation is
   /// reported once rather than on every subsequent sync.
+  @override
   List<SyncNotice> consumeNotices() {
     final out = List<SyncNotice>.unmodifiable(_notices);
     _notices.clear();
@@ -96,6 +98,7 @@ class SyncRepository {
   /// outcome of two devices starting a run offline — not an error.
   static const _uniqueViolation = '23505';
 
+  @override
   Future<SyncOutcome> sync(String userId) async {
     // Push first, always. Pulling first would merge a server row over a local
     // change that has not been sent yet, and then send the merged result —
