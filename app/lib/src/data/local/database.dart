@@ -26,6 +26,7 @@ part 'database.g.dart';
     CampaignRuns,
     DayLogs,
     DiagnosticResults,
+    Entitlements,
     // sync
     SyncState,
   ],
@@ -34,7 +35,7 @@ class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -57,6 +58,11 @@ class FeralDatabase extends _$FeralDatabase {
         // is no column to add here.
         await m.createTable(profiles);
         await m.createTable(syncState);
+      }
+      if (from < 4) {
+        // Additive, like every migration before it. Nothing existing moves,
+        // so an upgrade cannot lose a day log.
+        await m.createTable(entitlements);
       }
     },
   );

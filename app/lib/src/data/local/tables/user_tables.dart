@@ -85,3 +85,24 @@ class Profiles extends Table {
   @override
   Set<Column<Object>> get primaryKey => {userId};
 }
+
+/// A local copy of `public.entitlements`, which the client may read and never
+/// write (ADR-0017). Pulled read-only; there is deliberately no `dirty` column,
+/// because nothing here is ever pushed.
+@DataClassName('EntitlementRow')
+class Entitlements extends Table {
+  TextColumn get userId => text()();
+  TextColumn get packId => text()();
+  TextColumn get source => text()();
+  DateTimeColumn get acquiredAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  /// True for an optimistic row written the moment a purchase completed, before
+  /// the webhook's row has been pulled. It unlocks the pack exactly as a server
+  /// row does; the flag exists so a wipe can tell them apart and so nothing
+  /// mistakes it for the server agreeing.
+  BoolColumn get local => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {userId, packId};
+}

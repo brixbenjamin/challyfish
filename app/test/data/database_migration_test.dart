@@ -17,8 +17,8 @@ void main() {
   setUp(() => db = FeralDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  test('schemaVersion is 3', () {
-    expect(db.schemaVersion, 3);
+  test('schemaVersion is 4', () {
+    expect(db.schemaVersion, 4);
   });
 
   test('the new content tables exist and are empty', () async {
@@ -76,7 +76,7 @@ void main() {
     addTearDown(() => dir.delete(recursive: true));
     final file = File('${dir.path}/feral.sqlite');
 
-    await _writeV1Database(file);
+    await _writeLegacyDatabase(file, tables: _v1Tables, version: 1);
 
     final migrated = FeralDatabase(NativeDatabase(file));
     addTearDown(migrated.close);
@@ -88,9 +88,39 @@ void main() {
     expect(await migrated.select(migrated.doctrineGroups).get(), isEmpty);
     expect(await migrated.select(migrated.diagnosticQuestions).get(), isEmpty);
   });
+
+  test('a v3 database migrates to v4 without losing progress', () async {
+    // The migration that adds entitlements claims to be additive. A day log
+    // written before the upgrade is the thing that claim is about, so it is
+    // the thing the test holds on to.
+    final dir = await Directory.systemTemp.createTemp('feral-migration-v3');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/feral.sqlite');
+
+    await _writeLegacyDatabase(file, tables: _v3Tables, version: 3);
+
+    final migrated = FeralDatabase(NativeDatabase(file));
+    addTearDown(migrated.close);
+
+    expect(
+      await migrated.select(migrated.campaignRuns).get(),
+      hasLength(1),
+      reason: 'the run survived the migration',
+    );
+    expect(
+      await migrated.select(migrated.dayLogs).get(),
+      hasLength(1),
+      reason: 'the day log survived the migration',
+    );
+    expect(
+      await migrated.select(migrated.entitlements).get(),
+      isEmpty,
+      reason: 'the new table exists and starts empty',
+    );
+  });
 }
 
-/// The tables that existed at schema v1, before this plan.
+/// The tables that existed at schema v1, before plan 2.
 const _v1Tables = {
   'archetypes',
   'packs',
@@ -100,13 +130,30 @@ const _v1Tables = {
   'day_logs',
 };
 
-/// Writes a genuine v1 file: the v1 tables only, at user_version 1, with a run
-/// and a day log in them.
+/// The tables that existed at schema v3, before plan 4 added entitlements.
+const _v3Tables = {
+  ..._v1Tables,
+  'campaign_archetypes',
+  'doctrine_groups',
+  'doctrine_entries',
+  'diagnostic_questions',
+  'diagnostic_options',
+  'diagnostic_results',
+  'profiles',
+  'sync_state',
+};
+
+/// Writes a genuine file at an earlier schema version: [tables] only, at
+/// `user_version` [version], with a run and a day log in them.
 ///
 /// The DDL is taken from drift's own schema rather than hand-copied, so the
 /// probe cannot quietly drift out of step with the tables it is imitating.
-Future<void> _writeV1Database(File file) async {
-  final ddl = await _v1SchemaStatements();
+Future<void> _writeLegacyDatabase(
+  File file, {
+  required Set<String> tables,
+  required int version,
+}) async {
+  final ddl = await _schemaStatementsFor(tables);
 
   final raw = sqlite3.open(file.path);
   try {
@@ -124,15 +171,15 @@ Future<void> _writeV1Database(File file) async {
       '(id, user_id, run_id, day_index, action_id, updated_at, dirty) '
       "VALUES ('legacy-log', 'user-1', 'legacy-run', 1, 'action-1', $at, 1)",
     );
-    raw.execute('PRAGMA user_version = 1');
+    raw.execute('PRAGMA user_version = $version');
   } finally {
     raw.close();
   }
 }
 
-/// Reads the create statements drift emits, keeping only the v1 tables and the
+/// Reads the create statements drift emits, keeping only [tables] and the
 /// indexes that belong to them.
-Future<List<String>> _v1SchemaStatements() async {
+Future<List<String>> _schemaStatementsFor(Set<String> tables) async {
   final probe = FeralDatabase(NativeDatabase.memory());
   try {
     final rows = await probe
@@ -142,7 +189,7 @@ Future<List<String>> _v1SchemaStatements() async {
         .get();
     return [
       for (final row in rows)
-        if (_v1Tables.contains(row.read<String>('tbl_name')))
+        if (tables.contains(row.read<String>('tbl_name')))
           row.read<String>('sql'),
     ];
   } finally {

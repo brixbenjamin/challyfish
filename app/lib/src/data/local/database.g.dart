@@ -6294,6 +6294,421 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
   }
 }
 
+class $EntitlementsTable extends Entitlements
+    with TableInfo<$EntitlementsTable, EntitlementRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EntitlementsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _packIdMeta = const VerificationMeta('packId');
+  @override
+  late final GeneratedColumn<String> packId = GeneratedColumn<String>(
+    'pack_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _acquiredAtMeta = const VerificationMeta(
+    'acquiredAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> acquiredAt = GeneratedColumn<DateTime>(
+    'acquired_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localMeta = const VerificationMeta('local');
+  @override
+  late final GeneratedColumn<bool> local = GeneratedColumn<bool>(
+    'local',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("local" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    packId,
+    source,
+    acquiredAt,
+    updatedAt,
+    local,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'entitlements';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<EntitlementRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('pack_id')) {
+      context.handle(
+        _packIdMeta,
+        packId.isAcceptableOrUnknown(data['pack_id']!, _packIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_packIdMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('acquired_at')) {
+      context.handle(
+        _acquiredAtMeta,
+        acquiredAt.isAcceptableOrUnknown(data['acquired_at']!, _acquiredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_acquiredAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('local')) {
+      context.handle(
+        _localMeta,
+        local.isAcceptableOrUnknown(data['local']!, _localMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId, packId};
+  @override
+  EntitlementRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return EntitlementRow(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      packId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pack_id'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      acquiredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}acquired_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      local: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}local'],
+      )!,
+    );
+  }
+
+  @override
+  $EntitlementsTable createAlias(String alias) {
+    return $EntitlementsTable(attachedDatabase, alias);
+  }
+}
+
+class EntitlementRow extends DataClass implements Insertable<EntitlementRow> {
+  final String userId;
+  final String packId;
+  final String source;
+  final DateTime acquiredAt;
+  final DateTime updatedAt;
+
+  /// True for an optimistic row written the moment a purchase completed, before
+  /// the webhook's row has been pulled. It unlocks the pack exactly as a server
+  /// row does; the flag exists so a wipe can tell them apart and so nothing
+  /// mistakes it for the server agreeing.
+  final bool local;
+  const EntitlementRow({
+    required this.userId,
+    required this.packId,
+    required this.source,
+    required this.acquiredAt,
+    required this.updatedAt,
+    required this.local,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    map['pack_id'] = Variable<String>(packId);
+    map['source'] = Variable<String>(source);
+    map['acquired_at'] = Variable<DateTime>(acquiredAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['local'] = Variable<bool>(local);
+    return map;
+  }
+
+  EntitlementsCompanion toCompanion(bool nullToAbsent) {
+    return EntitlementsCompanion(
+      userId: Value(userId),
+      packId: Value(packId),
+      source: Value(source),
+      acquiredAt: Value(acquiredAt),
+      updatedAt: Value(updatedAt),
+      local: Value(local),
+    );
+  }
+
+  factory EntitlementRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EntitlementRow(
+      userId: serializer.fromJson<String>(json['userId']),
+      packId: serializer.fromJson<String>(json['packId']),
+      source: serializer.fromJson<String>(json['source']),
+      acquiredAt: serializer.fromJson<DateTime>(json['acquiredAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      local: serializer.fromJson<bool>(json['local']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'packId': serializer.toJson<String>(packId),
+      'source': serializer.toJson<String>(source),
+      'acquiredAt': serializer.toJson<DateTime>(acquiredAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'local': serializer.toJson<bool>(local),
+    };
+  }
+
+  EntitlementRow copyWith({
+    String? userId,
+    String? packId,
+    String? source,
+    DateTime? acquiredAt,
+    DateTime? updatedAt,
+    bool? local,
+  }) => EntitlementRow(
+    userId: userId ?? this.userId,
+    packId: packId ?? this.packId,
+    source: source ?? this.source,
+    acquiredAt: acquiredAt ?? this.acquiredAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    local: local ?? this.local,
+  );
+  EntitlementRow copyWithCompanion(EntitlementsCompanion data) {
+    return EntitlementRow(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      packId: data.packId.present ? data.packId.value : this.packId,
+      source: data.source.present ? data.source.value : this.source,
+      acquiredAt: data.acquiredAt.present
+          ? data.acquiredAt.value
+          : this.acquiredAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      local: data.local.present ? data.local.value : this.local,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntitlementRow(')
+          ..write('userId: $userId, ')
+          ..write('packId: $packId, ')
+          ..write('source: $source, ')
+          ..write('acquiredAt: $acquiredAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('local: $local')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(userId, packId, source, acquiredAt, updatedAt, local);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EntitlementRow &&
+          other.userId == this.userId &&
+          other.packId == this.packId &&
+          other.source == this.source &&
+          other.acquiredAt == this.acquiredAt &&
+          other.updatedAt == this.updatedAt &&
+          other.local == this.local);
+}
+
+class EntitlementsCompanion extends UpdateCompanion<EntitlementRow> {
+  final Value<String> userId;
+  final Value<String> packId;
+  final Value<String> source;
+  final Value<DateTime> acquiredAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> local;
+  final Value<int> rowid;
+  const EntitlementsCompanion({
+    this.userId = const Value.absent(),
+    this.packId = const Value.absent(),
+    this.source = const Value.absent(),
+    this.acquiredAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.local = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  EntitlementsCompanion.insert({
+    required String userId,
+    required String packId,
+    required String source,
+    required DateTime acquiredAt,
+    required DateTime updatedAt,
+    this.local = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       packId = Value(packId),
+       source = Value(source),
+       acquiredAt = Value(acquiredAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<EntitlementRow> custom({
+    Expression<String>? userId,
+    Expression<String>? packId,
+    Expression<String>? source,
+    Expression<DateTime>? acquiredAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? local,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (packId != null) 'pack_id': packId,
+      if (source != null) 'source': source,
+      if (acquiredAt != null) 'acquired_at': acquiredAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (local != null) 'local': local,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  EntitlementsCompanion copyWith({
+    Value<String>? userId,
+    Value<String>? packId,
+    Value<String>? source,
+    Value<DateTime>? acquiredAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? local,
+    Value<int>? rowid,
+  }) {
+    return EntitlementsCompanion(
+      userId: userId ?? this.userId,
+      packId: packId ?? this.packId,
+      source: source ?? this.source,
+      acquiredAt: acquiredAt ?? this.acquiredAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      local: local ?? this.local,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (packId.present) {
+      map['pack_id'] = Variable<String>(packId.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (acquiredAt.present) {
+      map['acquired_at'] = Variable<DateTime>(acquiredAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (local.present) {
+      map['local'] = Variable<bool>(local.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EntitlementsCompanion(')
+          ..write('userId: $userId, ')
+          ..write('packId: $packId, ')
+          ..write('source: $source, ')
+          ..write('acquiredAt: $acquiredAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('local: $local, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SyncStateTable extends SyncState
     with TableInfo<$SyncStateTable, SyncStateRow> {
   @override
@@ -6601,6 +7016,7 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
   late final $DayLogsTable dayLogs = $DayLogsTable(this);
   late final $DiagnosticResultsTable diagnosticResults =
       $DiagnosticResultsTable(this);
+  late final $EntitlementsTable entitlements = $EntitlementsTable(this);
   late final $SyncStateTable syncState = $SyncStateTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -6620,6 +7036,7 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     campaignRuns,
     dayLogs,
     diagnosticResults,
+    entitlements,
     syncState,
   ];
 }
@@ -9909,6 +10326,227 @@ typedef $$DiagnosticResultsTableProcessedTableManager =
       DiagnosticResultRow,
       PrefetchHooks Function()
     >;
+typedef $$EntitlementsTableCreateCompanionBuilder =
+    EntitlementsCompanion Function({
+      required String userId,
+      required String packId,
+      required String source,
+      required DateTime acquiredAt,
+      required DateTime updatedAt,
+      Value<bool> local,
+      Value<int> rowid,
+    });
+typedef $$EntitlementsTableUpdateCompanionBuilder =
+    EntitlementsCompanion Function({
+      Value<String> userId,
+      Value<String> packId,
+      Value<String> source,
+      Value<DateTime> acquiredAt,
+      Value<DateTime> updatedAt,
+      Value<bool> local,
+      Value<int> rowid,
+    });
+
+class $$EntitlementsTableFilterComposer
+    extends Composer<_$FeralDatabase, $EntitlementsTable> {
+  $$EntitlementsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get packId => $composableBuilder(
+    column: $table.packId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get local => $composableBuilder(
+    column: $table.local,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$EntitlementsTableOrderingComposer
+    extends Composer<_$FeralDatabase, $EntitlementsTable> {
+  $$EntitlementsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get packId => $composableBuilder(
+    column: $table.packId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get local => $composableBuilder(
+    column: $table.local,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$EntitlementsTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $EntitlementsTable> {
+  $$EntitlementsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get packId =>
+      $composableBuilder(column: $table.packId, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get acquiredAt => $composableBuilder(
+    column: $table.acquiredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get local =>
+      $composableBuilder(column: $table.local, builder: (column) => column);
+}
+
+class $$EntitlementsTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $EntitlementsTable,
+          EntitlementRow,
+          $$EntitlementsTableFilterComposer,
+          $$EntitlementsTableOrderingComposer,
+          $$EntitlementsTableAnnotationComposer,
+          $$EntitlementsTableCreateCompanionBuilder,
+          $$EntitlementsTableUpdateCompanionBuilder,
+          (
+            EntitlementRow,
+            BaseReferences<_$FeralDatabase, $EntitlementsTable, EntitlementRow>,
+          ),
+          EntitlementRow,
+          PrefetchHooks Function()
+        > {
+  $$EntitlementsTableTableManager(_$FeralDatabase db, $EntitlementsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$EntitlementsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$EntitlementsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$EntitlementsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> userId = const Value.absent(),
+                Value<String> packId = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<DateTime> acquiredAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> local = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EntitlementsCompanion(
+                userId: userId,
+                packId: packId,
+                source: source,
+                acquiredAt: acquiredAt,
+                updatedAt: updatedAt,
+                local: local,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String userId,
+                required String packId,
+                required String source,
+                required DateTime acquiredAt,
+                required DateTime updatedAt,
+                Value<bool> local = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => EntitlementsCompanion.insert(
+                userId: userId,
+                packId: packId,
+                source: source,
+                acquiredAt: acquiredAt,
+                updatedAt: updatedAt,
+                local: local,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$EntitlementsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $EntitlementsTable,
+      EntitlementRow,
+      $$EntitlementsTableFilterComposer,
+      $$EntitlementsTableOrderingComposer,
+      $$EntitlementsTableAnnotationComposer,
+      $$EntitlementsTableCreateCompanionBuilder,
+      $$EntitlementsTableUpdateCompanionBuilder,
+      (
+        EntitlementRow,
+        BaseReferences<_$FeralDatabase, $EntitlementsTable, EntitlementRow>,
+      ),
+      EntitlementRow,
+      PrefetchHooks Function()
+    >;
 typedef $$SyncStateTableCreateCompanionBuilder =
     SyncStateCompanion Function({
       required String syncTable,
@@ -10103,6 +10741,8 @@ class $FeralDatabaseManager {
       $$DayLogsTableTableManager(_db, _db.dayLogs);
   $$DiagnosticResultsTableTableManager get diagnosticResults =>
       $$DiagnosticResultsTableTableManager(_db, _db.diagnosticResults);
+  $$EntitlementsTableTableManager get entitlements =>
+      $$EntitlementsTableTableManager(_db, _db.entitlements);
   $$SyncStateTableTableManager get syncState =>
       $$SyncStateTableTableManager(_db, _db.syncState);
 }
