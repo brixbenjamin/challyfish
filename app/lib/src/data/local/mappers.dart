@@ -18,6 +18,7 @@ Campaign toCampaign(CampaignRow row) => Campaign(
   lengthDays: row.lengthDays,
   rampDays: row.rampDays,
   difficulty: row.difficulty,
+  sort: row.sort,
 );
 
 ActionSpec toAction(ActionRow row) => ActionSpec(

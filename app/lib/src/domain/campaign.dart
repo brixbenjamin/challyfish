@@ -10,6 +10,7 @@ class Campaign {
     this.subtitle,
     this.rampDays = 0,
     this.difficulty = 1,
+    this.sort = 0,
   });
 
   final String id;
@@ -21,6 +22,11 @@ class Campaign {
   final int lengthDays;
   final int rampDays;
   final int difficulty;
+
+  /// Authoring order within the pack. Carried on the domain type because the
+  /// recommendation ranks by (difficulty, sort) and must not depend on a
+  /// query's incidental ordering.
+  final int sort;
 }
 
 /// One day's assignment within a campaign. Carries exactly one archetype.
