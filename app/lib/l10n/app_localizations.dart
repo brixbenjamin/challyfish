@@ -628,6 +628,54 @@ abstract class AppLocalizations {
   /// **'Removes every run, day, and note. Immediate.'**
   String get deleteAccountSettingsSubtitle;
 
+  /// Heading of the delete confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes everything'**
+  String get deleteHeadline;
+
+  /// [niche] LOAD-BEARING. Exhaustive scope of the deletion (ADR-0015). If it stops being exhaustive that is a defect, not a copy edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Every run, every day you reported, every note you wrote, and your diagnostic result. It happens immediately and cannot be undone.'**
+  String get deleteScopeNotice;
+
+  /// Must not imply purchases are deleted or refunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases are held by the App Store or Google Play and are not part of this. Deleting your account does not refund a purchase.'**
+  String get deletePurchasesNotice;
+
+  /// Shown only for unlinked accounts.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has no identity attached, so deleting the app from this phone achieves the same thing.'**
+  String get deleteAnonymousNotice;
+
+  /// Cancels the deletion. The default.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep my account'**
+  String get keepMyAccountButton;
+
+  /// Confirms the deletion, after the typed word.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete everything'**
+  String get deleteEverythingButton;
+
+  /// Shown when the delete call fails. The second sentence is the important one — nothing was wiped locally.
+  ///
+  /// In en, this message translates to:
+  /// **'That did not go through. Nothing has been deleted. Check your connection and try again.'**
+  String get deleteFailedNotice;
+
+  /// Instruction above the typed-confirmation field.
+  ///
+  /// In en, this message translates to:
+  /// **'Type {word} to confirm.'**
+  String deleteConfirmInstruction(String word);
+
   /// Acknowledges the privacy notice.
   ///
   /// In en, this message translates to:

@@ -23,6 +23,7 @@ import 'onboarding/diagnostic_result_screen.dart';
 import 'onboarding/diagnostic_screen.dart';
 import 'onboarding/doctrine_intro_screen.dart';
 import 'onboarding/privacy_notice_screen.dart';
+import 'settings/delete_account_screen.dart';
 import 'settings/settings_screen.dart';
 import 'sync/sync_banner.dart';
 
@@ -299,6 +300,34 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     });
   }
 
+  Future<void> _openDeleteAccount() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (routeContext) => DeleteAccountScreen(
+          isLinked: ref.read(identityRepositoryProvider).isLinked,
+          onConfirmDelete: () async {
+            try {
+              await ref.read(accountApiProvider).deleteAccount();
+              return true;
+            } catch (_) {
+              // The screen says nothing was deleted, and nothing was.
+              return false;
+            }
+          },
+          onCancel: () => Navigator.of(routeContext).pop(),
+          onDeleted: () async {
+            await ref.read(identityRepositoryProvider).resetToFreshAnonymous();
+            await ref.read(linkPromptStateProvider).reset();
+            if (!mounted) return;
+            // Land on first-run, never on a broken signed-out screen.
+            Navigator.of(context).popUntil((r) => r.isFirst);
+            await _boot();
+          },
+        ),
+      ),
+    );
+  }
+
   Future<void> _dismissLinkPrompt() async {
     await ref.read(linkPromptStateProvider).markDismissed();
     if (!mounted) return;
@@ -345,8 +374,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
           scheduler: ref.read(reminderSchedulerProvider),
           linkedIdentity: ref.read(identityRepositoryProvider).linkedIdentity,
           onLink: () {},
-          // Deletion is wired in Task 14; purchases are plan 4.
-          onDeleteAccount: () {},
+          onDeleteAccount: _openDeleteAccount,
           onRestorePurchases: () {},
         ),
       ),

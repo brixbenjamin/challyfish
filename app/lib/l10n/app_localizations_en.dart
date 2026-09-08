@@ -332,5 +332,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'Removes every run, day, and note. Immediate.';
 
   @override
+  String get deleteHeadline => 'This removes everything';
+
+  @override
+  String get deleteScopeNotice =>
+      'Every run, every day you reported, every note you wrote, and your diagnostic result. It happens immediately and cannot be undone.';
+
+  @override
+  String get deletePurchasesNotice =>
+      'Purchases are held by the App Store or Google Play and are not part of this. Deleting your account does not refund a purchase.';
+
+  @override
+  String get deleteAnonymousNotice =>
+      'This account has no identity attached, so deleting the app from this phone achieves the same thing.';
+
+  @override
+  String get keepMyAccountButton => 'Keep my account';
+
+  @override
+  String get deleteEverythingButton => 'Delete everything';
+
+  @override
+  String get deleteFailedNotice =>
+      'That did not go through. Nothing has been deleted. Check your connection and try again.';
+
+  @override
+  String deleteConfirmInstruction(String word) {
+    return 'Type $word to confirm.';
+  }
+
+  @override
   String get understoodButton => 'Understood';
 }

@@ -7,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../core/clock.dart';
 import '../data/local/database.dart';
+import '../data/remote/account_api.dart';
 import '../data/remote/auth_gateway.dart';
 import '../data/remote/content_api.dart';
 import '../data/remote/progress_api.dart';
@@ -115,4 +116,8 @@ final sharedPreferencesProvider = Provider<SharedPreferences>(
 
 final linkPromptStateProvider = Provider<LinkPromptState>(
   (ref) => LinkPromptState(ref.watch(sharedPreferencesProvider)),
+);
+
+final accountApiProvider = Provider<AccountApi>(
+  (ref) => SupabaseAccountApi(Supabase.instance.client),
 );
