@@ -377,4 +377,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get understoodButton => 'Understood';
+
+  @override
+  String get closeTooltip => 'Close';
+
+  @override
+  String get packContentsLead => 'Inside';
+
+  @override
+  String get workingButton => 'Working...';
+
+  @override
+  String get alreadyBoughtButton => 'Already bought it';
+
+  @override
+  String get restorePurchasesSubtitle =>
+      'For a new phone, or after reinstalling';
+
+  @override
+  String get oneTimePurchaseNote => 'One-time purchase. Yours after that.';
+
+  @override
+  String get purchasePendingNote =>
+      'The store is still waiting on this purchase. It unlocks by itself once it goes through — you do not need to buy it again.';
+
+  @override
+  String get purchaseErrorFreePack => 'This pack is free.';
+
+  @override
+  String get purchaseErrorUnavailable =>
+      'This pack is not available from the store right now.';
+
+  @override
+  String get purchaseErrorRestoreOwned =>
+      'You already own this. Restoring it did not work — try again.';
+
+  @override
+  String get restoreNothingFound => 'There was nothing to restore.';
+
+  @override
+  String get restoreUnreachable => 'The store could not be reached. Try again.';
 }

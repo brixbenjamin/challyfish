@@ -705,6 +705,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Understood'**
   String get understoodButton;
+
+  /// Tooltip on the unlock sheet's close button.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeTooltip;
+
+  /// Introduces the list of campaigns in a pack.
+  ///
+  /// In en, this message translates to:
+  /// **'Inside'**
+  String get packContentsLead;
+
+  /// Buy button while the store is working. A second tap would be a second charge.
+  ///
+  /// In en, this message translates to:
+  /// **'Working...'**
+  String get workingButton;
+
+  /// Restore, offered in the sheet. 'I already bought this' is a thought people have in front of a buy button, not in settings (US26).
+  ///
+  /// In en, this message translates to:
+  /// **'Already bought it'**
+  String get alreadyBoughtButton;
+
+  /// Settings subtitle for restore purchases.
+  ///
+  /// In en, this message translates to:
+  /// **'For a new phone, or after reinstalling'**
+  String get restorePurchasesSubtitle;
+
+  /// ADR-0008's promise, made where the money is asked for. Note what is absent and must stay absent: no urgency, no discount, no 'most popular'.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time purchase. Yours after that.'**
+  String get oneTimePurchaseNote;
+
+  /// A real purchase awaiting parental or bank approval. Must prevent a second attempt.
+  ///
+  /// In en, this message translates to:
+  /// **'The store is still waiting on this purchase. It unlocks by itself once it goes through — you do not need to buy it again.'**
+  String get purchasePendingNote;
+
+  /// Not reachable from the UI; refused in the controller anyway.
+  ///
+  /// In en, this message translates to:
+  /// **'This pack is free.'**
+  String get purchaseErrorFreePack;
+
+  /// No store product id, or the store does not know it.
+  ///
+  /// In en, this message translates to:
+  /// **'This pack is not available from the store right now.'**
+  String get purchaseErrorUnavailable;
+
+  /// Shown to someone who has paid. Must never read as a refusal of what they own.
+  ///
+  /// In en, this message translates to:
+  /// **'You already own this. Restoring it did not work — try again.'**
+  String get purchaseErrorRestoreOwned;
+
+  /// A restore that succeeded and found no purchases.
+  ///
+  /// In en, this message translates to:
+  /// **'There was nothing to restore.'**
+  String get restoreNothingFound;
+
+  /// A restore that failed to reach the store at all.
+  ///
+  /// In en, this message translates to:
+  /// **'The store could not be reached. Try again.'**
+  String get restoreUnreachable;
 }
 
 class _AppLocalizationsDelegate

@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/balance_state.dart';
 import '../app/link_flow.dart';
 import '../app/providers.dart';
+import '../app/purchase_state.dart';
 import '../app/run_state.dart';
 import '../app/sync_state.dart';
 import '../core/l10n_ext.dart';
 import '../data/repositories/diagnostic_repository.dart';
 import '../domain/archetype.dart';
 import '../domain/campaign.dart';
+import '../domain/pack.dart';
 import '../domain/diagnostic.dart';
 import '../domain/doctrine.dart';
 import '../domain/grade.dart';
@@ -18,6 +20,7 @@ import '../domain/outcome.dart';
 import '../domain/sync_status.dart';
 import 'browse/campaign_detail_screen.dart';
 import 'browse/pack_list_screen.dart';
+import 'purchase/unlock_sheet.dart';
 import 'completion/completion_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'doctrine/doctrine_entry_screen.dart';
@@ -644,9 +647,101 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
             navigator.pop();
             await _startRun(campaign.id);
           },
-          // Purchases are plan 4. Nothing but the core pack exists yet, so a
-          // locked pack cannot in practice be reached.
-          onUnlock: () {},
+          onUnlock: () => _openUnlockSheetFor(campaign),
+        ),
+      ),
+    );
+  }
+
+  /// Opens the unlock sheet for the pack holding [campaign].
+  ///
+  /// Reached only by tapping Unlock. Nothing in this product opens a paywall on
+  /// its own (design principle 5).
+  Future<void> _openUnlockSheetFor(Campaign campaign) async {
+    final content = ref.read(contentRepositoryProvider);
+    final packs = await content.packs();
+    final pack = packs.where((p) => p.id == campaign.packId).firstOrNull;
+    if (pack == null || !mounted) return;
+
+    await _openUnlockSheet(context, pack);
+  }
+
+  Future<void> _openUnlockSheet(BuildContext context, Pack pack) async {
+    final campaigns = await ref
+        .read(contentRepositoryProvider)
+        .campaignsFor(pack.id);
+    final productId = pack.storeProductId;
+
+    // A store that cannot be reached costs the price label, not the sheet.
+    String? price;
+    if (productId != null && productId.isNotEmpty) {
+      try {
+        final products = await ref.read(purchaseGatewayProvider).products([
+          productId,
+        ]);
+        price = products.isEmpty ? null : products.first.priceString;
+      } catch (_) {
+        price = null;
+      }
+    }
+
+    if (!context.mounted) return;
+
+    // Declared as PurchaseUiState, not var: inferred as PurchaseIdle it could
+    // not later hold a PurchaseProblem, and the failure would be a type error
+    // at the least convenient moment — after a purchase.
+    PurchaseUiState state = const PurchaseIdle();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => UnlockSheet(
+          pack: pack,
+          campaigns: campaigns,
+          priceLabel: price,
+          state: state,
+          onBuy: () async {
+            setSheetState(() => state = const PurchaseInProgress());
+            final userId = ref.read(userIdProvider);
+            final result = await ref
+                .read(purchaseControllerProvider)
+                .buy(userId: userId, pack: pack);
+            ref.invalidate(unlockedPackIdsProvider);
+            if (result is PurchaseComplete && sheetContext.mounted) {
+              Navigator.of(sheetContext).pop();
+              await _loadHome();
+              return;
+            }
+            if (sheetContext.mounted) {
+              setSheetState(() => state = result);
+            }
+          },
+          onRestore: () async {
+            setSheetState(() => state = const PurchaseInProgress());
+            final userId = ref.read(userIdProvider);
+            final allPacks = await ref.read(contentRepositoryProvider).packs();
+            final summary = await ref
+                .read(purchaseControllerProvider)
+                .restore(userId: userId, packs: allPacks);
+            ref.invalidate(unlockedPackIdsProvider);
+            if (!sheetContext.mounted) return;
+            if (summary.succeeded && summary.unlockedPacks > 0) {
+              Navigator.of(sheetContext).pop();
+              await _loadHome();
+              return;
+            }
+            setSheetState(
+              () => state = summary.succeeded
+                  ? const PurchaseProblem(
+                      PurchaseProblemReason.nothingToRestore,
+                    )
+                  : const PurchaseProblem(
+                      PurchaseProblemReason.storeUnreachable,
+                    ),
+            );
+          },
+          onClose: () => Navigator.of(sheetContext).pop(),
         ),
       ),
     );

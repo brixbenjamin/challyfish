@@ -1,523 +1,561 @@
 {
   "@@locale": "en",
-
   "commitButton": "Commit",
   "@commitButton": {
     "description": "[niche] Button that acknowledges today's action before doing it. The commit/report verbs are the product's vocabulary."
   },
-
   "campaignsTitle": "Campaigns",
   "@campaignsTitle": {
     "description": "[niche] App bar title of the campaign list."
   },
-
   "contentUnavailable": "Content unavailable. Your run is safe — pull again when you have signal.",
   "@contentUnavailable": {
     "description": "Shown on the dashboard when today's action has not synced. Must reassure, never alarm."
   },
-
   "dayOfLength": "Day {day} of {length}",
   "@dayOfLength": {
     "description": "Progress through the current run, on the dashboard.",
-    "placeholders": { "day": { "type": "int" }, "length": { "type": "int" } }
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "length": {
+        "type": "int"
+      }
+    }
   },
-
   "missesUsed": "{used} of {allowed} misses used",
   "@missesUsed": {
     "description": "Stated plainly on the dashboard. Never a warning and never a countdown (ADR-0010).",
-    "placeholders": { "used": { "type": "int" }, "allowed": { "type": "int" } }
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "allowed": {
+        "type": "int"
+      }
+    }
   },
-
   "reportedOutcome": "Reported: {outcome}",
   "@reportedOutcome": {
     "description": "Shown once today has been reported.",
-    "placeholders": { "outcome": { "type": "String" } }
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
   },
-
   "lengthInDays": "{days} days",
   "@lengthInDays": {
     "description": "A campaign's length, in lists and on detail screens.",
-    "placeholders": { "days": { "type": "int" } }
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
-
   "outcomeDone": "Done",
-  "@outcomeDone": { "description": "Report option." },
+  "@outcomeDone": {
+    "description": "Report option."
+  },
   "outcomePartial": "Partial",
-  "@outcomePartial": { "description": "Report option." },
+  "@outcomePartial": {
+    "description": "Report option."
+  },
   "outcomeSkipped": "Skipped",
   "@outcomeSkipped": {
     "description": "Report option. Must read exactly as easy as Done — if skipping feels like a confession, users stop reporting instead of skipping and the record stops being honest (R6)."
   },
   "outcomeMissed": "Missed",
-  "@outcomeMissed": { "description": "Written by rollover, never chosen by the user." },
-
+  "@outcomeMissed": {
+    "description": "Written by rollover, never chosen by the user."
+  },
   "backButton": "Back",
   "@backButton": {
     "description": "Returns to the previous diagnostic question."
   },
-
   "startButton": "Start",
   "@startButton": {
     "description": "Starts the recommended campaign."
   },
-
   "browseInsteadButton": "Look at the others",
   "@browseInsteadButton": {
     "description": "[niche] Declines the recommendation and opens browse."
   },
-
   "diagnosticWeakestLead": "When you had to choose, you chose this one least:",
   "@diagnosticWeakestLead": {
     "description": "[niche] Introduces the weakest drive. Must read as relative, never as a low score (ADR-0009)."
   },
-
   "diagnosticRecommendationLead": "Start here:",
   "@diagnosticRecommendationLead": {
     "description": "Introduces the recommended campaign."
   },
-
   "questionProgress": "{n} of {total}",
   "@questionProgress": {
     "description": "Position within the eight diagnostic questions.",
-    "placeholders": { "n": { "type": "int" }, "total": { "type": "int" } }
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   },
-
   "doctrineTitle": "Doctrine",
   "@doctrineTitle": {
     "description": "[niche] Name of the reading section."
   },
-
   "doctrineEmpty": "Nothing here yet. Check back after a sync.",
   "@doctrineEmpty": {
     "description": "Empty state for the reading section before first sync."
   },
-
   "lockedBadge": "Locked",
   "@lockedBadge": {
     "description": "Marks a campaign in a pack the user has not bought."
   },
-
   "unlockButton": "Unlock",
   "@unlockButton": {
     "description": "Opens the purchase sheet for a locked pack."
   },
-
   "missesAllowed": "{count, plural, =1{1 miss allowed} other{{count} misses allowed}}",
   "@missesAllowed": {
     "description": "The campaign's miss allowance, stated on its detail screen. It scales with campaign length (ADR-0012) and so differs per campaign, which is why it is stated rather than left to a help article.",
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
-
   "abandonActiveRunWarning": "Starting this will abandon your current run. The days you already logged still count, but the run cannot be resumed.",
   "@abandonActiveRunWarning": {
     "description": "[niche] One of exactly three destructive confirmations. Says effort is not erased, which is the product's position (ADR-0003)."
   },
-
   "abandonAndStartButton": "Abandon and start",
   "@abandonAndStartButton": {
     "description": "[niche] Starts this campaign in place of the active run. Names the cost in the label itself, not only in the warning above it."
   },
-
   "markCount": "{count, plural, =1{1 mark} other{{count} marks}}",
   "@markCount": {
     "description": "[niche] How many marks an archetype has earned, beside its radar label. 'Mark' is the product's vocabulary. Marks never decay, and this count sitting next to the decaying balance is what keeps a falling radar from reading as erasure (ADR-0010).",
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
-
   "recordButton": "Record",
   "@recordButton": {
     "description": "[niche] Submits the day's report. The commit/report verbs are the product's vocabulary."
   },
-
   "notePlaceholder": "One line, if you want",
   "@notePlaceholder": {
     "description": "[niche] Hint on the optional note field. The optionality is the point."
   },
-
   "openDoctrine": "Doctrine",
   "@openDoctrine": {
     "description": "[niche] Tooltip on the dashboard's link to the reading section."
   },
-
   "openSettings": "Settings",
   "@openSettings": {
     "description": "Tooltip on the dashboard's link to settings."
   },
-
   "gradeSovereign": "Sovereign",
   "@gradeSovereign": {
     "description": "[niche] Grade for a run finished with no misses. Stored as `sovereign`; only this word changes."
   },
-
   "gradePassed": "Passed",
   "@gradePassed": {
     "description": "[niche] Grade for a run finished within its miss allowance."
   },
-
   "gradeBroken": "Broken",
   "@gradeBroken": {
     "description": "[niche] Grade for a run finished over its allowance. Never 'failed' — nothing is failed out of (ADR-0003)."
   },
-
   "gradeSummarySovereign": "Every day of {title}. No misses.",
   "@gradeSummarySovereign": {
     "description": "[niche] States the Sovereign result. No congratulation.",
-    "placeholders": { "title": { "type": "String" } }
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
   },
-
   "gradeSummaryPassed": "You finished {title}. {misses} of {allowed} misses used.",
   "@gradeSummaryPassed": {
     "description": "[niche] States the Passed result.",
-    "placeholders": { "title": { "type": "String" }, "misses": { "type": "int" }, "allowed": { "type": "int" } }
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "misses": {
+        "type": "int"
+      },
+      "allowed": {
+        "type": "int"
+      }
+    }
   },
-
   "gradeSummaryBroken": "You finished {title} with {misses} misses. It allowed {allowed}.",
   "@gradeSummaryBroken": {
     "description": "[niche] States the Broken result. No consolation, no retry offer — the honest record is the product.",
-    "placeholders": { "title": { "type": "String" }, "misses": { "type": "int" }, "allowed": { "type": "int" } }
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "misses": {
+        "type": "int"
+      },
+      "allowed": {
+        "type": "int"
+      }
+    }
   },
-
   "marksEarnedLead": "Marks earned:",
   "@marksEarnedLead": {
     "description": "[niche] Introduces the archetype marks a run awarded. 'Mark' is the product's vocabulary."
   },
-
   "noMarkNote": "No mark. The days you did still count.",
   "@noMarkNote": {
     "description": "[niche] Shown when a Broken run earns no mark. The second sentence is load-bearing."
   },
-
   "linkPromptBody": "This record lives on this phone only. Attach an identity and it survives losing it.",
   "@linkPromptBody": {
     "description": "[niche] Shown on the completion screen to a user with no identity attached. Finishing a campaign is the moment they have the most to lose (ADR-0007)."
   },
-
   "linkIdentityButton": "Attach an identity",
   "@linkIdentityButton": {
     "description": "[niche] Opens the link sheet. 'Attach an identity', never 'sign up' — there has been an account since first launch."
   },
-
   "whatNextButton": "What next",
   "@whatNextButton": {
     "description": "[niche] Leaves the completion screen for browse."
   },
-
   "settingsTitle": "Settings",
   "@settingsTitle": {
     "description": "App bar title of settings."
   },
-
   "reminderToggle": "Daily reminder",
   "@reminderToggle": {
     "description": "Label of the single reminder switch (ADR-0011)."
   },
-
   "reminderChangeTime": "Change time",
   "@reminderChangeTime": {
     "description": "Opens the time picker for the reminder."
   },
-
   "reminderOffSubtitle": "One notification a day, at a time you choose.",
   "@reminderOffSubtitle": {
     "description": "Subtitle when the reminder is off. States the whole extent of it."
   },
-
   "reminderOnAt": "One notification a day, at {time}.",
   "@reminderOnAt": {
     "description": "Subtitle when the reminder is on.",
-    "placeholders": { "time": { "type": "String" } }
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
-
   "linkIdentitySettingsSubtitle": "So your record survives losing this phone.",
   "@linkIdentitySettingsSubtitle": {
     "description": "[niche] Why to attach an identity. 'Record' is the product's vocabulary."
   },
-
   "restorePurchases": "Restore purchases",
   "@restorePurchases": {
     "description": "Settings row that re-queries the store."
   },
-
   "notificationsBlockedNotice": "Notifications are turned off for Feral. Turn them on in your system settings if you want the reminder.",
   "@notificationsBlockedNotice": {
     "description": "[niche] Contains the product name. Shown when OS permission was denied."
   },
-
   "reminderNotificationTitle": "Today",
   "@reminderNotificationTitle": {
     "description": "[niche] Title of the daily reminder notification."
   },
-
   "reminderNotificationBody": "Your action is waiting.",
   "@reminderNotificationBody": {
     "description": "[niche] Body of the daily reminder. Never a miss, never a streak, never the balance (ADR-0011)."
   },
-
   "reminderChannelName": "Daily reminder",
   "@reminderChannelName": {
     "description": "Android notification channel name, shown in system settings."
   },
-
   "doctrineIntroTitle": "The Zoo",
   "@doctrineIntroTitle": {
     "description": "[niche] The enclosure's name, on the first onboarding screen. This is the product's central metaphor and every fork replaces it."
   },
-
   "doctrineIntroBody": "Safety, predictability and a single-file path, traded for the ability to choose your own. Nobody forced it on you. That is what makes it hard to see.",
   "@doctrineIntroBody": {
     "description": "[niche] Names the adversary. A fork without a compelling adversary has a weaker product and this string is where that shows."
   },
-
   "doctrineIntroPromise": "Eight questions. Then one thing a day.",
   "@doctrineIntroPromise": {
     "description": "[niche] What the user is about to do. Eight and one-a-day are structural, but the phrasing is the product's."
   },
-
   "continueButton": "Go on",
   "@continueButton": {
     "description": "[niche] Advances onboarding. Plain 'Continue' in most forks; this wording is a voice choice."
   },
-
   "privacyNoticeTitle": "Before you start",
   "@privacyNoticeTitle": {
     "description": "Heading of the privacy notice, shown before the diagnostic."
   },
-
   "privacyNoticeAccount": "Feral made you an account when you opened it. You were not asked for anything, and you do not have to give anything.",
   "@privacyNoticeAccount": {
     "description": "[niche] Contains the product name. Explains the silent anonymous account (ADR-0007)."
   },
-
   "privacyNoticeStored": "It stores what you report each day, a line of note if you write one, and your answers here as four numbers. Nothing else. No location, no contacts, no health data, no tracking.",
   "@privacyNoticeStored": {
     "description": "Exhaustive list of what is stored. If this stops being exhaustive it is a defect, not a copy edit."
   },
-
   "privacyNoticeLoss": "That account lives on this phone only. If you lose the phone before attaching an identity, the record is gone and nothing can bring it back. You can attach one any time in settings.",
   "@privacyNoticeLoss": {
     "description": "States the accepted cost of anonymous-first auth plainly (ADR-0013)."
   },
-
   "dismissNoticeButton": "OK",
   "@dismissNoticeButton": {
     "description": "Dismisses the non-modal sync notice."
   },
-
   "syncOfflineNotice": "Offline. Your days are being recorded here.",
   "@syncOfflineNotice": {
     "description": "[niche] Quiet offline indicator on the dashboard. States a fact about the record, never a warning (US28)."
   },
-
   "syncFailingNotice": "Your progress is saved on this phone but has not reached the server yet. It will keep trying.",
   "@syncFailingNotice": {
     "description": "Shown only after repeated failures. The first clause is the important one: nothing is lost."
   },
-
   "emailAddressField": "Email address",
   "@emailAddressField": {
     "description": "Label of the email field when linking by one-time code."
   },
-
   "emailStepTitle": "Your email",
   "@emailStepTitle": {
     "description": "App bar title of the address step."
   },
-
   "codeStepTitle": "Enter the code",
   "@codeStepTitle": {
     "description": "App bar title of the six-digit code step."
   },
-
   "codeField": "Code",
   "@codeField": {
     "description": "Label of the six-digit code field."
   },
-
   "sendCodeButton": "Send code",
   "@sendCodeButton": {
     "description": "Requests a one-time code by email (ADR-0016)."
   },
-
   "resendCodeButton": "Send another code",
   "@resendCodeButton": {
     "description": "Requests a replacement code."
   },
-
   "changeEmailButton": "Use a different address",
   "@changeEmailButton": {
     "description": "Returns to the email step."
   },
-
   "codeSentTo": "We sent a six-digit code to {email}.",
   "@codeSentTo": {
     "description": "Confirms where the code went. Six-digit is structural — there is no magic link (ADR-0016).",
-    "placeholders": { "email": { "type": "String" } }
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
   },
-
   "codeSendFailed": "That did not send. Check the address and try again.",
   "@codeSendFailed": {
     "description": "Shown when requesting a code fails. Names the likely cause and the next step, never blames."
   },
-
   "codeRejected": "That code is not right, or it has expired. Ask for a new one.",
   "@codeRejected": {
     "description": "Shown on the code step when six digits are refused. Covers wrong, expired, and used-up in one sentence, because the server does not say which and guessing would be worse than not saying."
   },
-
   "linkFailed": "That did not work, and nothing on this phone changed.",
   "@linkFailed": {
     "description": "Shown when attaching an identity fails for any reason other than the address being taken. The second clause is the part that matters: a failed link is not a lost record."
   },
-
   "appleAccountName": "your Apple ID",
   "@appleAccountName": {
     "description": "Names the account in the replace confirmation when signing in with Apple, where no address is known to show instead."
   },
-
   "googleAccountName": "your Google account",
   "@googleAccountName": {
     "description": "Names the account in the replace confirmation when signing in with Google, where no address is known to show instead."
   },
-
   "linkSheetTitle": "Keep this record",
   "@linkSheetTitle": {
     "description": "[niche] Title of the identity-link sheet. 'Record' is the product's vocabulary."
   },
-
   "linkSheetBody": "Right now everything you have done lives only on this phone. Attaching an account keeps it, and lets you pick it up on another device.",
   "@linkSheetBody": {
     "description": "[niche] Says what is at stake, once, and never again (ADR-0013)."
   },
-
   "notNowButton": "Not now",
   "@notNowButton": {
     "description": "Dismisses the link prompt. Dismissal is remembered and never asked again."
   },
-
   "continueWithApple": "Continue with Apple",
   "@continueWithApple": {
     "description": "Starts the Sign in with Apple flow. Required alongside any social login (App Store guideline 4.8)."
   },
-
   "continueWithGoogle": "Continue with Google",
   "@continueWithGoogle": {
     "description": "Starts the Google sign-in flow."
   },
-
   "continueWithEmail": "Continue with email",
   "@continueWithEmail": {
     "description": "Starts the six-digit code flow."
   },
-
   "signInTitle": "Sign in",
   "@signInTitle": {
     "description": "App bar title of the replace-confirmation screen."
   },
-
   "replaceHeadline": "This phone has its own record",
   "@replaceHeadline": {
     "description": "[niche] LOAD-BEARING. Heading of the replace confirmation — the only screen standing between linking and signing in (ADR-0014). Must name what is on THIS phone."
   },
-
   "replaceSummaryUntitled": "There is progress recorded on this phone.",
   "@replaceSummaryUntitled": {
     "description": "[niche] Fallback when the local run has no campaign title."
   },
-
   "replaceSummary": "\"{title}\" — {reported} of {total} days reported.",
   "@replaceSummary": {
     "description": "[niche] Names concretely what signing in would replace.",
     "placeholders": {
-      "title": { "type": "String" },
-      "reported": { "type": "int" },
-      "total": { "type": "int" }
+      "title": {
+        "type": "String"
+      },
+      "reported": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
-
   "replaceWarning": "Signing in as {account} replaces it with the record from that account. What is on this phone cannot be recovered afterwards.",
   "@replaceWarning": {
     "description": "[niche] LOAD-BEARING. Every word matters: it must say plainly that this does not come back. Reword only with that in view.",
-    "placeholders": { "account": { "type": "String" } }
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
   },
-
   "keepThisRecordButton": "Keep this record",
   "@keepThisRecordButton": {
     "description": "[niche] Cancels the replace. Cancel is the default in all three destructive flows."
   },
-
   "replaceWithAccountButton": "Replace with my account",
   "@replaceWithAccountButton": {
     "description": "[niche] Confirms the destructive replace."
   },
-
   "settingsAccountSection": "Account",
   "@settingsAccountSection": {
     "description": "Settings section heading, above the identity and restore rows."
   },
-
   "settingsPrivacySection": "Privacy",
   "@settingsPrivacySection": {
     "description": "Settings section heading, above account deletion."
   },
-
   "signedInRow": "Signed in",
   "@signedInRow": {
     "description": "Settings row title once an identity is attached."
   },
-
   "deleteAccountTitle": "Delete account",
   "@deleteAccountTitle": {
     "description": "Settings row and screen title."
   },
-
   "deleteAccountSettingsSubtitle": "Removes every run, day, and note. Immediate.",
   "@deleteAccountSettingsSubtitle": {
     "description": "[niche] Names the product's nouns; states that it is not deferred."
   },
-
   "deleteHeadline": "This removes everything",
   "@deleteHeadline": {
     "description": "Heading of the delete confirmation."
   },
-
   "deleteScopeNotice": "Every run, every day you reported, every note you wrote, and your diagnostic result. It happens immediately and cannot be undone.",
   "@deleteScopeNotice": {
     "description": "[niche] LOAD-BEARING. Exhaustive scope of the deletion (ADR-0015). If it stops being exhaustive that is a defect, not a copy edit."
   },
-
   "deletePurchasesNotice": "Purchases are held by the App Store or Google Play and are not part of this. Deleting your account does not refund a purchase.",
   "@deletePurchasesNotice": {
     "description": "Must not imply purchases are deleted or refunded."
   },
-
   "deleteAnonymousNotice": "This account has no identity attached, so deleting the app from this phone achieves the same thing.",
   "@deleteAnonymousNotice": {
     "description": "Shown only for unlinked accounts."
   },
-
   "keepMyAccountButton": "Keep my account",
   "@keepMyAccountButton": {
     "description": "Cancels the deletion. The default."
   },
-
   "deleteEverythingButton": "Delete everything",
   "@deleteEverythingButton": {
     "description": "Confirms the deletion, after the typed word."
   },
-
   "deleteFailedNotice": "That did not go through. Nothing has been deleted. Check your connection and try again.",
   "@deleteFailedNotice": {
     "description": "Shown when the delete call fails. The second sentence is the important one — nothing was wiped locally."
   },
-
   "deleteConfirmInstruction": "Type {word} to confirm.",
   "@deleteConfirmInstruction": {
     "description": "Instruction above the typed-confirmation field.",
-    "placeholders": { "word": { "type": "String" } }
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
   },
-
   "understoodButton": "Understood",
   "@understoodButton": {
     "description": "Acknowledges the privacy notice."
+  },
+  "closeTooltip": "Close",
+  "@closeTooltip": {
+    "description": "Tooltip on the unlock sheet's close button."
+  },
+  "packContentsLead": "Inside",
+  "@packContentsLead": {
+    "description": "Introduces the list of campaigns in a pack."
+  },
+  "workingButton": "Working...",
+  "@workingButton": {
+    "description": "Buy button while the store is working. A second tap would be a second charge."
+  },
+  "alreadyBoughtButton": "Already bought it",
+  "@alreadyBoughtButton": {
+    "description": "Restore, offered in the sheet. 'I already bought this' is a thought people have in front of a buy button, not in settings (US26)."
+  },
+  "restorePurchasesSubtitle": "For a new phone, or after reinstalling",
+  "@restorePurchasesSubtitle": {
+    "description": "Settings subtitle for restore purchases."
+  },
+  "oneTimePurchaseNote": "One-time purchase. Yours after that.",
+  "@oneTimePurchaseNote": {
+    "description": "ADR-0008's promise, made where the money is asked for. Note what is absent and must stay absent: no urgency, no discount, no 'most popular'."
+  },
+  "purchasePendingNote": "The store is still waiting on this purchase. It unlocks by itself once it goes through — you do not need to buy it again.",
+  "@purchasePendingNote": {
+    "description": "A real purchase awaiting parental or bank approval. Must prevent a second attempt."
+  },
+  "purchaseErrorFreePack": "This pack is free.",
+  "@purchaseErrorFreePack": {
+    "description": "Not reachable from the UI; refused in the controller anyway."
+  },
+  "purchaseErrorUnavailable": "This pack is not available from the store right now.",
+  "@purchaseErrorUnavailable": {
+    "description": "No store product id, or the store does not know it."
+  },
+  "purchaseErrorRestoreOwned": "You already own this. Restoring it did not work — try again.",
+  "@purchaseErrorRestoreOwned": {
+    "description": "Shown to someone who has paid. Must never read as a refusal of what they own."
+  },
+  "restoreNothingFound": "There was nothing to restore.",
+  "@restoreNothingFound": {
+    "description": "A restore that succeeded and found no purchases."
+  },
+  "restoreUnreachable": "The store could not be reached. Try again.",
+  "@restoreUnreachable": {
+    "description": "A restore that failed to reach the store at all."
   }
 }
