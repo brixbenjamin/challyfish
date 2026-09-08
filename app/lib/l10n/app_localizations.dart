@@ -466,6 +466,60 @@ abstract class AppLocalizations {
   /// **'Your progress is saved on this phone but has not reached the server yet. It will keep trying.'**
   String get syncFailingNotice;
 
+  /// Label of the email field when linking by one-time code.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get emailAddressField;
+
+  /// App bar title of the address step.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email'**
+  String get emailStepTitle;
+
+  /// App bar title of the six-digit code step.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code'**
+  String get codeStepTitle;
+
+  /// Label of the six-digit code field.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get codeField;
+
+  /// Requests a one-time code by email (ADR-0016).
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get sendCodeButton;
+
+  /// Requests a replacement code.
+  ///
+  /// In en, this message translates to:
+  /// **'Send another code'**
+  String get resendCodeButton;
+
+  /// Returns to the email step.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different address'**
+  String get changeEmailButton;
+
+  /// Confirms where the code went. Six-digit is structural — there is no magic link (ADR-0016).
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a six-digit code to {email}.'**
+  String codeSentTo(String email);
+
+  /// Shown when requesting a code fails. Names the likely cause and the next step, never blames.
+  ///
+  /// In en, this message translates to:
+  /// **'That did not send. Check the address and try again.'**
+  String get codeSendFailed;
+
   /// Acknowledges the privacy notice.
   ///
   /// In en, this message translates to:

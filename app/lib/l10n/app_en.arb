@@ -313,6 +313,52 @@
     "description": "Shown only after repeated failures. The first clause is the important one: nothing is lost."
   },
 
+  "emailAddressField": "Email address",
+  "@emailAddressField": {
+    "description": "Label of the email field when linking by one-time code."
+  },
+
+  "emailStepTitle": "Your email",
+  "@emailStepTitle": {
+    "description": "App bar title of the address step."
+  },
+
+  "codeStepTitle": "Enter the code",
+  "@codeStepTitle": {
+    "description": "App bar title of the six-digit code step."
+  },
+
+  "codeField": "Code",
+  "@codeField": {
+    "description": "Label of the six-digit code field."
+  },
+
+  "sendCodeButton": "Send code",
+  "@sendCodeButton": {
+    "description": "Requests a one-time code by email (ADR-0016)."
+  },
+
+  "resendCodeButton": "Send another code",
+  "@resendCodeButton": {
+    "description": "Requests a replacement code."
+  },
+
+  "changeEmailButton": "Use a different address",
+  "@changeEmailButton": {
+    "description": "Returns to the email step."
+  },
+
+  "codeSentTo": "We sent a six-digit code to {email}.",
+  "@codeSentTo": {
+    "description": "Confirms where the code went. Six-digit is structural — there is no magic link (ADR-0016).",
+    "placeholders": { "email": { "type": "String" } }
+  },
+
+  "codeSendFailed": "That did not send. Check the address and try again.",
+  "@codeSendFailed": {
+    "description": "Shown when requesting a code fails. Names the likely cause and the next step, never blames."
+  },
+
   "understoodButton": "Understood",
   "@understoodButton": {
     "description": "Acknowledges the privacy notice."

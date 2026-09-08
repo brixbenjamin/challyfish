@@ -241,5 +241,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your progress is saved on this phone but has not reached the server yet. It will keep trying.';
 
   @override
+  String get emailAddressField => 'Email address';
+
+  @override
+  String get emailStepTitle => 'Your email';
+
+  @override
+  String get codeStepTitle => 'Enter the code';
+
+  @override
+  String get codeField => 'Code';
+
+  @override
+  String get sendCodeButton => 'Send code';
+
+  @override
+  String get resendCodeButton => 'Send another code';
+
+  @override
+  String get changeEmailButton => 'Use a different address';
+
+  @override
+  String codeSentTo(String email) {
+    return 'We sent a six-digit code to $email.';
+  }
+
+  @override
+  String get codeSendFailed =>
+      'That did not send. Check the address and try again.';
+
+  @override
   String get understoodButton => 'Understood';
 }
