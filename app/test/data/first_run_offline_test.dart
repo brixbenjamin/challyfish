@@ -97,7 +97,7 @@ void main() {
     // 3. Starting it gives a run with a day-1 action.
     final run = await progressAt(
       at(1, 9),
-    ).startRun(userId: 'u', campaignId: recommended!.id);
+    ).startRun(userId: 'u', campaignId: recommended!.id, isUnlocked: true);
     expect(await content.actionFor(recommended.id, 1), isNotNull);
 
     // 4. The whole campaign can be committed and reported, day by day.
@@ -155,7 +155,9 @@ void main() {
       final campaign = (await content.campaignById(
         stored.recommendedCampaignId,
       ))!;
-      await progressAt(at(1, 9)).startRun(userId: 'u', campaignId: campaign.id);
+      await progressAt(
+        at(1, 9),
+      ).startRun(userId: 'u', campaignId: campaign.id, isUnlocked: true);
 
       expect(
         (await progressAt(at(2, 9)).activeRun('u'))?.campaignId,

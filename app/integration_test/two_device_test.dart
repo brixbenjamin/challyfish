@@ -124,6 +124,7 @@ void main() {
     final run = await a.progress.startRun(
       userId: userId,
       campaignId: campaignId,
+      isUnlocked: true,
     );
     await report(a, run, 1, Outcome.done, note: 'did it');
     await a.sync.sync(userId);
@@ -143,6 +144,7 @@ void main() {
     final run = await a.progress.startRun(
       userId: userId,
       campaignId: campaignId,
+      isUnlocked: true,
     );
     await a.sync.sync(userId);
     await b.sync.sync(userId);
@@ -168,6 +170,7 @@ void main() {
       final run = await a.progress.startRun(
         userId: userId,
         campaignId: campaignId,
+        isUnlocked: true,
       );
       await a.sync.sync(userId);
       await b.sync.sync(userId);
@@ -198,11 +201,13 @@ void main() {
     final runA = await a.progress.startRun(
       userId: userId,
       campaignId: campaignId,
+      isUnlocked: true,
     );
     await backdate(a, runA.id, DateTime.utc(2026, 6, 10, 8));
     final runB = await b.progress.startRun(
       userId: userId,
       campaignId: campaignId,
+      isUnlocked: true,
     );
 
     await a.sync.sync(userId);
@@ -225,11 +230,13 @@ void main() {
     final runA = await a.progress.startRun(
       userId: userId,
       campaignId: campaignId,
+      isUnlocked: true,
     );
     await backdate(a, runA.id, DateTime.utc(2026, 6, 10, 8));
     final runB = await b.progress.startRun(
       userId: userId,
       campaignId: campaignId,
+      isUnlocked: true,
     );
     await report(b, runB, 1, Outcome.done);
 
@@ -249,6 +256,7 @@ void main() {
     final run = await a.progress.startRun(
       userId: userId,
       campaignId: campaignId,
+      isUnlocked: true,
     );
     for (var day = 1; day <= 3; day++) {
       await report(a, run, day, Outcome.done);

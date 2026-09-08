@@ -11,6 +11,21 @@ import '../../domain/run.dart';
 import '../../engine/run_engine.dart';
 import '../local/database.dart';
 
+/// Thrown when a run is started on a campaign in a pack the user does not own.
+///
+/// The UI hides the button, and this is the second gate. Row-level security is
+/// not a third one and never will be: teasers are public by design (ADR-0008),
+/// so from the server's side reading a locked campaign and starting it look the
+/// same.
+class PackLocked implements Exception {
+  const PackLocked(this.campaignId);
+
+  final String campaignId;
+
+  @override
+  String toString() => 'PackLocked($campaignId)';
+}
+
 /// The only writer of user state.
 ///
 /// Every method here writes to Drift and returns. Nothing awaits the network —
@@ -42,7 +57,14 @@ class ProgressRepository {
   Future<CampaignRun> startRun({
     required String userId,
     required String campaignId,
+
+    /// Required, and deliberately without a default. A default would let every
+    /// existing call site keep compiling and keep permitting; required makes
+    /// the compiler name every place that has to consult entitlements.
+    required bool isUnlocked,
   }) async {
+    if (!isUnlocked) throw PackLocked(campaignId);
+
     final now = clock.nowUtc();
     final run = CampaignRun(
       id: _newId(),

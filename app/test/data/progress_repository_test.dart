@@ -24,7 +24,11 @@ void main() {
 
   test('starting a run creates an active run, dirty for later sync', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+    final run = await repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
 
     expect(run.status, RunStatus.active);
     expect(run.startedAt, day1);
@@ -36,7 +40,11 @@ void main() {
 
   test('activeRun returns the run; abandoning it clears the slot', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+    final run = await repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
 
     expect((await repo.activeRun('user-1'))?.id, run.id);
 
@@ -49,7 +57,11 @@ void main() {
 
   test('committing records a timestamp without an outcome', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+    final run = await repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
 
     await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
 
@@ -60,7 +72,11 @@ void main() {
 
   test('reporting without committing is allowed', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+    final run = await repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
 
     await repo.report(
       run: run,
@@ -78,7 +94,11 @@ void main() {
 
   test('reporting after committing keeps the commit timestamp', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+    final run = await repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
 
     await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
     await repo.report(
@@ -100,7 +120,11 @@ void main() {
 
   test('a freshly committed day log is dirty for later sync', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+    final run = await repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
 
     await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
 
@@ -110,7 +134,11 @@ void main() {
 
   test('reporting after committing keeps the day log dirty', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'user-1', campaignId: 'campaign-1');
+    final run = await repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
 
     await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
     await repo.report(
@@ -131,6 +159,7 @@ void main() {
       final run = await startRepo.startRun(
         userId: 'user-1',
         campaignId: 'campaign-1',
+        isUnlocked: true,
       );
       await startRepo.report(
         run: run,
@@ -178,6 +207,7 @@ void main() {
     final run = await startRepo.startRun(
       userId: 'user-1',
       campaignId: 'campaign-1',
+      isUnlocked: true,
     );
     await startRepo.report(
       run: run,

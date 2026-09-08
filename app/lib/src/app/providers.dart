@@ -1,4 +1,6 @@
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,13 +13,19 @@ import '../data/remote/account_api.dart';
 import '../data/remote/auth_gateway.dart';
 import '../data/remote/content_api.dart';
 import '../data/remote/progress_api.dart';
+import '../data/remote/purchase_gateway.dart';
+import '../data/remote/revenuecat_gateway.dart';
 import '../data/remote/seed_snapshot.dart';
 import '../data/repositories/content_repository.dart';
 import '../data/repositories/diagnostic_repository.dart';
+import '../data/repositories/entitlement_repository.dart';
 import '../data/repositories/identity_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../data/repositories/sync_repository.dart';
+import '../domain/campaign.dart';
+import '../domain/pack.dart';
 import '../notifications/reminder_scheduler.dart';
+import '../ui/browse/pack_list_screen.dart' show PackView;
 import '../sync/sync_scheduler.dart';
 import 'link_prompt_state.dart';
 
@@ -131,3 +139,77 @@ final linkPromptStateProvider = Provider<LinkPromptState>(
 final accountApiProvider = Provider<AccountApi>(
   (ref) => SupabaseAccountApi(Supabase.instance.client),
 );
+
+/// Assembles the browse screen's data.
+///
+/// Pure, so that "a locked pack still lists its campaigns" is a unit test and
+/// not a widget test with three fakes behind it.
+List<PackView> packViewsFrom({
+  required List<Pack> packs,
+  required Map<String, List<Campaign>> campaignsByPack,
+  required Set<String> unlockedPackIds,
+}) => [
+  for (final pack in packs)
+    PackView(
+      pack: pack,
+      campaigns: campaignsByPack[pack.id] ?? const [],
+      isUnlocked: unlockedPackIds.contains(pack.id),
+    ),
+];
+
+/// The store. One instance for the process: the SDK is configured once, with
+/// the Supabase user id as the app user id (ADR-0017).
+final purchaseGatewayProvider = Provider<PurchaseGateway>((ref) {
+  const iosKey = String.fromEnvironment('REVENUECAT_IOS_KEY');
+  const androidKey = String.fromEnvironment('REVENUECAT_ANDROID_KEY');
+  final key = defaultTargetPlatform == TargetPlatform.iOS ? iosKey : androidKey;
+  return RevenueCatGateway(apiKey: key);
+});
+
+final entitlementRepositoryProvider = Provider<EntitlementRepository>((ref) {
+  return EntitlementRepository(
+    db: ref.watch(databaseProvider),
+    gateway: ref.watch(purchaseGatewayProvider),
+    clock: ref.watch(clockProvider),
+  );
+});
+
+final packsProvider = FutureProvider<List<Pack>>((ref) async {
+  return ref.watch(contentRepositoryProvider).packs();
+});
+
+final ownedProductChangesProvider = StreamProvider<Set<String>>((ref) {
+  return ref.watch(purchaseGatewayProvider).ownedProductChanges;
+});
+
+/// Recomputed whenever ownership changes — a purchase, a restore, a pulled row,
+/// a refund seen by the SDK.
+final unlockedPackIdsProvider = FutureProvider<Set<String>>((ref) async {
+  final userId = ref.watch(userIdProvider);
+  final packs = await ref.watch(packsProvider.future);
+
+  // Re-runs this provider when the store's view of ownership changes, including
+  // changes that started on another device.
+  ref.watch(ownedProductChangesProvider);
+
+  return ref
+      .watch(entitlementRepositoryProvider)
+      .unlockedPackIds(userId: userId, packs: packs);
+});
+
+final packViewsProvider = FutureProvider<List<PackView>>((ref) async {
+  final packs = await ref.watch(packsProvider.future);
+  final unlocked = await ref.watch(unlockedPackIdsProvider.future);
+  final content = ref.watch(contentRepositoryProvider);
+
+  final campaignsByPack = <String, List<Campaign>>{};
+  for (final pack in packs) {
+    campaignsByPack[pack.id] = await content.campaignsFor(pack.id);
+  }
+
+  return packViewsFrom(
+    packs: packs,
+    campaignsByPack: campaignsByPack,
+    unlockedPackIds: unlocked,
+  );
+});

@@ -36,7 +36,11 @@ void main() {
 
   Future<CampaignRun> runAllDays({required int misses}) async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'u', campaignId: 'c-1');
+    final run = await repo.startRun(
+      userId: 'u',
+      campaignId: 'c-1',
+      isUnlocked: true,
+    );
     for (var day = 1; day <= 7; day++) {
       await repoAt(dayN(day)).report(
         run: run,
@@ -79,7 +83,11 @@ void main() {
 
   test('a run mid-way does not complete', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'u', campaignId: 'c-1');
+    final run = await repo.startRun(
+      userId: 'u',
+      campaignId: 'c-1',
+      isUnlocked: true,
+    );
     await repo.report(
       run: run,
       dayIndex: 1,
@@ -96,7 +104,11 @@ void main() {
 
   test('the final day elapsing is not enough — it must be resolved', () async {
     final repo = repoAt(day1);
-    final run = await repo.startRun(userId: 'u', campaignId: 'c-1');
+    final run = await repo.startRun(
+      userId: 'u',
+      campaignId: 'c-1',
+      isUnlocked: true,
+    );
     for (var day = 1; day <= 6; day++) {
       await repoAt(dayN(day)).report(
         run: run,
@@ -148,7 +160,7 @@ void main() {
     await repo.completeRunIfFinished(run: run, campaign: campaign);
 
     expect(await repo.activeRun('u'), isNull);
-    await repo.startRun(userId: 'u', campaignId: 'c-2');
+    await repo.startRun(userId: 'u', campaignId: 'c-2', isUnlocked: true);
     expect((await repo.activeRun('u'))?.campaignId, 'c-2');
   });
 

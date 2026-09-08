@@ -53,6 +53,7 @@ void main() {
       final run = await repo.startRun(
         userId: 'user-1',
         campaignId: 'campaign-1',
+        isUnlocked: true,
       );
       await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
       await repo.report(

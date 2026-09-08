@@ -110,6 +110,8 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     final diagnostic = ref.read(diagnosticRepositoryProvider);
     final userId = ref.read(userIdProvider);
 
+    await _configurePurchases(userId);
+
     if (await diagnostic.hasCompleted(userId)) {
       await _loadHome();
       return;
@@ -121,6 +123,18 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       _questions = questions;
       _step = _Step.intro;
     });
+  }
+
+  /// Hands the store the Supabase user id as its app user id (ADR-0017), which
+  /// is what makes a pack bought anonymously survive identity linking.
+  ///
+  /// A store that cannot be configured must never block the app. Everything
+  /// already owned still works from the pulled rows, and the daily loop does
+  /// not involve the store at all.
+  Future<void> _configurePurchases(String userId) async {
+    try {
+      await ref.read(purchaseGatewayProvider).configure(userId);
+    } catch (_) {}
   }
 
   // -------------------------------------------------------------- diagnostic
@@ -151,13 +165,43 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     final progress = ref.read(progressRepositoryProvider);
     final userId = ref.read(userIdProvider);
 
+    // The second gate, and the one that counts. The UI hides the button, but
+    // row-level security cannot cover this: teasers are public by design
+    // (ADR-0008), so from the server's side reading a locked campaign and
+    // starting it look the same. Computed here rather than passed in, so no
+    // call site can decide the answer for itself.
+    final unlocked = await _isCampaignUnlocked(campaignId);
+
     // Exactly one run may be active. Replacing one is the only destructive
-    // action in the product, and the detail screen has already said so.
+    // action in the product, and the detail screen has already said so. It
+    // happens only after the lock check, so a refused start never abandons the
+    // run the user is in the middle of.
     final active = await progress.activeRun(userId);
     if (active != null) await progress.abandonRun(active.id);
 
-    await progress.startRun(userId: userId, campaignId: campaignId);
+    await progress.startRun(
+      userId: userId,
+      campaignId: campaignId,
+      isUnlocked: unlocked,
+    );
+    ref.invalidate(unlockedPackIdsProvider);
     await _loadHome();
+  }
+
+  /// Whether the pack holding [campaignId] is owned. Fails closed: a campaign
+  /// or pack this device cannot resolve is not a reason to hand out content.
+  Future<bool> _isCampaignUnlocked(String campaignId) async {
+    final content = ref.read(contentRepositoryProvider);
+    final campaign = await content.campaignById(campaignId);
+    if (campaign == null) return false;
+
+    final packs = await content.packs();
+    final pack = packs.where((p) => p.id == campaign.packId).firstOrNull;
+    if (pack == null) return false;
+
+    return ref
+        .read(entitlementRepositoryProvider)
+        .isUnlocked(userId: ref.read(userIdProvider), pack: pack);
   }
 
   Future<BalanceState> _balance() async {
@@ -204,16 +248,25 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
 
   Future<List<PackView>> _browse() async {
     final content = ref.read(contentRepositoryProvider);
-    return [
-      for (final pack in await content.packs())
-        PackView(
-          pack: pack,
-          campaigns: await content.campaignsFor(pack.id),
-          // Entitlements are plan 4. Until then only the core pack is usable,
-          // and everything else renders as a teaser that cannot be started.
-          isUnlocked: pack.isCore,
-        ),
-    ];
+    final packs = await content.packs();
+
+    final campaignsByPack = <String, List<Campaign>>{};
+    for (final pack in packs) {
+      campaignsByPack[pack.id] = await content.campaignsFor(pack.id);
+    }
+
+    // Locked packs still list their campaigns — the teaser is the shop window
+    // (ADR-0008). What changed in plan 4 is that `isUnlocked` is now an answer
+    // from the entitlement repository rather than an assumption about is_core.
+    final unlocked = await ref
+        .read(entitlementRepositoryProvider)
+        .unlockedPackIds(userId: ref.read(userIdProvider), packs: packs);
+
+    return packViewsFrom(
+      packs: packs,
+      campaignsByPack: campaignsByPack,
+      unlockedPackIds: unlocked,
+    );
   }
 
   Future<_Home> _buildHome() async {
