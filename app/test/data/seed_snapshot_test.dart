@@ -144,6 +144,12 @@ void main() {
     );
     expect(await content.archetypeIdsFor(campaign.id), isNotEmpty);
     expect(await content.archetypesById(), hasLength(4));
+
+    // The reading section ships too: a first launch with no signal that opens
+    // Doctrine must not find it empty.
+    final doctrine = await content.doctrineGroups();
+    expect(doctrine, isNotEmpty);
+    expect(await content.doctrineEntriesFor(doctrine.first.id), isNotEmpty);
   });
 }
 

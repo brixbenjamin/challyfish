@@ -70,4 +70,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String questionProgress(int n, int total) {
     return '$n of $total';
   }
+
+  @override
+  String get doctrineTitle => 'Doctrine';
+
+  @override
+  String get doctrineEmpty => 'Nothing here yet. Check back after a sync.';
 }

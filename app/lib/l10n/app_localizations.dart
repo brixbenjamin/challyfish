@@ -195,6 +195,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{n} of {total}'**
   String questionProgress(int n, int total);
+
+  /// [niche] Name of the reading section.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctrine'**
+  String get doctrineTitle;
+
+  /// Empty state for the reading section before first sync.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Check back after a sync.'**
+  String get doctrineEmpty;
 }
 
 class _AppLocalizationsDelegate

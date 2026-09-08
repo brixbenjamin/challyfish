@@ -79,6 +79,7 @@ enabled = true
 sql_paths = [
   "./seed/axes.sql",
   "./seed/diagnostic.sql",
+  "./seed/doctrine.sql",
   "./seed/packs.sql",
   "./seed/campaigns.sql",
   "./seed/actions.sql",

@@ -80,5 +80,15 @@
   "@questionProgress": {
     "description": "Position within the eight diagnostic questions.",
     "placeholders": { "n": { "type": "int" }, "total": { "type": "int" } }
+  },
+
+  "doctrineTitle": "Doctrine",
+  "@doctrineTitle": {
+    "description": "[niche] Name of the reading section."
+  },
+
+  "doctrineEmpty": "Nothing here yet. Check back after a sync.",
+  "@doctrineEmpty": {
+    "description": "Empty state for the reading section before first sync."
   }
 }

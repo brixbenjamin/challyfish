@@ -12,6 +12,7 @@
 -- sync if the include order ever changes.
 \i seed/axes.sql
 \i seed/diagnostic.sql
+\i seed/doctrine.sql
 \i seed/packs.sql
 \i seed/campaigns.sql
 \i seed/actions.sql
