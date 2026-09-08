@@ -128,4 +128,123 @@ void main() {
       expect(await repo.actionFor('campaign-1', 1), isNull);
     },
   );
+
+  test('a pull covers every content table', () async {
+    final api = FakeContentApi(const {});
+    final repo = ContentRepository(db: db, api: api);
+
+    await repo.pull();
+
+    expect(api.calls.map((c) => c.table).toSet(), {
+      'archetypes',
+      'packs',
+      'campaigns',
+      'campaign_archetypes',
+      'actions',
+      'doctrine_groups',
+      'doctrine_entries',
+      'diagnostic_questions',
+      'diagnostic_options',
+    });
+  });
+
+  test('doctrine entries come back grouped and ordered', () async {
+    final api = FakeContentApi({
+      'doctrine_groups': [
+        {
+          'id': 'g-1',
+          'title': 'The Zoo',
+          'blurb': null,
+          'sort': 1,
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+      ],
+      'doctrine_entries': [
+        {
+          'id': 'e-2',
+          'group_id': 'g-1',
+          'title': 'The Guards',
+          'body_md': 'b',
+          'related_archetype_id': null,
+          'sort': 2,
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+        {
+          'id': 'e-1',
+          'group_id': 'g-1',
+          'title': 'The Domesticated State',
+          'body_md': 'b',
+          'related_archetype_id': null,
+          'sort': 1,
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    expect((await repo.doctrineGroups()).single.title, 'The Zoo');
+    expect(
+      (await repo.doctrineEntriesFor('g-1')).map((e) => e.id),
+      ['e-1', 'e-2'],
+      reason: 'ordered by sort, not by arrival',
+    );
+  });
+
+  test('diagnostic questions come back with both their options', () async {
+    final api = FakeContentApi({
+      'diagnostic_questions': [
+        {
+          'id': 'q-1',
+          'prompt': 'Closer to you?',
+          'sort': 1,
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+      ],
+      'diagnostic_options': [
+        {
+          'id': 'o-1',
+          'question_id': 'q-1',
+          'label': 'Act now',
+          'archetype_id': 'arch-alchemist',
+          'sort': 0,
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+        {
+          'id': 'o-2',
+          'question_id': 'q-1',
+          'label': 'Say the hard thing',
+          'archetype_id': 'arch-killer',
+          'sort': 1,
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    final questions = await repo.diagnosticQuestions();
+    expect(questions, hasLength(1));
+    expect(questions.single.options.map((o) => o.archetypeId), [
+      'arch-alchemist',
+      'arch-killer',
+    ]);
+  });
+
+  test('a campaign reports the archetypes it targets', () async {
+    final api = FakeContentApi({
+      'campaign_archetypes': [
+        {
+          'campaign_id': 'campaign-1',
+          'archetype_id': 'arch-killer',
+          'weight': 1,
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    expect(await repo.archetypeIdsFor('campaign-1'), ['arch-killer']);
+  });
 }
