@@ -1,0 +1,413 @@
+{
+  "archetypes": [
+    {
+      "id": "cccccccc-0000-0000-0000-000000000001",
+      "key": "psycho",
+      "name": "Psycho",
+      "blurb": "The irrational visionary. Absolute focus, unbothered by standard risk paradigms, social embarrassment, or logical limitations.",
+      "color": "#B23A48",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.131034+00:00",
+      "updated_at": "2026-09-08T07:25:07.131034+00:00"
+    },
+    {
+      "id": "cccccccc-0000-0000-0000-000000000002",
+      "key": "killer",
+      "name": "Killer",
+      "blurb": "The acutely competent predator. Physical confidence and assertiveness; refusal to enter a subservient state of explaining oneself.",
+      "color": "#2E4057",
+      "sort": 2,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.131034+00:00",
+      "updated_at": "2026-09-08T07:25:07.131034+00:00"
+    },
+    {
+      "id": "cccccccc-0000-0000-0000-000000000003",
+      "key": "alchemist",
+      "name": "Alchemist",
+      "blurb": "The intuitive action force. Immediate action on unearned confidence, turning error and chaos into progress.",
+      "color": "#C98C1E",
+      "sort": 3,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.131034+00:00",
+      "updated_at": "2026-09-08T07:25:07.131034+00:00"
+    },
+    {
+      "id": "cccccccc-0000-0000-0000-000000000004",
+      "key": "creature",
+      "name": "Creature",
+      "blurb": "Primal desire. Raw drive without sterile guilt, social policing, or self-sabotaging shame.",
+      "color": "#4A7C59",
+      "sort": 4,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.131034+00:00",
+      "updated_at": "2026-09-08T07:25:07.131034+00:00"
+    }
+  ],
+  "packs": [
+    {
+      "id": "aaaaaaaa-0000-0000-0000-000000000001",
+      "key": "core",
+      "title": "The Core",
+      "description": "Where everyone starts. Free, forever.",
+      "is_core": true,
+      "store_product_id": null,
+      "cover_path": null,
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.134165+00:00",
+      "updated_at": "2026-09-08T07:25:07.134165+00:00"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "pack_id": "aaaaaaaa-0000-0000-0000-000000000001",
+      "key": "first-week",
+      "title": "The First Week",
+      "subtitle": "Seven days of saying the thing.",
+      "intro_md": "Seven days. One act a day, each one small enough that you cannot reasonably claim it was impossible, and large enough that you will want to skip it.",
+      "length_days": 7,
+      "ramp_days": 2,
+      "difficulty": 1,
+      "cover_path": null,
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.135494+00:00",
+      "updated_at": "2026-09-08T07:25:07.135494+00:00"
+    }
+  ],
+  "campaign_archetypes": [
+    {
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "weight": 1,
+      "created_at": "2026-09-08T07:25:07.135494+00:00",
+      "updated_at": "2026-09-08T07:25:07.135494+00:00"
+    }
+  ],
+  "actions": [
+    {
+      "id": "42095f49-6f47-4155-980b-7a536a9324bb",
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "day_index": 1,
+      "title": "[PLACEHOLDER] State a preference out loud",
+      "body_md": "[PLACEHOLDER] Once today, when someone asks what you want, answer immediately and do not soften it.",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "why_doctrine_id": null,
+      "effort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13687+00:00",
+      "updated_at": "2026-09-08T07:25:07.13687+00:00"
+    },
+    {
+      "id": "ea60042f-5545-478d-a43e-ac246d38b7b6",
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "day_index": 2,
+      "title": "[PLACEHOLDER] Ask for something small",
+      "body_md": "[PLACEHOLDER] Ask one person for one thing you would normally not bother asking for.",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "why_doctrine_id": null,
+      "effort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13687+00:00",
+      "updated_at": "2026-09-08T07:25:07.13687+00:00"
+    },
+    {
+      "id": "0d17ec81-fe9f-442e-9731-124c2e192aed",
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "day_index": 3,
+      "title": "[PLACEHOLDER] Do not explain yourself",
+      "body_md": "[PLACEHOLDER] Say no once today, and stop talking after you have said it.",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "why_doctrine_id": null,
+      "effort": 2,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13687+00:00",
+      "updated_at": "2026-09-08T07:25:07.13687+00:00"
+    },
+    {
+      "id": "ddd8b786-c139-419c-a0ee-4b4427d35fa9",
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "day_index": 4,
+      "title": "[PLACEHOLDER] Go first",
+      "body_md": "[PLACEHOLDER] In one conversation today, be the first to speak.",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "why_doctrine_id": null,
+      "effort": 2,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13687+00:00",
+      "updated_at": "2026-09-08T07:25:07.13687+00:00"
+    },
+    {
+      "id": "fde6fd98-c533-49f7-bf05-27f20002262f",
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "day_index": 5,
+      "title": "[PLACEHOLDER] Disagree in the room",
+      "body_md": "[PLACEHOLDER] Say the disagreeing thing once, while the subject is still open.",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "why_doctrine_id": null,
+      "effort": 3,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13687+00:00",
+      "updated_at": "2026-09-08T07:25:07.13687+00:00"
+    },
+    {
+      "id": "1b31ff9c-e14e-49fb-ac01-55985dbf92cd",
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "day_index": 6,
+      "title": "[PLACEHOLDER] Take the harder option",
+      "body_md": "[PLACEHOLDER] Where two options exist today and one is easier, take the other.",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "why_doctrine_id": null,
+      "effort": 3,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13687+00:00",
+      "updated_at": "2026-09-08T07:25:07.13687+00:00"
+    },
+    {
+      "id": "c6e752ac-a498-4d6e-8cec-4491da561870",
+      "campaign_id": "bbbbbbbb-0000-0000-0000-000000000001",
+      "day_index": 7,
+      "title": "[PLACEHOLDER] Say the thing you have been not saying",
+      "body_md": "[PLACEHOLDER] You already know what it is. Say it to the person it concerns.",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "why_doctrine_id": null,
+      "effort": 3,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13687+00:00",
+      "updated_at": "2026-09-08T07:25:07.13687+00:00"
+    }
+  ],
+  "doctrine_groups": [],
+  "doctrine_entries": [],
+  "diagnostic_questions": [
+    {
+      "id": "dddddddd-0000-0000-0000-000000000001",
+      "prompt": "Closer to you?",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dddddddd-0000-0000-0000-000000000002",
+      "prompt": "Closer to you?",
+      "sort": 2,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dddddddd-0000-0000-0000-000000000003",
+      "prompt": "Closer to you?",
+      "sort": 3,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dddddddd-0000-0000-0000-000000000004",
+      "prompt": "Closer to you?",
+      "sort": 4,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dddddddd-0000-0000-0000-000000000005",
+      "prompt": "Closer to you?",
+      "sort": 5,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dddddddd-0000-0000-0000-000000000006",
+      "prompt": "Closer to you?",
+      "sort": 6,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dddddddd-0000-0000-0000-000000000007",
+      "prompt": "Closer to you?",
+      "sort": 7,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dddddddd-0000-0000-0000-000000000008",
+      "prompt": "Closer to you?",
+      "sort": 8,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    }
+  ],
+  "diagnostic_options": [
+    {
+      "id": "af163000-2787-4c2f-a71a-9bfc7682b4d1",
+      "question_id": "dddddddd-0000-0000-0000-000000000001",
+      "label": "Commit to something before you can justify it",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000001",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "8e6d28f0-219a-4695-ade8-1dbcbb6ca223",
+      "question_id": "dddddddd-0000-0000-0000-000000000001",
+      "label": "Say the thing nobody in the room will say",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "987b9c86-31a2-487b-9042-24831d1e6b3e",
+      "question_id": "dddddddd-0000-0000-0000-000000000002",
+      "label": "Hold a plan nobody else believes in",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000001",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "6faa3eac-f415-4144-b04f-a87ac90b805d",
+      "question_id": "dddddddd-0000-0000-0000-000000000002",
+      "label": "Start now and work it out on the way",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000003",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "28298315-fe18-4e39-8762-de21f67d22a7",
+      "question_id": "dddddddd-0000-0000-0000-000000000003",
+      "label": "Ignore how it looks to other people",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000001",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "ec7cfd4d-4492-4e62-9072-2186bf67c9b0",
+      "question_id": "dddddddd-0000-0000-0000-000000000003",
+      "label": "Want what you want without apologising for it",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000004",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "22859461-47ca-487e-b5df-94adf8b2ee49",
+      "question_id": "dddddddd-0000-0000-0000-000000000004",
+      "label": "End a conversation instead of explaining again",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "836753c6-1a32-4674-a276-6ec9523afc96",
+      "question_id": "dddddddd-0000-0000-0000-000000000004",
+      "label": "Make the first move with half the information",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000003",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "0e5136d7-3bef-4e69-a350-9ab57749bcb8",
+      "question_id": "dddddddd-0000-0000-0000-000000000005",
+      "label": "Hold your ground when someone pushes",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "a3041114-dec8-4bbe-add7-fd6bdb966e06",
+      "question_id": "dddddddd-0000-0000-0000-000000000005",
+      "label": "Admit plainly what you actually want",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000004",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "c5d0a363-c7b6-4dc9-9ccc-b4e476a84679",
+      "question_id": "dddddddd-0000-0000-0000-000000000006",
+      "label": "Improvise when the plan falls apart",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000003",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "67402c8e-f581-4c52-a2ad-7c3993389da5",
+      "question_id": "dddddddd-0000-0000-0000-000000000006",
+      "label": "Follow an appetite you cannot fully defend",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000004",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "5574ac64-40e2-4140-a4fe-5e663cbb5dff",
+      "question_id": "dddddddd-0000-0000-0000-000000000007",
+      "label": "Bet on an idea everyone calls unrealistic",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000001",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "dd845ca3-8285-4457-abc1-27087cb821c3",
+      "question_id": "dddddddd-0000-0000-0000-000000000007",
+      "label": "Refuse a request without softening it",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000002",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "a1890131-68d7-4b0d-aba8-4008c26ac2f5",
+      "question_id": "dddddddd-0000-0000-0000-000000000008",
+      "label": "Act on instinct and correct afterwards",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000003",
+      "sort": 0,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    },
+    {
+      "id": "696baf80-4e5f-4d96-9e69-da76e18b0b75",
+      "question_id": "dddddddd-0000-0000-0000-000000000008",
+      "label": "Say out loud what you are drawn to",
+      "archetype_id": "cccccccc-0000-0000-0000-000000000004",
+      "sort": 1,
+      "min_app_version": 1,
+      "created_at": "2026-09-08T07:25:07.13242+00:00",
+      "updated_at": "2026-09-08T07:25:07.13242+00:00"
+    }
+  ]
+}

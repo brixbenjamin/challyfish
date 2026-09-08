@@ -206,6 +206,19 @@ class ContentRepository {
     }
   }
 
+  /// Applies rows keyed by table name, using the same upserts as the network
+  /// pull, so the bundled snapshot and the wire can never diverge. Unknown
+  /// table names are ignored; a malformed row throws.
+  Future<void> applyRows(Map<String, dynamic> rowsByTable) async {
+    for (final table in _tables) {
+      final rows = rowsByTable[table.name];
+      if (rows == null) continue;
+      for (final row in (rows as List).cast<Map<String, dynamic>>()) {
+        await table.upsert(row);
+      }
+    }
+  }
+
   /// Read-only view, used by the seed snapshot loader to set the initial marks.
   Map<String, DateTime> get watermarks => Map.unmodifiable(_watermarks);
 
