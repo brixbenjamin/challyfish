@@ -44,7 +44,11 @@ jobs:
         with:
           deno-version: v2.x
       - name: Type-check Edge Functions
-        # From the function's own directory: deno.json carries the import map,
+        # From each function's own directory: deno.json carries the import map,
         # and deno resolves its config from the working directory.
-        working-directory: supabase/functions/delete-account
-        run: deno check index.ts
+        run: |
+          (cd supabase/functions/delete-account && deno check index.ts)
+          (cd supabase/functions/revenuecat-webhook && deno check index.ts)
+
+      - name: Test the webhook mapping
+        run: deno test supabase/functions/revenuecat-webhook/mapping_test.ts
