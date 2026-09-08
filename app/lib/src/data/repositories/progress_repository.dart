@@ -89,6 +89,26 @@ class ProgressRepository {
     );
   }
 
+  /// Every run the user has, in any status. The balance and the marks both
+  /// span the user's whole history, not just the active run.
+  Future<List<CampaignRun>> allRuns(String userId) async {
+    final rows =
+        await (db.select(db.campaignRuns)
+              ..where((r) => r.userId.equals(userId))
+              ..orderBy([(r) => OrderingTerm(expression: r.startedAt)]))
+            .get();
+    return rows.map(_toRun).toList();
+  }
+
+  Future<List<DayLog>> allDayLogs(String userId) async {
+    final rows =
+        await (db.select(db.dayLogs)
+              ..where((l) => l.userId.equals(userId))
+              ..orderBy([(l) => OrderingTerm(expression: l.dayIndex)]))
+            .get();
+    return rows.map(_toLog).toList();
+  }
+
   Future<List<DayLog>> logsFor(String runId) async {
     final rows =
         await (db.select(db.dayLogs)
