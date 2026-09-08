@@ -93,7 +93,11 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     );
   }
 
-  void _reload() => setState(() => _pending = _load());
+  void _reload() {
+    setState(() {
+      _pending = _load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
