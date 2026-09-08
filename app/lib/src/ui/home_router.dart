@@ -17,13 +17,35 @@ class HomeRouter extends ConsumerStatefulWidget {
   ConsumerState<HomeRouter> createState() => _HomeRouterState();
 }
 
-class _HomeRouterState extends ConsumerState<HomeRouter> {
+class _HomeRouterState extends ConsumerState<HomeRouter>
+    with WidgetsBindingObserver {
   Future<RunState?>? _pending;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pending = _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// RunState is derived once per load, against the clock as it was at that
+  /// moment. A phone backgrounded overnight and reopened the next morning would
+  /// otherwise still be showing yesterday's day and yesterday's action — which
+  /// is precisely the daily loop, not an edge case. Re-deriving on resume also
+  /// runs rollover, so the missed day is written when the user comes back.
+  ///
+  /// It does not cover a session left in the foreground across local midnight.
+  /// Plan 2's real navigation should derive against a live time source rather
+  /// than a cached future; this is the cheap half of that in scaffolding.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
+    if (lifecycle == AppLifecycleState.resumed) _reload();
   }
 
   Future<RunState?> _load() async {
