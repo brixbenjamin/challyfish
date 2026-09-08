@@ -76,4 +76,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get doctrineEmpty => 'Nothing here yet. Check back after a sync.';
+
+  @override
+  String get lockedBadge => 'Locked';
+
+  @override
+  String get unlockButton => 'Unlock';
+
+  @override
+  String missesAllowed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count misses allowed',
+      one: '1 miss allowed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get abandonActiveRunWarning =>
+      'Starting this will abandon your current run. The days you already logged still count, but the run cannot be resumed.';
+
+  @override
+  String get abandonAndStartButton => 'Abandon and start';
 }

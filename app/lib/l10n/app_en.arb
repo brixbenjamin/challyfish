@@ -90,5 +90,31 @@
   "doctrineEmpty": "Nothing here yet. Check back after a sync.",
   "@doctrineEmpty": {
     "description": "Empty state for the reading section before first sync."
+  },
+
+  "lockedBadge": "Locked",
+  "@lockedBadge": {
+    "description": "Marks a campaign in a pack the user has not bought."
+  },
+
+  "unlockButton": "Unlock",
+  "@unlockButton": {
+    "description": "Opens the purchase sheet for a locked pack."
+  },
+
+  "missesAllowed": "{count, plural, =1{1 miss allowed} other{{count} misses allowed}}",
+  "@missesAllowed": {
+    "description": "The campaign's miss allowance, stated on its detail screen. It scales with campaign length (ADR-0012) and so differs per campaign, which is why it is stated rather than left to a help article.",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "abandonActiveRunWarning": "Starting this will abandon your current run. The days you already logged still count, but the run cannot be resumed.",
+  "@abandonActiveRunWarning": {
+    "description": "[niche] One of exactly three destructive confirmations. Says effort is not erased, which is the product's position (ADR-0003)."
+  },
+
+  "abandonAndStartButton": "Abandon and start",
+  "@abandonAndStartButton": {
+    "description": "[niche] Starts this campaign in place of the active run. Names the cost in the label itself, not only in the warning above it."
   }
 }

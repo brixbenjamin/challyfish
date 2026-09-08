@@ -207,6 +207,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing here yet. Check back after a sync.'**
   String get doctrineEmpty;
+
+  /// Marks a campaign in a pack the user has not bought.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get lockedBadge;
+
+  /// Opens the purchase sheet for a locked pack.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlockButton;
+
+  /// The campaign's miss allowance, stated on its detail screen. It scales with campaign length (ADR-0012) and so differs per campaign, which is why it is stated rather than left to a help article.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 miss allowed} other{{count} misses allowed}}'**
+  String missesAllowed(int count);
+
+  /// [niche] One of exactly three destructive confirmations. Says effort is not erased, which is the product's position (ADR-0003).
+  ///
+  /// In en, this message translates to:
+  /// **'Starting this will abandon your current run. The days you already logged still count, but the run cannot be resumed.'**
+  String get abandonActiveRunWarning;
+
+  /// [niche] Starts this campaign in place of the active run. Names the cost in the label itself, not only in the warning above it.
+  ///
+  /// In en, this message translates to:
+  /// **'Abandon and start'**
+  String get abandonAndStartButton;
 }
 
 class _AppLocalizationsDelegate
