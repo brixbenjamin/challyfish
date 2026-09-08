@@ -1716,6 +1716,331 @@ class CampaignsCompanion extends UpdateCompanion<CampaignRow> {
   }
 }
 
+class $CampaignArchetypesTable extends CampaignArchetypes
+    with TableInfo<$CampaignArchetypesTable, CampaignArchetypeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CampaignArchetypesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _campaignIdMeta = const VerificationMeta(
+    'campaignId',
+  );
+  @override
+  late final GeneratedColumn<String> campaignId = GeneratedColumn<String>(
+    'campaign_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archetypeIdMeta = const VerificationMeta(
+    'archetypeId',
+  );
+  @override
+  late final GeneratedColumn<String> archetypeId = GeneratedColumn<String>(
+    'archetype_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weightMeta = const VerificationMeta('weight');
+  @override
+  late final GeneratedColumn<double> weight = GeneratedColumn<double>(
+    'weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    campaignId,
+    archetypeId,
+    weight,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'campaign_archetypes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CampaignArchetypeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('campaign_id')) {
+      context.handle(
+        _campaignIdMeta,
+        campaignId.isAcceptableOrUnknown(data['campaign_id']!, _campaignIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_campaignIdMeta);
+    }
+    if (data.containsKey('archetype_id')) {
+      context.handle(
+        _archetypeIdMeta,
+        archetypeId.isAcceptableOrUnknown(
+          data['archetype_id']!,
+          _archetypeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_archetypeIdMeta);
+    }
+    if (data.containsKey('weight')) {
+      context.handle(
+        _weightMeta,
+        weight.isAcceptableOrUnknown(data['weight']!, _weightMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {campaignId, archetypeId};
+  @override
+  CampaignArchetypeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CampaignArchetypeRow(
+      campaignId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}campaign_id'],
+      )!,
+      archetypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}archetype_id'],
+      )!,
+      weight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}weight'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CampaignArchetypesTable createAlias(String alias) {
+    return $CampaignArchetypesTable(attachedDatabase, alias);
+  }
+}
+
+class CampaignArchetypeRow extends DataClass
+    implements Insertable<CampaignArchetypeRow> {
+  final String campaignId;
+  final String archetypeId;
+  final double weight;
+  final DateTime updatedAt;
+  const CampaignArchetypeRow({
+    required this.campaignId,
+    required this.archetypeId,
+    required this.weight,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['campaign_id'] = Variable<String>(campaignId);
+    map['archetype_id'] = Variable<String>(archetypeId);
+    map['weight'] = Variable<double>(weight);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  CampaignArchetypesCompanion toCompanion(bool nullToAbsent) {
+    return CampaignArchetypesCompanion(
+      campaignId: Value(campaignId),
+      archetypeId: Value(archetypeId),
+      weight: Value(weight),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CampaignArchetypeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CampaignArchetypeRow(
+      campaignId: serializer.fromJson<String>(json['campaignId']),
+      archetypeId: serializer.fromJson<String>(json['archetypeId']),
+      weight: serializer.fromJson<double>(json['weight']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'campaignId': serializer.toJson<String>(campaignId),
+      'archetypeId': serializer.toJson<String>(archetypeId),
+      'weight': serializer.toJson<double>(weight),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  CampaignArchetypeRow copyWith({
+    String? campaignId,
+    String? archetypeId,
+    double? weight,
+    DateTime? updatedAt,
+  }) => CampaignArchetypeRow(
+    campaignId: campaignId ?? this.campaignId,
+    archetypeId: archetypeId ?? this.archetypeId,
+    weight: weight ?? this.weight,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CampaignArchetypeRow copyWithCompanion(CampaignArchetypesCompanion data) {
+    return CampaignArchetypeRow(
+      campaignId: data.campaignId.present
+          ? data.campaignId.value
+          : this.campaignId,
+      archetypeId: data.archetypeId.present
+          ? data.archetypeId.value
+          : this.archetypeId,
+      weight: data.weight.present ? data.weight.value : this.weight,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CampaignArchetypeRow(')
+          ..write('campaignId: $campaignId, ')
+          ..write('archetypeId: $archetypeId, ')
+          ..write('weight: $weight, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(campaignId, archetypeId, weight, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CampaignArchetypeRow &&
+          other.campaignId == this.campaignId &&
+          other.archetypeId == this.archetypeId &&
+          other.weight == this.weight &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CampaignArchetypesCompanion
+    extends UpdateCompanion<CampaignArchetypeRow> {
+  final Value<String> campaignId;
+  final Value<String> archetypeId;
+  final Value<double> weight;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const CampaignArchetypesCompanion({
+    this.campaignId = const Value.absent(),
+    this.archetypeId = const Value.absent(),
+    this.weight = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CampaignArchetypesCompanion.insert({
+    required String campaignId,
+    required String archetypeId,
+    this.weight = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : campaignId = Value(campaignId),
+       archetypeId = Value(archetypeId),
+       updatedAt = Value(updatedAt);
+  static Insertable<CampaignArchetypeRow> custom({
+    Expression<String>? campaignId,
+    Expression<String>? archetypeId,
+    Expression<double>? weight,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (campaignId != null) 'campaign_id': campaignId,
+      if (archetypeId != null) 'archetype_id': archetypeId,
+      if (weight != null) 'weight': weight,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CampaignArchetypesCompanion copyWith({
+    Value<String>? campaignId,
+    Value<String>? archetypeId,
+    Value<double>? weight,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CampaignArchetypesCompanion(
+      campaignId: campaignId ?? this.campaignId,
+      archetypeId: archetypeId ?? this.archetypeId,
+      weight: weight ?? this.weight,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (campaignId.present) {
+      map['campaign_id'] = Variable<String>(campaignId.value);
+    }
+    if (archetypeId.present) {
+      map['archetype_id'] = Variable<String>(archetypeId.value);
+    }
+    if (weight.present) {
+      map['weight'] = Variable<double>(weight.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CampaignArchetypesCompanion(')
+          ..write('campaignId: $campaignId, ')
+          ..write('archetypeId: $archetypeId, ')
+          ..write('weight: $weight, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -2281,6 +2606,1554 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
           ..write('archetypeId: $archetypeId, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DoctrineGroupsTable extends DoctrineGroups
+    with TableInfo<$DoctrineGroupsTable, DoctrineGroupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DoctrineGroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _blurbMeta = const VerificationMeta('blurb');
+  @override
+  late final GeneratedColumn<String> blurb = GeneratedColumn<String>(
+    'blurb',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sortMeta = const VerificationMeta('sort');
+  @override
+  late final GeneratedColumn<int> sort = GeneratedColumn<int>(
+    'sort',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, title, blurb, sort, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'doctrine_groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DoctrineGroupRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('blurb')) {
+      context.handle(
+        _blurbMeta,
+        blurb.isAcceptableOrUnknown(data['blurb']!, _blurbMeta),
+      );
+    }
+    if (data.containsKey('sort')) {
+      context.handle(
+        _sortMeta,
+        sort.isAcceptableOrUnknown(data['sort']!, _sortMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DoctrineGroupRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DoctrineGroupRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      blurb: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}blurb'],
+      ),
+      sort: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DoctrineGroupsTable createAlias(String alias) {
+    return $DoctrineGroupsTable(attachedDatabase, alias);
+  }
+}
+
+class DoctrineGroupRow extends DataClass
+    implements Insertable<DoctrineGroupRow> {
+  final String id;
+  final String title;
+  final String? blurb;
+  final int sort;
+  final DateTime updatedAt;
+  const DoctrineGroupRow({
+    required this.id,
+    required this.title,
+    this.blurb,
+    required this.sort,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || blurb != null) {
+      map['blurb'] = Variable<String>(blurb);
+    }
+    map['sort'] = Variable<int>(sort);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DoctrineGroupsCompanion toCompanion(bool nullToAbsent) {
+    return DoctrineGroupsCompanion(
+      id: Value(id),
+      title: Value(title),
+      blurb: blurb == null && nullToAbsent
+          ? const Value.absent()
+          : Value(blurb),
+      sort: Value(sort),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DoctrineGroupRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DoctrineGroupRow(
+      id: serializer.fromJson<String>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      blurb: serializer.fromJson<String?>(json['blurb']),
+      sort: serializer.fromJson<int>(json['sort']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'title': serializer.toJson<String>(title),
+      'blurb': serializer.toJson<String?>(blurb),
+      'sort': serializer.toJson<int>(sort),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DoctrineGroupRow copyWith({
+    String? id,
+    String? title,
+    Value<String?> blurb = const Value.absent(),
+    int? sort,
+    DateTime? updatedAt,
+  }) => DoctrineGroupRow(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    blurb: blurb.present ? blurb.value : this.blurb,
+    sort: sort ?? this.sort,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  DoctrineGroupRow copyWithCompanion(DoctrineGroupsCompanion data) {
+    return DoctrineGroupRow(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      blurb: data.blurb.present ? data.blurb.value : this.blurb,
+      sort: data.sort.present ? data.sort.value : this.sort,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DoctrineGroupRow(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('blurb: $blurb, ')
+          ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, title, blurb, sort, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DoctrineGroupRow &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.blurb == this.blurb &&
+          other.sort == this.sort &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DoctrineGroupsCompanion extends UpdateCompanion<DoctrineGroupRow> {
+  final Value<String> id;
+  final Value<String> title;
+  final Value<String?> blurb;
+  final Value<int> sort;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DoctrineGroupsCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.blurb = const Value.absent(),
+    this.sort = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DoctrineGroupsCompanion.insert({
+    required String id,
+    required String title,
+    this.blurb = const Value.absent(),
+    required int sort,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       title = Value(title),
+       sort = Value(sort),
+       updatedAt = Value(updatedAt);
+  static Insertable<DoctrineGroupRow> custom({
+    Expression<String>? id,
+    Expression<String>? title,
+    Expression<String>? blurb,
+    Expression<int>? sort,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (blurb != null) 'blurb': blurb,
+      if (sort != null) 'sort': sort,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DoctrineGroupsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? title,
+    Value<String?>? blurb,
+    Value<int>? sort,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DoctrineGroupsCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      blurb: blurb ?? this.blurb,
+      sort: sort ?? this.sort,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (blurb.present) {
+      map['blurb'] = Variable<String>(blurb.value);
+    }
+    if (sort.present) {
+      map['sort'] = Variable<int>(sort.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DoctrineGroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('blurb: $blurb, ')
+          ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DoctrineEntriesTable extends DoctrineEntries
+    with TableInfo<$DoctrineEntriesTable, DoctrineEntryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DoctrineEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMdMeta = const VerificationMeta('bodyMd');
+  @override
+  late final GeneratedColumn<String> bodyMd = GeneratedColumn<String>(
+    'body_md',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _relatedArchetypeIdMeta =
+      const VerificationMeta('relatedArchetypeId');
+  @override
+  late final GeneratedColumn<String> relatedArchetypeId =
+      GeneratedColumn<String>(
+        'related_archetype_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _sortMeta = const VerificationMeta('sort');
+  @override
+  late final GeneratedColumn<int> sort = GeneratedColumn<int>(
+    'sort',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    title,
+    bodyMd,
+    relatedArchetypeId,
+    sort,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'doctrine_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DoctrineEntryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('body_md')) {
+      context.handle(
+        _bodyMdMeta,
+        bodyMd.isAcceptableOrUnknown(data['body_md']!, _bodyMdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMdMeta);
+    }
+    if (data.containsKey('related_archetype_id')) {
+      context.handle(
+        _relatedArchetypeIdMeta,
+        relatedArchetypeId.isAcceptableOrUnknown(
+          data['related_archetype_id']!,
+          _relatedArchetypeIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sort')) {
+      context.handle(
+        _sortMeta,
+        sort.isAcceptableOrUnknown(data['sort']!, _sortMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DoctrineEntryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DoctrineEntryRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      bodyMd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body_md'],
+      )!,
+      relatedArchetypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}related_archetype_id'],
+      ),
+      sort: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DoctrineEntriesTable createAlias(String alias) {
+    return $DoctrineEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class DoctrineEntryRow extends DataClass
+    implements Insertable<DoctrineEntryRow> {
+  final String id;
+  final String groupId;
+  final String title;
+  final String bodyMd;
+  final String? relatedArchetypeId;
+  final int sort;
+  final DateTime updatedAt;
+  const DoctrineEntryRow({
+    required this.id,
+    required this.groupId,
+    required this.title,
+    required this.bodyMd,
+    this.relatedArchetypeId,
+    required this.sort,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['title'] = Variable<String>(title);
+    map['body_md'] = Variable<String>(bodyMd);
+    if (!nullToAbsent || relatedArchetypeId != null) {
+      map['related_archetype_id'] = Variable<String>(relatedArchetypeId);
+    }
+    map['sort'] = Variable<int>(sort);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DoctrineEntriesCompanion toCompanion(bool nullToAbsent) {
+    return DoctrineEntriesCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      title: Value(title),
+      bodyMd: Value(bodyMd),
+      relatedArchetypeId: relatedArchetypeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(relatedArchetypeId),
+      sort: Value(sort),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DoctrineEntryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DoctrineEntryRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      title: serializer.fromJson<String>(json['title']),
+      bodyMd: serializer.fromJson<String>(json['bodyMd']),
+      relatedArchetypeId: serializer.fromJson<String?>(
+        json['relatedArchetypeId'],
+      ),
+      sort: serializer.fromJson<int>(json['sort']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'groupId': serializer.toJson<String>(groupId),
+      'title': serializer.toJson<String>(title),
+      'bodyMd': serializer.toJson<String>(bodyMd),
+      'relatedArchetypeId': serializer.toJson<String?>(relatedArchetypeId),
+      'sort': serializer.toJson<int>(sort),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DoctrineEntryRow copyWith({
+    String? id,
+    String? groupId,
+    String? title,
+    String? bodyMd,
+    Value<String?> relatedArchetypeId = const Value.absent(),
+    int? sort,
+    DateTime? updatedAt,
+  }) => DoctrineEntryRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    title: title ?? this.title,
+    bodyMd: bodyMd ?? this.bodyMd,
+    relatedArchetypeId: relatedArchetypeId.present
+        ? relatedArchetypeId.value
+        : this.relatedArchetypeId,
+    sort: sort ?? this.sort,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  DoctrineEntryRow copyWithCompanion(DoctrineEntriesCompanion data) {
+    return DoctrineEntryRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      title: data.title.present ? data.title.value : this.title,
+      bodyMd: data.bodyMd.present ? data.bodyMd.value : this.bodyMd,
+      relatedArchetypeId: data.relatedArchetypeId.present
+          ? data.relatedArchetypeId.value
+          : this.relatedArchetypeId,
+      sort: data.sort.present ? data.sort.value : this.sort,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DoctrineEntryRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('title: $title, ')
+          ..write('bodyMd: $bodyMd, ')
+          ..write('relatedArchetypeId: $relatedArchetypeId, ')
+          ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    title,
+    bodyMd,
+    relatedArchetypeId,
+    sort,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DoctrineEntryRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.title == this.title &&
+          other.bodyMd == this.bodyMd &&
+          other.relatedArchetypeId == this.relatedArchetypeId &&
+          other.sort == this.sort &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DoctrineEntriesCompanion extends UpdateCompanion<DoctrineEntryRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<String> title;
+  final Value<String> bodyMd;
+  final Value<String?> relatedArchetypeId;
+  final Value<int> sort;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DoctrineEntriesCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.bodyMd = const Value.absent(),
+    this.relatedArchetypeId = const Value.absent(),
+    this.sort = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DoctrineEntriesCompanion.insert({
+    required String id,
+    required String groupId,
+    required String title,
+    required String bodyMd,
+    this.relatedArchetypeId = const Value.absent(),
+    required int sort,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       title = Value(title),
+       bodyMd = Value(bodyMd),
+       sort = Value(sort),
+       updatedAt = Value(updatedAt);
+  static Insertable<DoctrineEntryRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<String>? title,
+    Expression<String>? bodyMd,
+    Expression<String>? relatedArchetypeId,
+    Expression<int>? sort,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (title != null) 'title': title,
+      if (bodyMd != null) 'body_md': bodyMd,
+      if (relatedArchetypeId != null)
+        'related_archetype_id': relatedArchetypeId,
+      if (sort != null) 'sort': sort,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DoctrineEntriesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<String>? title,
+    Value<String>? bodyMd,
+    Value<String?>? relatedArchetypeId,
+    Value<int>? sort,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DoctrineEntriesCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      title: title ?? this.title,
+      bodyMd: bodyMd ?? this.bodyMd,
+      relatedArchetypeId: relatedArchetypeId ?? this.relatedArchetypeId,
+      sort: sort ?? this.sort,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (bodyMd.present) {
+      map['body_md'] = Variable<String>(bodyMd.value);
+    }
+    if (relatedArchetypeId.present) {
+      map['related_archetype_id'] = Variable<String>(relatedArchetypeId.value);
+    }
+    if (sort.present) {
+      map['sort'] = Variable<int>(sort.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DoctrineEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('title: $title, ')
+          ..write('bodyMd: $bodyMd, ')
+          ..write('relatedArchetypeId: $relatedArchetypeId, ')
+          ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DiagnosticQuestionsTable extends DiagnosticQuestions
+    with TableInfo<$DiagnosticQuestionsTable, DiagnosticQuestionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DiagnosticQuestionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _promptMeta = const VerificationMeta('prompt');
+  @override
+  late final GeneratedColumn<String> prompt = GeneratedColumn<String>(
+    'prompt',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortMeta = const VerificationMeta('sort');
+  @override
+  late final GeneratedColumn<int> sort = GeneratedColumn<int>(
+    'sort',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, prompt, sort, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'diagnostic_questions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DiagnosticQuestionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('prompt')) {
+      context.handle(
+        _promptMeta,
+        prompt.isAcceptableOrUnknown(data['prompt']!, _promptMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_promptMeta);
+    }
+    if (data.containsKey('sort')) {
+      context.handle(
+        _sortMeta,
+        sort.isAcceptableOrUnknown(data['sort']!, _sortMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DiagnosticQuestionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DiagnosticQuestionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      prompt: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}prompt'],
+      )!,
+      sort: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DiagnosticQuestionsTable createAlias(String alias) {
+    return $DiagnosticQuestionsTable(attachedDatabase, alias);
+  }
+}
+
+class DiagnosticQuestionRow extends DataClass
+    implements Insertable<DiagnosticQuestionRow> {
+  final String id;
+  final String prompt;
+  final int sort;
+  final DateTime updatedAt;
+  const DiagnosticQuestionRow({
+    required this.id,
+    required this.prompt,
+    required this.sort,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['prompt'] = Variable<String>(prompt);
+    map['sort'] = Variable<int>(sort);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DiagnosticQuestionsCompanion toCompanion(bool nullToAbsent) {
+    return DiagnosticQuestionsCompanion(
+      id: Value(id),
+      prompt: Value(prompt),
+      sort: Value(sort),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DiagnosticQuestionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DiagnosticQuestionRow(
+      id: serializer.fromJson<String>(json['id']),
+      prompt: serializer.fromJson<String>(json['prompt']),
+      sort: serializer.fromJson<int>(json['sort']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'prompt': serializer.toJson<String>(prompt),
+      'sort': serializer.toJson<int>(sort),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DiagnosticQuestionRow copyWith({
+    String? id,
+    String? prompt,
+    int? sort,
+    DateTime? updatedAt,
+  }) => DiagnosticQuestionRow(
+    id: id ?? this.id,
+    prompt: prompt ?? this.prompt,
+    sort: sort ?? this.sort,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  DiagnosticQuestionRow copyWithCompanion(DiagnosticQuestionsCompanion data) {
+    return DiagnosticQuestionRow(
+      id: data.id.present ? data.id.value : this.id,
+      prompt: data.prompt.present ? data.prompt.value : this.prompt,
+      sort: data.sort.present ? data.sort.value : this.sort,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiagnosticQuestionRow(')
+          ..write('id: $id, ')
+          ..write('prompt: $prompt, ')
+          ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, prompt, sort, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DiagnosticQuestionRow &&
+          other.id == this.id &&
+          other.prompt == this.prompt &&
+          other.sort == this.sort &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DiagnosticQuestionsCompanion
+    extends UpdateCompanion<DiagnosticQuestionRow> {
+  final Value<String> id;
+  final Value<String> prompt;
+  final Value<int> sort;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DiagnosticQuestionsCompanion({
+    this.id = const Value.absent(),
+    this.prompt = const Value.absent(),
+    this.sort = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DiagnosticQuestionsCompanion.insert({
+    required String id,
+    required String prompt,
+    required int sort,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       prompt = Value(prompt),
+       sort = Value(sort),
+       updatedAt = Value(updatedAt);
+  static Insertable<DiagnosticQuestionRow> custom({
+    Expression<String>? id,
+    Expression<String>? prompt,
+    Expression<int>? sort,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (prompt != null) 'prompt': prompt,
+      if (sort != null) 'sort': sort,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DiagnosticQuestionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? prompt,
+    Value<int>? sort,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DiagnosticQuestionsCompanion(
+      id: id ?? this.id,
+      prompt: prompt ?? this.prompt,
+      sort: sort ?? this.sort,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (prompt.present) {
+      map['prompt'] = Variable<String>(prompt.value);
+    }
+    if (sort.present) {
+      map['sort'] = Variable<int>(sort.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiagnosticQuestionsCompanion(')
+          ..write('id: $id, ')
+          ..write('prompt: $prompt, ')
+          ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DiagnosticOptionsTable extends DiagnosticOptions
+    with TableInfo<$DiagnosticOptionsTable, DiagnosticOptionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DiagnosticOptionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _questionIdMeta = const VerificationMeta(
+    'questionId',
+  );
+  @override
+  late final GeneratedColumn<String> questionId = GeneratedColumn<String>(
+    'question_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archetypeIdMeta = const VerificationMeta(
+    'archetypeId',
+  );
+  @override
+  late final GeneratedColumn<String> archetypeId = GeneratedColumn<String>(
+    'archetype_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortMeta = const VerificationMeta('sort');
+  @override
+  late final GeneratedColumn<int> sort = GeneratedColumn<int>(
+    'sort',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    questionId,
+    label,
+    archetypeId,
+    sort,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'diagnostic_options';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DiagnosticOptionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('question_id')) {
+      context.handle(
+        _questionIdMeta,
+        questionId.isAcceptableOrUnknown(data['question_id']!, _questionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_questionIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('archetype_id')) {
+      context.handle(
+        _archetypeIdMeta,
+        archetypeId.isAcceptableOrUnknown(
+          data['archetype_id']!,
+          _archetypeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_archetypeIdMeta);
+    }
+    if (data.containsKey('sort')) {
+      context.handle(
+        _sortMeta,
+        sort.isAcceptableOrUnknown(data['sort']!, _sortMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {questionId, sort},
+  ];
+  @override
+  DiagnosticOptionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DiagnosticOptionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      questionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}question_id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      archetypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}archetype_id'],
+      )!,
+      sort: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DiagnosticOptionsTable createAlias(String alias) {
+    return $DiagnosticOptionsTable(attachedDatabase, alias);
+  }
+}
+
+class DiagnosticOptionRow extends DataClass
+    implements Insertable<DiagnosticOptionRow> {
+  final String id;
+  final String questionId;
+  final String label;
+  final String archetypeId;
+  final int sort;
+  final DateTime updatedAt;
+  const DiagnosticOptionRow({
+    required this.id,
+    required this.questionId,
+    required this.label,
+    required this.archetypeId,
+    required this.sort,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['question_id'] = Variable<String>(questionId);
+    map['label'] = Variable<String>(label);
+    map['archetype_id'] = Variable<String>(archetypeId);
+    map['sort'] = Variable<int>(sort);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DiagnosticOptionsCompanion toCompanion(bool nullToAbsent) {
+    return DiagnosticOptionsCompanion(
+      id: Value(id),
+      questionId: Value(questionId),
+      label: Value(label),
+      archetypeId: Value(archetypeId),
+      sort: Value(sort),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DiagnosticOptionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DiagnosticOptionRow(
+      id: serializer.fromJson<String>(json['id']),
+      questionId: serializer.fromJson<String>(json['questionId']),
+      label: serializer.fromJson<String>(json['label']),
+      archetypeId: serializer.fromJson<String>(json['archetypeId']),
+      sort: serializer.fromJson<int>(json['sort']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'questionId': serializer.toJson<String>(questionId),
+      'label': serializer.toJson<String>(label),
+      'archetypeId': serializer.toJson<String>(archetypeId),
+      'sort': serializer.toJson<int>(sort),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DiagnosticOptionRow copyWith({
+    String? id,
+    String? questionId,
+    String? label,
+    String? archetypeId,
+    int? sort,
+    DateTime? updatedAt,
+  }) => DiagnosticOptionRow(
+    id: id ?? this.id,
+    questionId: questionId ?? this.questionId,
+    label: label ?? this.label,
+    archetypeId: archetypeId ?? this.archetypeId,
+    sort: sort ?? this.sort,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  DiagnosticOptionRow copyWithCompanion(DiagnosticOptionsCompanion data) {
+    return DiagnosticOptionRow(
+      id: data.id.present ? data.id.value : this.id,
+      questionId: data.questionId.present
+          ? data.questionId.value
+          : this.questionId,
+      label: data.label.present ? data.label.value : this.label,
+      archetypeId: data.archetypeId.present
+          ? data.archetypeId.value
+          : this.archetypeId,
+      sort: data.sort.present ? data.sort.value : this.sort,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiagnosticOptionRow(')
+          ..write('id: $id, ')
+          ..write('questionId: $questionId, ')
+          ..write('label: $label, ')
+          ..write('archetypeId: $archetypeId, ')
+          ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, questionId, label, archetypeId, sort, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DiagnosticOptionRow &&
+          other.id == this.id &&
+          other.questionId == this.questionId &&
+          other.label == this.label &&
+          other.archetypeId == this.archetypeId &&
+          other.sort == this.sort &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DiagnosticOptionsCompanion extends UpdateCompanion<DiagnosticOptionRow> {
+  final Value<String> id;
+  final Value<String> questionId;
+  final Value<String> label;
+  final Value<String> archetypeId;
+  final Value<int> sort;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DiagnosticOptionsCompanion({
+    this.id = const Value.absent(),
+    this.questionId = const Value.absent(),
+    this.label = const Value.absent(),
+    this.archetypeId = const Value.absent(),
+    this.sort = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DiagnosticOptionsCompanion.insert({
+    required String id,
+    required String questionId,
+    required String label,
+    required String archetypeId,
+    required int sort,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       questionId = Value(questionId),
+       label = Value(label),
+       archetypeId = Value(archetypeId),
+       sort = Value(sort),
+       updatedAt = Value(updatedAt);
+  static Insertable<DiagnosticOptionRow> custom({
+    Expression<String>? id,
+    Expression<String>? questionId,
+    Expression<String>? label,
+    Expression<String>? archetypeId,
+    Expression<int>? sort,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (questionId != null) 'question_id': questionId,
+      if (label != null) 'label': label,
+      if (archetypeId != null) 'archetype_id': archetypeId,
+      if (sort != null) 'sort': sort,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DiagnosticOptionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? questionId,
+    Value<String>? label,
+    Value<String>? archetypeId,
+    Value<int>? sort,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DiagnosticOptionsCompanion(
+      id: id ?? this.id,
+      questionId: questionId ?? this.questionId,
+      label: label ?? this.label,
+      archetypeId: archetypeId ?? this.archetypeId,
+      sort: sort ?? this.sort,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (questionId.present) {
+      map['question_id'] = Variable<String>(questionId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (archetypeId.present) {
+      map['archetype_id'] = Variable<String>(archetypeId.value);
+    }
+    if (sort.present) {
+      map['sort'] = Variable<int>(sort.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiagnosticOptionsCompanion(')
+          ..write('id: $id, ')
+          ..write('questionId: $questionId, ')
+          ..write('label: $label, ')
+          ..write('archetypeId: $archetypeId, ')
+          ..write('sort: $sort, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3515,15 +5388,556 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
   }
 }
 
+class $DiagnosticResultsTable extends DiagnosticResults
+    with TableInfo<$DiagnosticResultsTable, DiagnosticResultRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DiagnosticResultsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _takenAtMeta = const VerificationMeta(
+    'takenAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> takenAt = GeneratedColumn<DateTime>(
+    'taken_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _scoresMeta = const VerificationMeta('scores');
+  @override
+  late final GeneratedColumn<String> scores = GeneratedColumn<String>(
+    'scores',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weakestArchetypeIdMeta =
+      const VerificationMeta('weakestArchetypeId');
+  @override
+  late final GeneratedColumn<String> weakestArchetypeId =
+      GeneratedColumn<String>(
+        'weakest_archetype_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _recommendedCampaignIdMeta =
+      const VerificationMeta('recommendedCampaignId');
+  @override
+  late final GeneratedColumn<String> recommendedCampaignId =
+      GeneratedColumn<String>(
+        'recommended_campaign_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
+  @override
+  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
+    'dirty',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("dirty" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    takenAt,
+    scores,
+    weakestArchetypeId,
+    recommendedCampaignId,
+    updatedAt,
+    dirty,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'diagnostic_results';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DiagnosticResultRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('taken_at')) {
+      context.handle(
+        _takenAtMeta,
+        takenAt.isAcceptableOrUnknown(data['taken_at']!, _takenAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_takenAtMeta);
+    }
+    if (data.containsKey('scores')) {
+      context.handle(
+        _scoresMeta,
+        scores.isAcceptableOrUnknown(data['scores']!, _scoresMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_scoresMeta);
+    }
+    if (data.containsKey('weakest_archetype_id')) {
+      context.handle(
+        _weakestArchetypeIdMeta,
+        weakestArchetypeId.isAcceptableOrUnknown(
+          data['weakest_archetype_id']!,
+          _weakestArchetypeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_weakestArchetypeIdMeta);
+    }
+    if (data.containsKey('recommended_campaign_id')) {
+      context.handle(
+        _recommendedCampaignIdMeta,
+        recommendedCampaignId.isAcceptableOrUnknown(
+          data['recommended_campaign_id']!,
+          _recommendedCampaignIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_recommendedCampaignIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('dirty')) {
+      context.handle(
+        _dirtyMeta,
+        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DiagnosticResultRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DiagnosticResultRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      takenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}taken_at'],
+      )!,
+      scores: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}scores'],
+      )!,
+      weakestArchetypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weakest_archetype_id'],
+      )!,
+      recommendedCampaignId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recommended_campaign_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      dirty: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dirty'],
+      )!,
+    );
+  }
+
+  @override
+  $DiagnosticResultsTable createAlias(String alias) {
+    return $DiagnosticResultsTable(attachedDatabase, alias);
+  }
+}
+
+class DiagnosticResultRow extends DataClass
+    implements Insertable<DiagnosticResultRow> {
+  final String id;
+  final String userId;
+  final DateTime takenAt;
+
+  /// JSON: archetype key to relative score, 0 to 1.
+  final String scores;
+  final String weakestArchetypeId;
+  final String recommendedCampaignId;
+  final DateTime updatedAt;
+  final bool dirty;
+  const DiagnosticResultRow({
+    required this.id,
+    required this.userId,
+    required this.takenAt,
+    required this.scores,
+    required this.weakestArchetypeId,
+    required this.recommendedCampaignId,
+    required this.updatedAt,
+    required this.dirty,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['taken_at'] = Variable<DateTime>(takenAt);
+    map['scores'] = Variable<String>(scores);
+    map['weakest_archetype_id'] = Variable<String>(weakestArchetypeId);
+    map['recommended_campaign_id'] = Variable<String>(recommendedCampaignId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['dirty'] = Variable<bool>(dirty);
+    return map;
+  }
+
+  DiagnosticResultsCompanion toCompanion(bool nullToAbsent) {
+    return DiagnosticResultsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      takenAt: Value(takenAt),
+      scores: Value(scores),
+      weakestArchetypeId: Value(weakestArchetypeId),
+      recommendedCampaignId: Value(recommendedCampaignId),
+      updatedAt: Value(updatedAt),
+      dirty: Value(dirty),
+    );
+  }
+
+  factory DiagnosticResultRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DiagnosticResultRow(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      takenAt: serializer.fromJson<DateTime>(json['takenAt']),
+      scores: serializer.fromJson<String>(json['scores']),
+      weakestArchetypeId: serializer.fromJson<String>(
+        json['weakestArchetypeId'],
+      ),
+      recommendedCampaignId: serializer.fromJson<String>(
+        json['recommendedCampaignId'],
+      ),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      dirty: serializer.fromJson<bool>(json['dirty']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'takenAt': serializer.toJson<DateTime>(takenAt),
+      'scores': serializer.toJson<String>(scores),
+      'weakestArchetypeId': serializer.toJson<String>(weakestArchetypeId),
+      'recommendedCampaignId': serializer.toJson<String>(recommendedCampaignId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'dirty': serializer.toJson<bool>(dirty),
+    };
+  }
+
+  DiagnosticResultRow copyWith({
+    String? id,
+    String? userId,
+    DateTime? takenAt,
+    String? scores,
+    String? weakestArchetypeId,
+    String? recommendedCampaignId,
+    DateTime? updatedAt,
+    bool? dirty,
+  }) => DiagnosticResultRow(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    takenAt: takenAt ?? this.takenAt,
+    scores: scores ?? this.scores,
+    weakestArchetypeId: weakestArchetypeId ?? this.weakestArchetypeId,
+    recommendedCampaignId: recommendedCampaignId ?? this.recommendedCampaignId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    dirty: dirty ?? this.dirty,
+  );
+  DiagnosticResultRow copyWithCompanion(DiagnosticResultsCompanion data) {
+    return DiagnosticResultRow(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      takenAt: data.takenAt.present ? data.takenAt.value : this.takenAt,
+      scores: data.scores.present ? data.scores.value : this.scores,
+      weakestArchetypeId: data.weakestArchetypeId.present
+          ? data.weakestArchetypeId.value
+          : this.weakestArchetypeId,
+      recommendedCampaignId: data.recommendedCampaignId.present
+          ? data.recommendedCampaignId.value
+          : this.recommendedCampaignId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      dirty: data.dirty.present ? data.dirty.value : this.dirty,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiagnosticResultRow(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('takenAt: $takenAt, ')
+          ..write('scores: $scores, ')
+          ..write('weakestArchetypeId: $weakestArchetypeId, ')
+          ..write('recommendedCampaignId: $recommendedCampaignId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    takenAt,
+    scores,
+    weakestArchetypeId,
+    recommendedCampaignId,
+    updatedAt,
+    dirty,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DiagnosticResultRow &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.takenAt == this.takenAt &&
+          other.scores == this.scores &&
+          other.weakestArchetypeId == this.weakestArchetypeId &&
+          other.recommendedCampaignId == this.recommendedCampaignId &&
+          other.updatedAt == this.updatedAt &&
+          other.dirty == this.dirty);
+}
+
+class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<DateTime> takenAt;
+  final Value<String> scores;
+  final Value<String> weakestArchetypeId;
+  final Value<String> recommendedCampaignId;
+  final Value<DateTime> updatedAt;
+  final Value<bool> dirty;
+  final Value<int> rowid;
+  const DiagnosticResultsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.takenAt = const Value.absent(),
+    this.scores = const Value.absent(),
+    this.weakestArchetypeId = const Value.absent(),
+    this.recommendedCampaignId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.dirty = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DiagnosticResultsCompanion.insert({
+    required String id,
+    required String userId,
+    required DateTime takenAt,
+    required String scores,
+    required String weakestArchetypeId,
+    required String recommendedCampaignId,
+    required DateTime updatedAt,
+    this.dirty = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       takenAt = Value(takenAt),
+       scores = Value(scores),
+       weakestArchetypeId = Value(weakestArchetypeId),
+       recommendedCampaignId = Value(recommendedCampaignId),
+       updatedAt = Value(updatedAt);
+  static Insertable<DiagnosticResultRow> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<DateTime>? takenAt,
+    Expression<String>? scores,
+    Expression<String>? weakestArchetypeId,
+    Expression<String>? recommendedCampaignId,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? dirty,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (takenAt != null) 'taken_at': takenAt,
+      if (scores != null) 'scores': scores,
+      if (weakestArchetypeId != null)
+        'weakest_archetype_id': weakestArchetypeId,
+      if (recommendedCampaignId != null)
+        'recommended_campaign_id': recommendedCampaignId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (dirty != null) 'dirty': dirty,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DiagnosticResultsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<DateTime>? takenAt,
+    Value<String>? scores,
+    Value<String>? weakestArchetypeId,
+    Value<String>? recommendedCampaignId,
+    Value<DateTime>? updatedAt,
+    Value<bool>? dirty,
+    Value<int>? rowid,
+  }) {
+    return DiagnosticResultsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      takenAt: takenAt ?? this.takenAt,
+      scores: scores ?? this.scores,
+      weakestArchetypeId: weakestArchetypeId ?? this.weakestArchetypeId,
+      recommendedCampaignId:
+          recommendedCampaignId ?? this.recommendedCampaignId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      dirty: dirty ?? this.dirty,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (takenAt.present) {
+      map['taken_at'] = Variable<DateTime>(takenAt.value);
+    }
+    if (scores.present) {
+      map['scores'] = Variable<String>(scores.value);
+    }
+    if (weakestArchetypeId.present) {
+      map['weakest_archetype_id'] = Variable<String>(weakestArchetypeId.value);
+    }
+    if (recommendedCampaignId.present) {
+      map['recommended_campaign_id'] = Variable<String>(
+        recommendedCampaignId.value,
+      );
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (dirty.present) {
+      map['dirty'] = Variable<bool>(dirty.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DiagnosticResultsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('takenAt: $takenAt, ')
+          ..write('scores: $scores, ')
+          ..write('weakestArchetypeId: $weakestArchetypeId, ')
+          ..write('recommendedCampaignId: $recommendedCampaignId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$FeralDatabase extends GeneratedDatabase {
   _$FeralDatabase(QueryExecutor e) : super(e);
   $FeralDatabaseManager get managers => $FeralDatabaseManager(this);
   late final $ArchetypesTable archetypes = $ArchetypesTable(this);
   late final $PacksTable packs = $PacksTable(this);
   late final $CampaignsTable campaigns = $CampaignsTable(this);
+  late final $CampaignArchetypesTable campaignArchetypes =
+      $CampaignArchetypesTable(this);
   late final $ActionsTable actions = $ActionsTable(this);
+  late final $DoctrineGroupsTable doctrineGroups = $DoctrineGroupsTable(this);
+  late final $DoctrineEntriesTable doctrineEntries = $DoctrineEntriesTable(
+    this,
+  );
+  late final $DiagnosticQuestionsTable diagnosticQuestions =
+      $DiagnosticQuestionsTable(this);
+  late final $DiagnosticOptionsTable diagnosticOptions =
+      $DiagnosticOptionsTable(this);
   late final $CampaignRunsTable campaignRuns = $CampaignRunsTable(this);
   late final $DayLogsTable dayLogs = $DayLogsTable(this);
+  late final $DiagnosticResultsTable diagnosticResults =
+      $DiagnosticResultsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3532,9 +5946,15 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     archetypes,
     packs,
     campaigns,
+    campaignArchetypes,
     actions,
+    doctrineGroups,
+    doctrineEntries,
+    diagnosticQuestions,
+    diagnosticOptions,
     campaignRuns,
     dayLogs,
+    diagnosticResults,
   ];
 }
 
@@ -4387,6 +6807,204 @@ typedef $$CampaignsTableProcessedTableManager =
       CampaignRow,
       PrefetchHooks Function()
     >;
+typedef $$CampaignArchetypesTableCreateCompanionBuilder =
+    CampaignArchetypesCompanion Function({
+      required String campaignId,
+      required String archetypeId,
+      Value<double> weight,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CampaignArchetypesTableUpdateCompanionBuilder =
+    CampaignArchetypesCompanion Function({
+      Value<String> campaignId,
+      Value<String> archetypeId,
+      Value<double> weight,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CampaignArchetypesTableFilterComposer
+    extends Composer<_$FeralDatabase, $CampaignArchetypesTable> {
+  $$CampaignArchetypesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get campaignId => $composableBuilder(
+    column: $table.campaignId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get weight => $composableBuilder(
+    column: $table.weight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CampaignArchetypesTableOrderingComposer
+    extends Composer<_$FeralDatabase, $CampaignArchetypesTable> {
+  $$CampaignArchetypesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get campaignId => $composableBuilder(
+    column: $table.campaignId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get weight => $composableBuilder(
+    column: $table.weight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CampaignArchetypesTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $CampaignArchetypesTable> {
+  $$CampaignArchetypesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get campaignId => $composableBuilder(
+    column: $table.campaignId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get weight =>
+      $composableBuilder(column: $table.weight, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CampaignArchetypesTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $CampaignArchetypesTable,
+          CampaignArchetypeRow,
+          $$CampaignArchetypesTableFilterComposer,
+          $$CampaignArchetypesTableOrderingComposer,
+          $$CampaignArchetypesTableAnnotationComposer,
+          $$CampaignArchetypesTableCreateCompanionBuilder,
+          $$CampaignArchetypesTableUpdateCompanionBuilder,
+          (
+            CampaignArchetypeRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $CampaignArchetypesTable,
+              CampaignArchetypeRow
+            >,
+          ),
+          CampaignArchetypeRow,
+          PrefetchHooks Function()
+        > {
+  $$CampaignArchetypesTableTableManager(
+    _$FeralDatabase db,
+    $CampaignArchetypesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CampaignArchetypesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CampaignArchetypesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CampaignArchetypesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> campaignId = const Value.absent(),
+                Value<String> archetypeId = const Value.absent(),
+                Value<double> weight = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CampaignArchetypesCompanion(
+                campaignId: campaignId,
+                archetypeId: archetypeId,
+                weight: weight,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String campaignId,
+                required String archetypeId,
+                Value<double> weight = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CampaignArchetypesCompanion.insert(
+                campaignId: campaignId,
+                archetypeId: archetypeId,
+                weight: weight,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CampaignArchetypesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $CampaignArchetypesTable,
+      CampaignArchetypeRow,
+      $$CampaignArchetypesTableFilterComposer,
+      $$CampaignArchetypesTableOrderingComposer,
+      $$CampaignArchetypesTableAnnotationComposer,
+      $$CampaignArchetypesTableCreateCompanionBuilder,
+      $$CampaignArchetypesTableUpdateCompanionBuilder,
+      (
+        CampaignArchetypeRow,
+        BaseReferences<
+          _$FeralDatabase,
+          $CampaignArchetypesTable,
+          CampaignArchetypeRow
+        >,
+      ),
+      CampaignArchetypeRow,
+      PrefetchHooks Function()
+    >;
 typedef $$ActionsTableCreateCompanionBuilder =
     ActionsCompanion Function({
       required String id,
@@ -4664,6 +7282,895 @@ typedef $$ActionsTableProcessedTableManager =
       $$ActionsTableUpdateCompanionBuilder,
       (ActionRow, BaseReferences<_$FeralDatabase, $ActionsTable, ActionRow>),
       ActionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DoctrineGroupsTableCreateCompanionBuilder =
+    DoctrineGroupsCompanion Function({
+      required String id,
+      required String title,
+      Value<String?> blurb,
+      required int sort,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DoctrineGroupsTableUpdateCompanionBuilder =
+    DoctrineGroupsCompanion Function({
+      Value<String> id,
+      Value<String> title,
+      Value<String?> blurb,
+      Value<int> sort,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$DoctrineGroupsTableFilterComposer
+    extends Composer<_$FeralDatabase, $DoctrineGroupsTable> {
+  $$DoctrineGroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get blurb => $composableBuilder(
+    column: $table.blurb,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DoctrineGroupsTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DoctrineGroupsTable> {
+  $$DoctrineGroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get blurb => $composableBuilder(
+    column: $table.blurb,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DoctrineGroupsTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DoctrineGroupsTable> {
+  $$DoctrineGroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get blurb =>
+      $composableBuilder(column: $table.blurb, builder: (column) => column);
+
+  GeneratedColumn<int> get sort =>
+      $composableBuilder(column: $table.sort, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DoctrineGroupsTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DoctrineGroupsTable,
+          DoctrineGroupRow,
+          $$DoctrineGroupsTableFilterComposer,
+          $$DoctrineGroupsTableOrderingComposer,
+          $$DoctrineGroupsTableAnnotationComposer,
+          $$DoctrineGroupsTableCreateCompanionBuilder,
+          $$DoctrineGroupsTableUpdateCompanionBuilder,
+          (
+            DoctrineGroupRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $DoctrineGroupsTable,
+              DoctrineGroupRow
+            >,
+          ),
+          DoctrineGroupRow,
+          PrefetchHooks Function()
+        > {
+  $$DoctrineGroupsTableTableManager(
+    _$FeralDatabase db,
+    $DoctrineGroupsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DoctrineGroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DoctrineGroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DoctrineGroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> blurb = const Value.absent(),
+                Value<int> sort = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DoctrineGroupsCompanion(
+                id: id,
+                title: title,
+                blurb: blurb,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String title,
+                Value<String?> blurb = const Value.absent(),
+                required int sort,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DoctrineGroupsCompanion.insert(
+                id: id,
+                title: title,
+                blurb: blurb,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DoctrineGroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DoctrineGroupsTable,
+      DoctrineGroupRow,
+      $$DoctrineGroupsTableFilterComposer,
+      $$DoctrineGroupsTableOrderingComposer,
+      $$DoctrineGroupsTableAnnotationComposer,
+      $$DoctrineGroupsTableCreateCompanionBuilder,
+      $$DoctrineGroupsTableUpdateCompanionBuilder,
+      (
+        DoctrineGroupRow,
+        BaseReferences<_$FeralDatabase, $DoctrineGroupsTable, DoctrineGroupRow>,
+      ),
+      DoctrineGroupRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DoctrineEntriesTableCreateCompanionBuilder =
+    DoctrineEntriesCompanion Function({
+      required String id,
+      required String groupId,
+      required String title,
+      required String bodyMd,
+      Value<String?> relatedArchetypeId,
+      required int sort,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DoctrineEntriesTableUpdateCompanionBuilder =
+    DoctrineEntriesCompanion Function({
+      Value<String> id,
+      Value<String> groupId,
+      Value<String> title,
+      Value<String> bodyMd,
+      Value<String?> relatedArchetypeId,
+      Value<int> sort,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$DoctrineEntriesTableFilterComposer
+    extends Composer<_$FeralDatabase, $DoctrineEntriesTable> {
+  $$DoctrineEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bodyMd => $composableBuilder(
+    column: $table.bodyMd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get relatedArchetypeId => $composableBuilder(
+    column: $table.relatedArchetypeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DoctrineEntriesTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DoctrineEntriesTable> {
+  $$DoctrineEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bodyMd => $composableBuilder(
+    column: $table.bodyMd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get relatedArchetypeId => $composableBuilder(
+    column: $table.relatedArchetypeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DoctrineEntriesTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DoctrineEntriesTable> {
+  $$DoctrineEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get bodyMd =>
+      $composableBuilder(column: $table.bodyMd, builder: (column) => column);
+
+  GeneratedColumn<String> get relatedArchetypeId => $composableBuilder(
+    column: $table.relatedArchetypeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sort =>
+      $composableBuilder(column: $table.sort, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DoctrineEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DoctrineEntriesTable,
+          DoctrineEntryRow,
+          $$DoctrineEntriesTableFilterComposer,
+          $$DoctrineEntriesTableOrderingComposer,
+          $$DoctrineEntriesTableAnnotationComposer,
+          $$DoctrineEntriesTableCreateCompanionBuilder,
+          $$DoctrineEntriesTableUpdateCompanionBuilder,
+          (
+            DoctrineEntryRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $DoctrineEntriesTable,
+              DoctrineEntryRow
+            >,
+          ),
+          DoctrineEntryRow,
+          PrefetchHooks Function()
+        > {
+  $$DoctrineEntriesTableTableManager(
+    _$FeralDatabase db,
+    $DoctrineEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DoctrineEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DoctrineEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DoctrineEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> bodyMd = const Value.absent(),
+                Value<String?> relatedArchetypeId = const Value.absent(),
+                Value<int> sort = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DoctrineEntriesCompanion(
+                id: id,
+                groupId: groupId,
+                title: title,
+                bodyMd: bodyMd,
+                relatedArchetypeId: relatedArchetypeId,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String groupId,
+                required String title,
+                required String bodyMd,
+                Value<String?> relatedArchetypeId = const Value.absent(),
+                required int sort,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DoctrineEntriesCompanion.insert(
+                id: id,
+                groupId: groupId,
+                title: title,
+                bodyMd: bodyMd,
+                relatedArchetypeId: relatedArchetypeId,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DoctrineEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DoctrineEntriesTable,
+      DoctrineEntryRow,
+      $$DoctrineEntriesTableFilterComposer,
+      $$DoctrineEntriesTableOrderingComposer,
+      $$DoctrineEntriesTableAnnotationComposer,
+      $$DoctrineEntriesTableCreateCompanionBuilder,
+      $$DoctrineEntriesTableUpdateCompanionBuilder,
+      (
+        DoctrineEntryRow,
+        BaseReferences<
+          _$FeralDatabase,
+          $DoctrineEntriesTable,
+          DoctrineEntryRow
+        >,
+      ),
+      DoctrineEntryRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DiagnosticQuestionsTableCreateCompanionBuilder =
+    DiagnosticQuestionsCompanion Function({
+      required String id,
+      required String prompt,
+      required int sort,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DiagnosticQuestionsTableUpdateCompanionBuilder =
+    DiagnosticQuestionsCompanion Function({
+      Value<String> id,
+      Value<String> prompt,
+      Value<int> sort,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$DiagnosticQuestionsTableFilterComposer
+    extends Composer<_$FeralDatabase, $DiagnosticQuestionsTable> {
+  $$DiagnosticQuestionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get prompt => $composableBuilder(
+    column: $table.prompt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DiagnosticQuestionsTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DiagnosticQuestionsTable> {
+  $$DiagnosticQuestionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get prompt => $composableBuilder(
+    column: $table.prompt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DiagnosticQuestionsTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DiagnosticQuestionsTable> {
+  $$DiagnosticQuestionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get prompt =>
+      $composableBuilder(column: $table.prompt, builder: (column) => column);
+
+  GeneratedColumn<int> get sort =>
+      $composableBuilder(column: $table.sort, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DiagnosticQuestionsTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DiagnosticQuestionsTable,
+          DiagnosticQuestionRow,
+          $$DiagnosticQuestionsTableFilterComposer,
+          $$DiagnosticQuestionsTableOrderingComposer,
+          $$DiagnosticQuestionsTableAnnotationComposer,
+          $$DiagnosticQuestionsTableCreateCompanionBuilder,
+          $$DiagnosticQuestionsTableUpdateCompanionBuilder,
+          (
+            DiagnosticQuestionRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $DiagnosticQuestionsTable,
+              DiagnosticQuestionRow
+            >,
+          ),
+          DiagnosticQuestionRow,
+          PrefetchHooks Function()
+        > {
+  $$DiagnosticQuestionsTableTableManager(
+    _$FeralDatabase db,
+    $DiagnosticQuestionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DiagnosticQuestionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DiagnosticQuestionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$DiagnosticQuestionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> prompt = const Value.absent(),
+                Value<int> sort = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DiagnosticQuestionsCompanion(
+                id: id,
+                prompt: prompt,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String prompt,
+                required int sort,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DiagnosticQuestionsCompanion.insert(
+                id: id,
+                prompt: prompt,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DiagnosticQuestionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DiagnosticQuestionsTable,
+      DiagnosticQuestionRow,
+      $$DiagnosticQuestionsTableFilterComposer,
+      $$DiagnosticQuestionsTableOrderingComposer,
+      $$DiagnosticQuestionsTableAnnotationComposer,
+      $$DiagnosticQuestionsTableCreateCompanionBuilder,
+      $$DiagnosticQuestionsTableUpdateCompanionBuilder,
+      (
+        DiagnosticQuestionRow,
+        BaseReferences<
+          _$FeralDatabase,
+          $DiagnosticQuestionsTable,
+          DiagnosticQuestionRow
+        >,
+      ),
+      DiagnosticQuestionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DiagnosticOptionsTableCreateCompanionBuilder =
+    DiagnosticOptionsCompanion Function({
+      required String id,
+      required String questionId,
+      required String label,
+      required String archetypeId,
+      required int sort,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DiagnosticOptionsTableUpdateCompanionBuilder =
+    DiagnosticOptionsCompanion Function({
+      Value<String> id,
+      Value<String> questionId,
+      Value<String> label,
+      Value<String> archetypeId,
+      Value<int> sort,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$DiagnosticOptionsTableFilterComposer
+    extends Composer<_$FeralDatabase, $DiagnosticOptionsTable> {
+  $$DiagnosticOptionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get questionId => $composableBuilder(
+    column: $table.questionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DiagnosticOptionsTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DiagnosticOptionsTable> {
+  $$DiagnosticOptionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get questionId => $composableBuilder(
+    column: $table.questionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DiagnosticOptionsTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DiagnosticOptionsTable> {
+  $$DiagnosticOptionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get questionId => $composableBuilder(
+    column: $table.questionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sort =>
+      $composableBuilder(column: $table.sort, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DiagnosticOptionsTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DiagnosticOptionsTable,
+          DiagnosticOptionRow,
+          $$DiagnosticOptionsTableFilterComposer,
+          $$DiagnosticOptionsTableOrderingComposer,
+          $$DiagnosticOptionsTableAnnotationComposer,
+          $$DiagnosticOptionsTableCreateCompanionBuilder,
+          $$DiagnosticOptionsTableUpdateCompanionBuilder,
+          (
+            DiagnosticOptionRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $DiagnosticOptionsTable,
+              DiagnosticOptionRow
+            >,
+          ),
+          DiagnosticOptionRow,
+          PrefetchHooks Function()
+        > {
+  $$DiagnosticOptionsTableTableManager(
+    _$FeralDatabase db,
+    $DiagnosticOptionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DiagnosticOptionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DiagnosticOptionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DiagnosticOptionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> questionId = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String> archetypeId = const Value.absent(),
+                Value<int> sort = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DiagnosticOptionsCompanion(
+                id: id,
+                questionId: questionId,
+                label: label,
+                archetypeId: archetypeId,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String questionId,
+                required String label,
+                required String archetypeId,
+                required int sort,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DiagnosticOptionsCompanion.insert(
+                id: id,
+                questionId: questionId,
+                label: label,
+                archetypeId: archetypeId,
+                sort: sort,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DiagnosticOptionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DiagnosticOptionsTable,
+      DiagnosticOptionRow,
+      $$DiagnosticOptionsTableFilterComposer,
+      $$DiagnosticOptionsTableOrderingComposer,
+      $$DiagnosticOptionsTableAnnotationComposer,
+      $$DiagnosticOptionsTableCreateCompanionBuilder,
+      $$DiagnosticOptionsTableUpdateCompanionBuilder,
+      (
+        DiagnosticOptionRow,
+        BaseReferences<
+          _$FeralDatabase,
+          $DiagnosticOptionsTable,
+          DiagnosticOptionRow
+        >,
+      ),
+      DiagnosticOptionRow,
       PrefetchHooks Function()
     >;
 typedef $$CampaignRunsTableCreateCompanionBuilder =
@@ -5261,6 +8768,280 @@ typedef $$DayLogsTableProcessedTableManager =
       DayLogRow,
       PrefetchHooks Function()
     >;
+typedef $$DiagnosticResultsTableCreateCompanionBuilder =
+    DiagnosticResultsCompanion Function({
+      required String id,
+      required String userId,
+      required DateTime takenAt,
+      required String scores,
+      required String weakestArchetypeId,
+      required String recommendedCampaignId,
+      required DateTime updatedAt,
+      Value<bool> dirty,
+      Value<int> rowid,
+    });
+typedef $$DiagnosticResultsTableUpdateCompanionBuilder =
+    DiagnosticResultsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<DateTime> takenAt,
+      Value<String> scores,
+      Value<String> weakestArchetypeId,
+      Value<String> recommendedCampaignId,
+      Value<DateTime> updatedAt,
+      Value<bool> dirty,
+      Value<int> rowid,
+    });
+
+class $$DiagnosticResultsTableFilterComposer
+    extends Composer<_$FeralDatabase, $DiagnosticResultsTable> {
+  $$DiagnosticResultsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get scores => $composableBuilder(
+    column: $table.scores,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weakestArchetypeId => $composableBuilder(
+    column: $table.weakestArchetypeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recommendedCampaignId => $composableBuilder(
+    column: $table.recommendedCampaignId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DiagnosticResultsTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DiagnosticResultsTable> {
+  $$DiagnosticResultsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get takenAt => $composableBuilder(
+    column: $table.takenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get scores => $composableBuilder(
+    column: $table.scores,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weakestArchetypeId => $composableBuilder(
+    column: $table.weakestArchetypeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recommendedCampaignId => $composableBuilder(
+    column: $table.recommendedCampaignId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DiagnosticResultsTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DiagnosticResultsTable> {
+  $$DiagnosticResultsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get takenAt =>
+      $composableBuilder(column: $table.takenAt, builder: (column) => column);
+
+  GeneratedColumn<String> get scores =>
+      $composableBuilder(column: $table.scores, builder: (column) => column);
+
+  GeneratedColumn<String> get weakestArchetypeId => $composableBuilder(
+    column: $table.weakestArchetypeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recommendedCampaignId => $composableBuilder(
+    column: $table.recommendedCampaignId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get dirty =>
+      $composableBuilder(column: $table.dirty, builder: (column) => column);
+}
+
+class $$DiagnosticResultsTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DiagnosticResultsTable,
+          DiagnosticResultRow,
+          $$DiagnosticResultsTableFilterComposer,
+          $$DiagnosticResultsTableOrderingComposer,
+          $$DiagnosticResultsTableAnnotationComposer,
+          $$DiagnosticResultsTableCreateCompanionBuilder,
+          $$DiagnosticResultsTableUpdateCompanionBuilder,
+          (
+            DiagnosticResultRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $DiagnosticResultsTable,
+              DiagnosticResultRow
+            >,
+          ),
+          DiagnosticResultRow,
+          PrefetchHooks Function()
+        > {
+  $$DiagnosticResultsTableTableManager(
+    _$FeralDatabase db,
+    $DiagnosticResultsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DiagnosticResultsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DiagnosticResultsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DiagnosticResultsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<DateTime> takenAt = const Value.absent(),
+                Value<String> scores = const Value.absent(),
+                Value<String> weakestArchetypeId = const Value.absent(),
+                Value<String> recommendedCampaignId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> dirty = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DiagnosticResultsCompanion(
+                id: id,
+                userId: userId,
+                takenAt: takenAt,
+                scores: scores,
+                weakestArchetypeId: weakestArchetypeId,
+                recommendedCampaignId: recommendedCampaignId,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required DateTime takenAt,
+                required String scores,
+                required String weakestArchetypeId,
+                required String recommendedCampaignId,
+                required DateTime updatedAt,
+                Value<bool> dirty = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DiagnosticResultsCompanion.insert(
+                id: id,
+                userId: userId,
+                takenAt: takenAt,
+                scores: scores,
+                weakestArchetypeId: weakestArchetypeId,
+                recommendedCampaignId: recommendedCampaignId,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DiagnosticResultsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DiagnosticResultsTable,
+      DiagnosticResultRow,
+      $$DiagnosticResultsTableFilterComposer,
+      $$DiagnosticResultsTableOrderingComposer,
+      $$DiagnosticResultsTableAnnotationComposer,
+      $$DiagnosticResultsTableCreateCompanionBuilder,
+      $$DiagnosticResultsTableUpdateCompanionBuilder,
+      (
+        DiagnosticResultRow,
+        BaseReferences<
+          _$FeralDatabase,
+          $DiagnosticResultsTable,
+          DiagnosticResultRow
+        >,
+      ),
+      DiagnosticResultRow,
+      PrefetchHooks Function()
+    >;
 
 class $FeralDatabaseManager {
   final _$FeralDatabase _db;
@@ -5271,10 +9052,22 @@ class $FeralDatabaseManager {
       $$PacksTableTableManager(_db, _db.packs);
   $$CampaignsTableTableManager get campaigns =>
       $$CampaignsTableTableManager(_db, _db.campaigns);
+  $$CampaignArchetypesTableTableManager get campaignArchetypes =>
+      $$CampaignArchetypesTableTableManager(_db, _db.campaignArchetypes);
   $$ActionsTableTableManager get actions =>
       $$ActionsTableTableManager(_db, _db.actions);
+  $$DoctrineGroupsTableTableManager get doctrineGroups =>
+      $$DoctrineGroupsTableTableManager(_db, _db.doctrineGroups);
+  $$DoctrineEntriesTableTableManager get doctrineEntries =>
+      $$DoctrineEntriesTableTableManager(_db, _db.doctrineEntries);
+  $$DiagnosticQuestionsTableTableManager get diagnosticQuestions =>
+      $$DiagnosticQuestionsTableTableManager(_db, _db.diagnosticQuestions);
+  $$DiagnosticOptionsTableTableManager get diagnosticOptions =>
+      $$DiagnosticOptionsTableTableManager(_db, _db.diagnosticOptions);
   $$CampaignRunsTableTableManager get campaignRuns =>
       $$CampaignRunsTableTableManager(_db, _db.campaignRuns);
   $$DayLogsTableTableManager get dayLogs =>
       $$DayLogsTableTableManager(_db, _db.dayLogs);
+  $$DiagnosticResultsTableTableManager get diagnosticResults =>
+      $$DiagnosticResultsTableTableManager(_db, _db.diagnosticResults);
 }

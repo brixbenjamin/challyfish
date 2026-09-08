@@ -46,3 +46,26 @@ class DayLogs extends Table {
     {runId, dayIndex},
   ];
 }
+
+/// The outcome of one sitting of the diagnostic. Kept as a history rather than
+/// overwritten, so a retake does not destroy the original reading.
+///
+/// Note what is absent: the individual picks. Only the four scores are stored
+/// (ADR-0009) — the answers themselves are a record of self-assessment that
+/// nothing in the product ever reads again.
+@DataClassName('DiagnosticResultRow')
+class DiagnosticResults extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  DateTimeColumn get takenAt => dateTime()();
+
+  /// JSON: archetype key to relative score, 0 to 1.
+  TextColumn get scores => text()();
+  TextColumn get weakestArchetypeId => text()();
+  TextColumn get recommendedCampaignId => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

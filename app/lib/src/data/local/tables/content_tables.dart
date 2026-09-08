@@ -77,3 +77,71 @@ class Actions extends Table {
     {campaignId, dayIndex},
   ];
 }
+
+@DataClassName('CampaignArchetypeRow')
+class CampaignArchetypes extends Table {
+  TextColumn get campaignId => text()();
+  TextColumn get archetypeId => text()();
+  RealColumn get weight => real().withDefault(const Constant(1))();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {campaignId, archetypeId};
+}
+
+@DataClassName('DoctrineGroupRow')
+class DoctrineGroups extends Table {
+  TextColumn get id => text()();
+  TextColumn get title => text()();
+  TextColumn get blurb => text().nullable()();
+  IntColumn get sort => integer()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+@DataClassName('DoctrineEntryRow')
+class DoctrineEntries extends Table {
+  TextColumn get id => text()();
+  TextColumn get groupId => text()();
+  TextColumn get title => text()();
+  TextColumn get bodyMd => text()();
+  TextColumn get relatedArchetypeId => text().nullable()();
+  IntColumn get sort => integer()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// One forced-choice pair (ADR-0009).
+@DataClassName('DiagnosticQuestionRow')
+class DiagnosticQuestions extends Table {
+  TextColumn get id => text()();
+  TextColumn get prompt => text()();
+  IntColumn get sort => integer()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// One side of a pair. Exactly two per question, on different archetypes.
+@DataClassName('DiagnosticOptionRow')
+class DiagnosticOptions extends Table {
+  TextColumn get id => text()();
+  TextColumn get questionId => text()();
+  TextColumn get label => text()();
+  TextColumn get archetypeId => text()();
+  IntColumn get sort => integer()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<Set<Column<Object>>> get uniqueKeys => [
+    {questionId, sort},
+  ];
+}
