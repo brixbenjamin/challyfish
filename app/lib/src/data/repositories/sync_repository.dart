@@ -1,6 +1,11 @@
 import 'package:drift/drift.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../core/clock.dart';
+import '../../domain/grade.dart';
+import '../../domain/run.dart';
+import '../../domain/sync_status.dart';
+import '../../engine/run_reconciler.dart';
 import '../local/database.dart';
 import '../remote/progress_api.dart';
 
@@ -74,6 +79,23 @@ class SyncRepository {
     'diagnostic_results',
   ];
 
+  final List<SyncNotice> _notices = [];
+
+  List<SyncNotice> get pendingNotices => List.unmodifiable(_notices);
+
+  /// Returns the queued notices and empties the queue, so a reconciliation is
+  /// reported once rather than on every subsequent sync.
+  List<SyncNotice> consumeNotices() {
+    final out = List<SyncNotice>.unmodifiable(_notices);
+    _notices.clear();
+    return out;
+  }
+
+  /// Postgres unique-violation. The partial unique index on
+  /// `(user_id) where status = 'active'` raises this, and it is the expected
+  /// outcome of two devices starting a run offline — not an error.
+  static const _uniqueViolation = '23505';
+
   Future<SyncOutcome> sync(String userId) async {
     // Push first, always. Pulling first would merge a server row over a local
     // change that has not been sent yet, and then send the merged result —
@@ -90,6 +112,12 @@ class SyncRepository {
       if (batch.isEmpty) continue;
       try {
         await api.upsert(table, batch.map((r) => r.payload).toList());
+      } on PostgrestException catch (error) {
+        if (table == 'campaign_runs' && error.code == _uniqueViolation) {
+          await _reconcileActiveRun(userId);
+          continue; // resolved, not failed
+        }
+        return PushResult(succeeded: false, pushedRows: pushed, error: error);
       } catch (error) {
         // Leave every flag as it was. The next attempt sends the same rows.
         return PushResult(succeeded: false, pushedRows: pushed, error: error);
@@ -409,4 +437,99 @@ class SyncRepository {
     if (localDirty == true) return false;
     return remoteUpdatedAt.isAfter(localUpdatedAt);
   }
+
+  /// The server already has an active run for this user and rejected ours.
+  /// Fetch theirs, apply the deterministic rule, and abandon the loser locally
+  /// so the next push carries the abandonment.
+  Future<void> _reconcileActiveRun(String userId) async {
+    final remoteRows = await api.fetchSince('campaign_runs', null, userId);
+    final remoteActive = remoteRows
+        .where((r) => r['status'] == 'active')
+        .map(_runFromRemote)
+        .toList();
+    if (remoteActive.isEmpty) return;
+
+    final localRow =
+        await (db.select(db.campaignRuns)..where(
+              (r) => r.userId.equals(userId) & r.status.equals('active'),
+            ))
+            .getSingleOrNull();
+    if (localRow == null) return;
+
+    final local = _runFromLocal(localRow);
+    final remote = remoteActive.first;
+    if (!RunReconciler.isConflict(local: local, remote: remote)) return;
+
+    final result = RunReconciler.resolve(local: local, remote: remote);
+
+    // If the survivor came from the server it is already acknowledged, so it
+    // is written clean. If it is ours, it is already in the table with the
+    // correct dirty state — leave it alone.
+    if (!result.localSurvived) {
+      await db
+          .into(db.campaignRuns)
+          .insertOnConflictUpdate(_rowFor(result.keep, dirty: false));
+    }
+
+    // The loser stays dirty so the abandonment reaches the server.
+    await (db.update(db.campaignRuns)..where(
+          (r) => r.id.equals(result.abandon.id),
+        ))
+        .write(
+          CampaignRunsCompanion(
+            status: const Value('abandoned'),
+            updatedAt: Value(clock.nowUtc()),
+            dirty: const Value(true),
+          ),
+        );
+
+    _notices.add(
+      SyncNotice(
+        kind: SyncNoticeKind.runReconciled,
+        message: result.localSurvived
+            ? 'Another device had also started a campaign. This one was '
+                  'earlier, so it is the one that continues.'
+            : 'A campaign was already running on another device. It started '
+                  'earlier, so it is the one that continues; the one started '
+                  'here has been closed.',
+        occurredAt: clock.nowUtc(),
+      ),
+    );
+  }
+
+  CampaignRun _runFromRemote(Map<String, dynamic> row) => CampaignRun(
+    id: row['id'] as String,
+    userId: row['user_id'] as String,
+    campaignId: row['campaign_id'] as String,
+    status: RunStatus.fromKey(row['status'] as String),
+    isHardened: (row['is_hardened'] as bool?) ?? false,
+    startedAt: DateTime.parse(row['started_at'] as String).toUtc(),
+    completedAt: _optional(row['completed_at']),
+    grade: row['grade'] == null ? null : Grade.fromKey(row['grade'] as String),
+  );
+
+  CampaignRun _runFromLocal(CampaignRunRow row) => CampaignRun(
+    id: row.id,
+    userId: row.userId,
+    campaignId: row.campaignId,
+    status: RunStatus.fromKey(row.status),
+    isHardened: row.isHardened,
+    startedAt: row.startedAt,
+    completedAt: row.completedAt,
+    grade: row.grade == null ? null : Grade.fromKey(row.grade!),
+  );
+
+  CampaignRunRow _rowFor(CampaignRun run, {required bool dirty}) =>
+      CampaignRunRow(
+        id: run.id,
+        userId: run.userId,
+        campaignId: run.campaignId,
+        status: run.status.key,
+        isHardened: run.isHardened,
+        startedAt: run.startedAt,
+        completedAt: run.completedAt,
+        grade: run.grade?.key,
+        updatedAt: clock.nowUtc(),
+        dirty: dirty,
+      );
 }
