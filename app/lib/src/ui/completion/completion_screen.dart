@@ -19,8 +19,9 @@ class CompletionScreen extends StatelessWidget {
     required this.missCount,
     required this.missAllowance,
     required this.marksEarned,
-    required this.isLinked,
+    required this.showLinkPrompt,
     required this.onLink,
+    required this.onDismissLinkPrompt,
     required this.onBrowse,
     super.key,
   });
@@ -31,11 +32,22 @@ class CompletionScreen extends StatelessWidget {
   final int missAllowance;
   final List<Archetype> marksEarned;
 
-  /// Whether the user has attached an identity. Finishing a campaign is the
-  /// moment they have the most to lose (ADR-0007).
-  final bool isLinked;
+  /// The single answer, computed by the caller: unlinked AND never asked
+  /// before. Two booleans where one answer is wanted is how a screen ends up
+  /// prompting in a state nobody intended (ADR-0013).
+  final bool showLinkPrompt;
   final VoidCallback onLink;
+  final VoidCallback onDismissLinkPrompt;
   final VoidCallback onBrowse;
+
+  // The prompt sits below the grade, and the test proves it — which needs both
+  // to be findable.
+  static const gradeKey = Key('completion-grade'); // niche:allow widget key
+  static const linkPromptKey = Key('completion-link-prompt'); // niche:allow key
+  static const linkPromptTextKey =
+      Key('completion-link-prompt-text'); // niche:allow widget key
+  static const linkDismissKey =
+      Key('completion-link-dismiss'); // niche:allow widget key
 
   String _summary(AppLocalizations l10n) => switch (grade) {
     Grade.sovereign => l10n.gradeSummarySovereign(campaign.title),
@@ -64,6 +76,7 @@ class CompletionScreen extends StatelessWidget {
             children: [
               Text(
                 gradeName(l10n, grade),
+                key: gradeKey,
                 style: Theme.of(context).textTheme.headlineLarge,
               ),
               const SizedBox(height: 12),
@@ -76,12 +89,38 @@ class CompletionScreen extends StatelessWidget {
               ] else
                 Text(l10n.noMarkNote),
               const Spacer(),
-              if (!isLinked) ...[
-                Text(l10n.linkPromptBody),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: onLink,
-                  child: Text(l10n.linkIdentityButton),
+              if (showLinkPrompt) ...[
+                Card(
+                  key: linkPromptKey,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // States the consequence. It does not sell a feature,
+                        // and it is the only time the product will ask
+                        // (ADR-0013).
+                        Text(l10n.linkPromptBody, key: linkPromptTextKey),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: onLink,
+                                child: Text(l10n.linkIdentityButton),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              key: linkDismissKey,
+                              onPressed: onDismissLinkPrompt,
+                              child: Text(l10n.notNowButton),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 8),
               ],

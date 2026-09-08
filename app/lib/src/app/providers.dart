@@ -1,20 +1,24 @@
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../core/clock.dart';
 import '../data/local/database.dart';
+import '../data/remote/auth_gateway.dart';
 import '../data/remote/content_api.dart';
 import '../data/remote/progress_api.dart';
 import '../data/remote/seed_snapshot.dart';
 import '../data/repositories/content_repository.dart';
 import '../data/repositories/diagnostic_repository.dart';
+import '../data/repositories/identity_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../data/repositories/sync_repository.dart';
 import '../notifications/reminder_scheduler.dart';
 import '../sync/sync_scheduler.dart';
+import 'link_prompt_state.dart';
 
 final databaseProvider = Provider<FeralDatabase>((ref) {
   final db = FeralDatabase(driftDatabase(name: 'feral'));
@@ -91,3 +95,24 @@ final syncSchedulerProvider = Provider<SyncScheduler>((ref) {
   ref.onDispose(scheduler.dispose);
   return scheduler;
 });
+
+final authGatewayProvider = Provider<AuthGateway>(
+  (ref) => SupabaseAuthGateway(Supabase.instance.client),
+);
+
+final identityRepositoryProvider = Provider<IdentityRepository>(
+  (ref) => IdentityRepository(
+    db: ref.watch(databaseProvider),
+    auth: ref.watch(authGatewayProvider),
+  ),
+);
+
+/// SharedPreferences is resolved once at startup and overridden into the
+/// container in main(), so nothing in the UI has to await it.
+final sharedPreferencesProvider = Provider<SharedPreferences>(
+  (ref) => throw UnimplementedError('overridden in main()'),
+);
+
+final linkPromptStateProvider = Provider<LinkPromptState>(
+  (ref) => LinkPromptState(ref.watch(sharedPreferencesProvider)),
+);

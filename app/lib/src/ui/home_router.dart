@@ -54,6 +54,10 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
 
   _Home? _home;
 
+  /// Computed when a completion is reached, never in build: it reads a
+  /// preference, and ADR-0013 allows exactly one asking.
+  bool _showLinkPrompt = false;
+
   @override
   void initState() {
     super.initState();
@@ -241,6 +245,9 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     );
     if (grade != null) {
       final logs = await progress.logsFor(run.id);
+      _showLinkPrompt = await ref
+          .read(linkPromptStateProvider)
+          .shouldPrompt(isLinked: ref.read(identityRepositoryProvider).isLinked);
       return _Home(
         completed: _Completed(
           grade: grade,
@@ -288,6 +295,12 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       _home = home;
       _step = _Step.home;
     });
+  }
+
+  Future<void> _dismissLinkPrompt() async {
+    await ref.read(linkPromptStateProvider).markDismissed();
+    if (!mounted) return;
+    setState(() => _showLinkPrompt = false);
   }
 
   Future<void> _reloadHome() async {
@@ -428,8 +441,9 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         missCount: completed.missCount,
         missAllowance: completed.missAllowance,
         marksEarned: completed.marksEarned,
-        isLinked: false,
+        showLinkPrompt: _showLinkPrompt,
         onLink: () {},
+        onDismissLinkPrompt: _dismissLinkPrompt,
         onBrowse: _reloadHome,
       );
     }

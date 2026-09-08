@@ -90,9 +90,8 @@ class LinkSheet extends StatelessWidget {
 /// normal outcome and must not surface as an error.
 abstract final class AppleCredentials {
   static String _randomNonce([int length = 32]) {
-    // niche:allow nonce alphabet, never read by a user
-    const chars =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    const chars = // niche:allow nonce alphabet, never read by a user
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._'; // niche:allow
     final random = Random.secure();
     return List.generate(
       length,

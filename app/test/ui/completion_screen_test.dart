@@ -30,7 +30,7 @@ Future<void> pump(
   WidgetTester tester,
   Grade grade, {
   int misses = 0,
-  bool isLinked = true,
+  bool showLinkPrompt = false,
   List<Archetype> marksEarned = const [],
 }) => tester.pumpWidget(
   wrap(
@@ -40,7 +40,8 @@ Future<void> pump(
       missCount: misses,
       missAllowance: 1,
       marksEarned: marksEarned,
-      isLinked: isLinked,
+      showLinkPrompt: showLinkPrompt,
+      onDismissLinkPrompt: () {},
       onLink: () {},
       onBrowse: () {},
     ),
@@ -103,7 +104,7 @@ void main() {
   testWidgets('an unlinked user is prompted to attach an identity', (
     tester,
   ) async {
-    await pump(tester, Grade.passed, misses: 1, isLinked: false);
+    await pump(tester, Grade.passed, misses: 1, showLinkPrompt: true);
     expect(find.text(l10n.linkIdentityButton), findsOneWidget);
   });
 
