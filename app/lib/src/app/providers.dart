@@ -28,6 +28,7 @@ import '../notifications/reminder_scheduler.dart';
 import '../ui/browse/pack_list_screen.dart' show PackView;
 import '../sync/sync_scheduler.dart';
 import 'link_prompt_state.dart';
+import 'purchase_state.dart';
 
 final databaseProvider = Provider<FeralDatabase>((ref) {
   final db = FeralDatabase(driftDatabase(name: 'feral'));
@@ -211,5 +212,12 @@ final packViewsProvider = FutureProvider<List<PackView>>((ref) async {
     packs: packs,
     campaignsByPack: campaignsByPack,
     unlockedPackIds: unlocked,
+  );
+});
+
+final purchaseControllerProvider = Provider<PurchaseController>((ref) {
+  return PurchaseController(
+    entitlements: ref.watch(entitlementRepositoryProvider),
+    gateway: ref.watch(purchaseGatewayProvider),
   );
 });
