@@ -200,5 +200,61 @@
   "whatNextButton": "What next",
   "@whatNextButton": {
     "description": "[niche] Leaves the completion screen for browse."
+  },
+
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "App bar title of settings."
+  },
+
+  "reminderToggle": "Daily reminder",
+  "@reminderToggle": {
+    "description": "Label of the single reminder switch (ADR-0011)."
+  },
+
+  "reminderChangeTime": "Change time",
+  "@reminderChangeTime": {
+    "description": "Opens the time picker for the reminder."
+  },
+
+  "reminderOffSubtitle": "One notification a day, at a time you choose.",
+  "@reminderOffSubtitle": {
+    "description": "Subtitle when the reminder is off. States the whole extent of it."
+  },
+
+  "reminderOnAt": "One notification a day, at {time}.",
+  "@reminderOnAt": {
+    "description": "Subtitle when the reminder is on.",
+    "placeholders": { "time": { "type": "String" } }
+  },
+
+  "linkIdentitySettingsSubtitle": "So your record survives losing this phone.",
+  "@linkIdentitySettingsSubtitle": {
+    "description": "[niche] Why to attach an identity. 'Record' is the product's vocabulary."
+  },
+
+  "restorePurchases": "Restore purchases",
+  "@restorePurchases": {
+    "description": "Settings row that re-queries the store."
+  },
+
+  "notificationsBlockedNotice": "Notifications are turned off for Feral. Turn them on in your system settings if you want the reminder.",
+  "@notificationsBlockedNotice": {
+    "description": "[niche] Contains the product name. Shown when OS permission was denied."
+  },
+
+  "reminderNotificationTitle": "Today",
+  "@reminderNotificationTitle": {
+    "description": "[niche] Title of the daily reminder notification."
+  },
+
+  "reminderNotificationBody": "Your action is waiting.",
+  "@reminderNotificationBody": {
+    "description": "[niche] Body of the daily reminder. Never a miss, never a streak, never the balance (ADR-0011)."
+  },
+
+  "reminderChannelName": "Daily reminder",
+  "@reminderChannelName": {
+    "description": "Android notification channel name, shown in system settings."
   }
 }

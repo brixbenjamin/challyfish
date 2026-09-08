@@ -163,4 +163,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whatNextButton => 'What next';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get reminderToggle => 'Daily reminder';
+
+  @override
+  String get reminderChangeTime => 'Change time';
+
+  @override
+  String get reminderOffSubtitle =>
+      'One notification a day, at a time you choose.';
+
+  @override
+  String reminderOnAt(String time) {
+    return 'One notification a day, at $time.';
+  }
+
+  @override
+  String get linkIdentitySettingsSubtitle =>
+      'So your record survives losing this phone.';
+
+  @override
+  String get restorePurchases => 'Restore purchases';
+
+  @override
+  String get notificationsBlockedNotice =>
+      'Notifications are turned off for Feral. Turn them on in your system settings if you want the reminder.';
+
+  @override
+  String get reminderNotificationTitle => 'Today';
+
+  @override
+  String get reminderNotificationBody => 'Your action is waiting.';
+
+  @override
+  String get reminderChannelName => 'Daily reminder';
 }

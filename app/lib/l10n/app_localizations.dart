@@ -333,6 +333,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What next'**
   String get whatNextButton;
+
+  /// App bar title of settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// Label of the single reminder switch (ADR-0011).
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reminder'**
+  String get reminderToggle;
+
+  /// Opens the time picker for the reminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Change time'**
+  String get reminderChangeTime;
+
+  /// Subtitle when the reminder is off. States the whole extent of it.
+  ///
+  /// In en, this message translates to:
+  /// **'One notification a day, at a time you choose.'**
+  String get reminderOffSubtitle;
+
+  /// Subtitle when the reminder is on.
+  ///
+  /// In en, this message translates to:
+  /// **'One notification a day, at {time}.'**
+  String reminderOnAt(String time);
+
+  /// [niche] Why to attach an identity. 'Record' is the product's vocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'So your record survives losing this phone.'**
+  String get linkIdentitySettingsSubtitle;
+
+  /// Settings row that re-queries the store.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get restorePurchases;
+
+  /// [niche] Contains the product name. Shown when OS permission was denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are turned off for Feral. Turn them on in your system settings if you want the reminder.'**
+  String get notificationsBlockedNotice;
+
+  /// [niche] Title of the daily reminder notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get reminderNotificationTitle;
+
+  /// [niche] Body of the daily reminder. Never a miss, never a streak, never the balance (ADR-0011).
+  ///
+  /// In en, this message translates to:
+  /// **'Your action is waiting.'**
+  String get reminderNotificationBody;
+
+  /// Android notification channel name, shown in system settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reminder'**
+  String get reminderChannelName;
 }
 
 class _AppLocalizationsDelegate
