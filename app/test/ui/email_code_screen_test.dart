@@ -61,7 +61,9 @@ void main() {
     expect(find.textContaining('you@example.com'), findsOneWidget);
   });
 
-  testWidgets('an obviously invalid address does not send anything', (tester) async {
+  testWidgets('an obviously invalid address does not send anything', (
+    tester,
+  ) async {
     await pump(tester);
 
     await tester.enterText(
@@ -135,7 +137,9 @@ void main() {
     expect(after.onPressed, isNotNull);
   });
 
-  testWidgets('changing the address keeps what was already typed', (tester) async {
+  testWidgets('changing the address keeps what was already typed', (
+    tester,
+  ) async {
     await pump(tester);
     await reachCodeStep(tester);
 

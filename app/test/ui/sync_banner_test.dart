@@ -63,7 +63,9 @@ void main() {
     expect(text.data!.toLowerCase(), isNot(contains('failed')));
   });
 
-  testWidgets('it is never a dialog and never blocks the screen', (tester) async {
+  testWidgets('it is never a dialog and never blocks the screen', (
+    tester,
+  ) async {
     await pump(tester, SyncStatus.failing);
 
     expect(find.byType(Dialog), findsNothing);
@@ -81,7 +83,9 @@ void main() {
     expect(tester.getSize(find.text('todays action')).height, greaterThan(0));
   });
 
-  testWidgets('a reconciliation notice is shown and can be dismissed', (tester) async {
+  testWidgets('a reconciliation notice is shown and can be dismissed', (
+    tester,
+  ) async {
     final dismissed = <SyncNoticeKind>[];
     await tester.pumpWidget(
       wrap(
@@ -111,13 +115,20 @@ void main() {
     expect(dismissed, [SyncNoticeKind.runReconciled]);
   });
 
-  testWidgets('no copy anywhere implies the user did something wrong', (tester) async {
+  testWidgets('no copy anywhere implies the user did something wrong', (
+    tester,
+  ) async {
     for (final status in SyncStatus.values) {
       await pump(tester, status);
       final finder = find.byKey(SyncBanner.messageKey);
       if (finder.evaluate().isEmpty) continue;
       final text = tester.widget<Text>(finder).data!.toLowerCase();
-      for (final banned in ['error', 'invalid', 'you must', 'try again later']) {
+      for (final banned in [
+        'error',
+        'invalid',
+        'you must',
+        'try again later',
+      ]) {
         expect(text, isNot(contains(banned)), reason: 'status $status');
       }
     }

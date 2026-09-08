@@ -51,7 +51,9 @@ void main() {
     expect(cancels, 1);
   });
 
-  testWidgets('it states plainly why linking exists, without pressure', (tester) async {
+  testWidgets('it states plainly why linking exists, without pressure', (
+    tester,
+  ) async {
     await pump(tester, AuthProvider.values);
 
     final body = tester

@@ -26,7 +26,9 @@ void main() {
     );
   }
 
-  testWidgets('an unlinked account offers linking, without a warning', (tester) async {
+  testWidgets('an unlinked account offers linking, without a warning', (
+    tester,
+  ) async {
     await pump(tester);
     await tester.pumpAndSettle();
 
@@ -61,7 +63,9 @@ void main() {
     expect(links, 1);
   });
 
-  testWidgets('delete account is available to an unlinked user too', (tester) async {
+  testWidgets('delete account is available to an unlinked user too', (
+    tester,
+  ) async {
     await pump(tester);
     await tester.pumpAndSettle();
 
@@ -71,7 +75,9 @@ void main() {
     expect(deletes, 1);
   });
 
-  testWidgets('delete account is not the first thing on the screen', (tester) async {
+  testWidgets('delete account is not the first thing on the screen', (
+    tester,
+  ) async {
     await pump(tester);
     await tester.pumpAndSettle();
 
@@ -82,7 +88,9 @@ void main() {
     expect(deleteY, greaterThan(reminderY));
   });
 
-  testWidgets('the reminder controls from plan 2 are still there', (tester) async {
+  testWidgets('the reminder controls from plan 2 are still there', (
+    tester,
+  ) async {
     await pump(tester);
     await tester.pumpAndSettle();
 

@@ -20,8 +20,12 @@ class SyncBanner extends StatelessWidget {
   final List<SyncNotice> notices;
   final void Function(SyncNoticeKind) onDismissNotice;
 
-  static const messageKey = Key('sync-banner-message'); // niche:allow widget key
-  static const dismissKey = Key('sync-banner-dismiss'); // niche:allow widget key
+  static const messageKey = Key(
+    'sync-banner-message', // niche:allow widget key
+  );
+  static const dismissKey = Key(
+    'sync-banner-dismiss', // niche:allow widget key
+  );
 
   /// Only two statuses have anything to say. `retrying` deliberately says
   /// nothing: one or two failed attempts is a blip, and reporting it would

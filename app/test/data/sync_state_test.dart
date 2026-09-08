@@ -69,26 +69,29 @@ void main() {
     await db.close();
   });
 
-  test('upgrading from v2 adds the new tables and keeps existing rows', () async {
-    // A plan 2 install left a real v2 file behind. Opening it at v3 must run
-    // the migration over that file rather than create the schema afresh.
-    final dir = Directory.systemTemp.createTempSync('feral_v3_migration');
-    addTearDown(() => dir.deleteSync(recursive: true));
-    final file = File('${dir.path}/feral.sqlite');
+  test(
+    'upgrading from v2 adds the new tables and keeps existing rows',
+    () async {
+      // A plan 2 install left a real v2 file behind. Opening it at v3 must run
+      // the migration over that file rather than create the schema afresh.
+      final dir = Directory.systemTemp.createTempSync('feral_v3_migration');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final file = File('${dir.path}/feral.sqlite');
 
-    await _writeV2Database(file);
+      await _writeV2Database(file);
 
-    final upgraded = FeralDatabase(NativeDatabase(file));
-    addTearDown(upgraded.close);
+      final upgraded = FeralDatabase(NativeDatabase(file));
+      addTearDown(upgraded.close);
 
-    final runs = await upgraded.select(upgraded.campaignRuns).get();
-    final logs = await upgraded.select(upgraded.dayLogs).get();
-    expect(runs, hasLength(1), reason: 'the run survived the migration');
-    expect(logs, hasLength(1), reason: 'the day log survived the migration');
-    expect(logs.single.note, 'kept across the migration');
-    expect(await upgraded.select(upgraded.profiles).get(), isEmpty);
-    expect(await upgraded.watermarkFor('campaigns'), isNull);
-  });
+      final runs = await upgraded.select(upgraded.campaignRuns).get();
+      final logs = await upgraded.select(upgraded.dayLogs).get();
+      expect(runs, hasLength(1), reason: 'the run survived the migration');
+      expect(logs, hasLength(1), reason: 'the day log survived the migration');
+      expect(logs.single.note, 'kept across the migration');
+      expect(await upgraded.select(upgraded.profiles).get(), isEmpty);
+      expect(await upgraded.watermarkFor('campaigns'), isNull);
+    },
+  );
 }
 
 /// The tables added at schema v3, which a v2 file must not have.

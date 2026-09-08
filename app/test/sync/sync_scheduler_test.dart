@@ -167,20 +167,23 @@ void main() {
     expect(seen, containsAllInOrder([SyncStatus.syncing, SyncStatus.idle]));
   });
 
-  test('the persistent-failure notice is emitted once, not every retry', () async {
-    sync.succeed = false;
-    final seen = <SyncNotice>[];
-    final sub = scheduler.noticeStream.listen(seen.add);
+  test(
+    'the persistent-failure notice is emitted once, not every retry',
+    () async {
+      sync.succeed = false;
+      final seen = <SyncNotice>[];
+      final sub = scheduler.noticeStream.listen(seen.add);
 
-    for (var i = 0; i < SyncScheduler.failuresBeforeNotice + 3; i++) {
-      await scheduler.syncNow(userId: 'user-1');
-    }
-    await Future<void>.delayed(Duration.zero);
-    await sub.cancel();
+      for (var i = 0; i < SyncScheduler.failuresBeforeNotice + 3; i++) {
+        await scheduler.syncNow(userId: 'user-1');
+      }
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
 
-    expect(
-      seen.where((n) => n.kind == SyncNoticeKind.persistentFailure),
-      hasLength(1),
-    );
-  });
+      expect(
+        seen.where((n) => n.kind == SyncNoticeKind.persistentFailure),
+        hasLength(1),
+      );
+    },
+  );
 }

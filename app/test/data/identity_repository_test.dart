@@ -141,11 +141,9 @@ void main() {
       );
 
       expect(outcome, isA<NeedsReplaceConfirmation>());
-      expect(
-        auth.calls,
-        ['link:google'],
-        reason: 'sign-in has NOT been attempted',
-      );
+      expect(auth.calls, [
+        'link:google',
+      ], reason: 'sign-in has NOT been attempted');
       expect(
         await db.select(db.campaignRuns).get(),
         hasLength(1),
@@ -209,29 +207,32 @@ void main() {
     );
   });
 
-  test('a sign-in resets the user watermarks but not the content ones', () async {
-    await seedLocalProgress();
-    await db.setWatermark('day_logs', DateTime.utc(2026, 6, 4));
-    await db.setWatermark('campaigns', DateTime.utc(2026, 6, 1));
-    auth.identityTaken = true;
-    await identity.attach(provider: AuthProvider.google, credential: 'g');
+  test(
+    'a sign-in resets the user watermarks but not the content ones',
+    () async {
+      await seedLocalProgress();
+      await db.setWatermark('day_logs', DateTime.utc(2026, 6, 4));
+      await db.setWatermark('campaigns', DateTime.utc(2026, 6, 1));
+      auth.identityTaken = true;
+      await identity.attach(provider: AuthProvider.google, credential: 'g');
 
-    await identity.completeSignIn(
-      provider: AuthProvider.google,
-      credential: 'g',
-    );
+      await identity.completeSignIn(
+        provider: AuthProvider.google,
+        credential: 'g',
+      );
 
-    expect(
-      await db.watermarkFor('day_logs'),
-      isNull,
-      reason: 'the new account must pull its record in full',
-    );
-    expect(
-      await db.watermarkFor('campaigns'),
-      DateTime.utc(2026, 6, 1),
-      reason: "the library is not the new account's business to re-download",
-    );
-  });
+      expect(
+        await db.watermarkFor('day_logs'),
+        isNull,
+        reason: 'the new account must pull its record in full',
+      );
+      expect(
+        await db.watermarkFor('campaigns'),
+        DateTime.utc(2026, 6, 1),
+        reason: "the library is not the new account's business to re-download",
+      );
+    },
+  );
 
   test('the rows are gone before any sync could pick them up', () async {
     await seedLocalProgress();

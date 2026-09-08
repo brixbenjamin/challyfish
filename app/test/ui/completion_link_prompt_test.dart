@@ -34,7 +34,9 @@ void main() {
     );
   }
 
-  testWidgets('an unlinked user sees the prompt below the grade', (tester) async {
+  testWidgets('an unlinked user sees the prompt below the grade', (
+    tester,
+  ) async {
     await pump(tester, showLinkPrompt: true);
 
     expect(find.byKey(CompletionScreen.linkPromptKey), findsOneWidget);

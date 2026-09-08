@@ -247,7 +247,9 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       final logs = await progress.logsFor(run.id);
       _showLinkPrompt = await ref
           .read(linkPromptStateProvider)
-          .shouldPrompt(isLinked: ref.read(identityRepositoryProvider).isLinked);
+          .shouldPrompt(
+            isLinked: ref.read(identityRepositoryProvider).isLinked,
+          );
       return _Home(
         completed: _Completed(
           grade: grade,

@@ -23,9 +23,12 @@ void main() {
     expect(b.delayFor(0), Duration.zero);
   });
 
-  test('a negative attempt is treated as the first try rather than throwing', () {
-    expect(b.delayFor(-3), Duration.zero);
-  });
+  test(
+    'a negative attempt is treated as the first try rather than throwing',
+    () {
+      expect(b.delayFor(-3), Duration.zero);
+    },
+  );
 
   test('the schedule is deterministic', () {
     expect(

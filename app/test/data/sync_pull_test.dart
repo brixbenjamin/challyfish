@@ -102,66 +102,76 @@ void main() {
     expect(logs.single.note, 'reported on the other phone');
   });
 
-  test('an older remote row does not overwrite a newer clean local row', () async {
-    await insertLocalRun();
-    await db
-        .into(db.dayLogs)
-        .insert(
-          DayLogsCompanion.insert(
-            id: 'local-3',
-            userId: 'user-1',
-            runId: 'run-1',
-            dayIndex: 3,
-            actionId: 'action-3',
-            outcome: const Value('done'),
-            note: const Value('the newer truth'),
-            updatedAt: DateTime.utc(2026, 6, 3, 20),
-            dirty: const Value(false),
-          ),
-        );
-    api.remote['day_logs'] = [
-      remoteLog(
-        id: 'srv-3',
-        dayIndex: 3,
-        outcome: 'skipped',
-        updatedAt: DateTime.utc(2026, 6, 3, 8),
-      ),
-    ];
+  test(
+    'an older remote row does not overwrite a newer clean local row',
+    () async {
+      await insertLocalRun();
+      await db
+          .into(db.dayLogs)
+          .insert(
+            DayLogsCompanion.insert(
+              id: 'local-3',
+              userId: 'user-1',
+              runId: 'run-1',
+              dayIndex: 3,
+              actionId: 'action-3',
+              outcome: const Value('done'),
+              note: const Value('the newer truth'),
+              updatedAt: DateTime.utc(2026, 6, 3, 20),
+              dirty: const Value(false),
+            ),
+          );
+      api.remote['day_logs'] = [
+        remoteLog(
+          id: 'srv-3',
+          dayIndex: 3,
+          outcome: 'skipped',
+          updatedAt: DateTime.utc(2026, 6, 3, 8),
+        ),
+      ];
 
-    await sync.pull('user-1');
+      await sync.pull('user-1');
 
-    final log = await db.select(db.dayLogs).getSingle();
-    expect(log.outcome, 'done');
-    expect(log.note, 'the newer truth');
-  });
+      final log = await db.select(db.dayLogs).getSingle();
+      expect(log.outcome, 'done');
+      expect(log.note, 'the newer truth');
+    },
+  );
 
-  test('a dirty local row is never overwritten, even by a newer remote row', () async {
-    await insertLocalRun();
-    await db
-        .into(db.dayLogs)
-        .insert(
-          DayLogsCompanion.insert(
-            id: 'local-3',
-            userId: 'user-1',
-            runId: 'run-1',
-            dayIndex: 3,
-            actionId: 'action-3',
-            outcome: const Value('partial'),
-            note: const Value('written here, not yet acknowledged'),
-            updatedAt: DateTime.utc(2026, 6, 3, 8),
-            dirty: const Value(true),
-          ),
-        );
-    api.remote['day_logs'] = [
-      remoteLog(id: 'srv-3', dayIndex: 3, updatedAt: DateTime.utc(2026, 6, 4)),
-    ];
+  test(
+    'a dirty local row is never overwritten, even by a newer remote row',
+    () async {
+      await insertLocalRun();
+      await db
+          .into(db.dayLogs)
+          .insert(
+            DayLogsCompanion.insert(
+              id: 'local-3',
+              userId: 'user-1',
+              runId: 'run-1',
+              dayIndex: 3,
+              actionId: 'action-3',
+              outcome: const Value('partial'),
+              note: const Value('written here, not yet acknowledged'),
+              updatedAt: DateTime.utc(2026, 6, 3, 8),
+              dirty: const Value(true),
+            ),
+          );
+      api.remote['day_logs'] = [
+        remoteLog(
+          id: 'srv-3',
+          dayIndex: 3,
+          updatedAt: DateTime.utc(2026, 6, 4),
+        ),
+      ];
 
-    await sync.pull('user-1');
+      await sync.pull('user-1');
 
-    final log = await db.select(db.dayLogs).getSingle();
-    expect(log.outcome, 'partial');
-    expect(log.dirty, isTrue, reason: 'still owed to the server');
-  });
+      final log = await db.select(db.dayLogs).getSingle();
+      expect(log.outcome, 'partial');
+      expect(log.dirty, isTrue, reason: 'still owed to the server');
+    },
+  );
 
   test('the watermark advances only after rows are committed', () async {
     await insertLocalRun();

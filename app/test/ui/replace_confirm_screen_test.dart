@@ -55,7 +55,9 @@ void main() {
     expect(find.textContaining('you@example.com'), findsOneWidget);
   });
 
-  testWidgets('cancel comes first and confirm is styled destructive', (tester) async {
+  testWidgets('cancel comes first and confirm is styled destructive', (
+    tester,
+  ) async {
     await pump(tester, withRun);
 
     // Cancel is above confirm: the safe action is the one a hurried tap lands
@@ -101,7 +103,9 @@ void main() {
     expect((confirms, cancels), (1, 1));
   });
 
-  testWidgets('progress with no active run still states what is lost', (tester) async {
+  testWidgets('progress with no active run still states what is lost', (
+    tester,
+  ) async {
     await pump(tester, const LocalProgressSummary(hasProgress: true));
 
     expect(find.byKey(ReplaceConfirmScreen.confirmKey), findsOneWidget);

@@ -68,22 +68,29 @@ void main() {
     final runs = await db.select(db.campaignRuns).get();
     final local = runs.firstWhere((r) => r.id == 'local-run');
     expect(local.status, 'abandoned');
-    expect(local.dirty, isTrue, reason: 'the abandonment must reach the server');
+    expect(
+      local.dirty,
+      isTrue,
+      reason: 'the abandonment must reach the server',
+    );
   });
 
-  test('the surviving run is the earlier one, and it is present locally', () async {
-    await insertLocalActiveRun('local-run', DateTime.utc(2026, 6, 5));
-    rejectRunPush();
-    api.remote['campaign_runs'] = [
-      remoteRun('server-run', DateTime.utc(2026, 6, 1)),
-    ];
+  test(
+    'the surviving run is the earlier one, and it is present locally',
+    () async {
+      await insertLocalActiveRun('local-run', DateTime.utc(2026, 6, 5));
+      rejectRunPush();
+      api.remote['campaign_runs'] = [
+        remoteRun('server-run', DateTime.utc(2026, 6, 1)),
+      ];
 
-    await sync.sync('user-1');
+      await sync.sync('user-1');
 
-    final runs = await db.select(db.campaignRuns).get();
-    final survivor = runs.firstWhere((r) => r.status == 'active');
-    expect(survivor.id, 'server-run');
-  });
+      final runs = await db.select(db.campaignRuns).get();
+      final survivor = runs.firstWhere((r) => r.status == 'active');
+      expect(survivor.id, 'server-run');
+    },
+  );
 
   test('the user is told, exactly once, and it is not an error', () async {
     await insertLocalActiveRun('local-run', DateTime.utc(2026, 6, 5));
@@ -116,16 +123,19 @@ void main() {
     );
   });
 
-  test('a non-23505 error is a real failure and is not reconciled away', () async {
-    await insertLocalActiveRun('local-run', DateTime.utc(2026, 6, 5));
-    api.throwOnUpsertForTable['campaign_runs'] = const PostgrestException(
-      message: 'permission denied',
-      code: '42501',
-    );
+  test(
+    'a non-23505 error is a real failure and is not reconciled away',
+    () async {
+      await insertLocalActiveRun('local-run', DateTime.utc(2026, 6, 5));
+      api.throwOnUpsertForTable['campaign_runs'] = const PostgrestException(
+        message: 'permission denied',
+        code: '42501',
+      );
 
-    final outcome = await sync.sync('user-1');
+      final outcome = await sync.sync('user-1');
 
-    expect(outcome.push.succeeded, isFalse);
-    expect((await db.select(db.campaignRuns).get()).single.status, 'active');
-  });
+      expect(outcome.push.succeeded, isFalse);
+      expect((await db.select(db.campaignRuns).get()).single.status, 'active');
+    },
+  );
 }

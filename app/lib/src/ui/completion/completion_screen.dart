@@ -44,10 +44,12 @@ class CompletionScreen extends StatelessWidget {
   // to be findable.
   static const gradeKey = Key('completion-grade'); // niche:allow widget key
   static const linkPromptKey = Key('completion-link-prompt'); // niche:allow key
-  static const linkPromptTextKey =
-      Key('completion-link-prompt-text'); // niche:allow widget key
-  static const linkDismissKey =
-      Key('completion-link-dismiss'); // niche:allow widget key
+  static const linkPromptTextKey = Key(
+    'completion-link-prompt-text', // niche:allow widget key
+  );
+  static const linkDismissKey = Key(
+    'completion-link-dismiss', // niche:allow widget key
+  );
 
   String _summary(AppLocalizations l10n) => switch (grade) {
     Grade.sovereign => l10n.gradeSummarySovereign(campaign.title),
