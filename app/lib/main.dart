@@ -7,6 +7,7 @@ import 'src/app/providers.dart';
 import 'src/core/zone_provider.dart';
 import 'src/data/remote/supabase_bootstrap.dart';
 import 'src/niche/brand.dart';
+import 'src/ui/home_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +37,7 @@ class FeralApp extends StatelessWidget {
       theme: Brand.theme(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const Scaffold(body: Center(child: Text(Brand.appName))),
+      home: const HomeRouter(),
     );
   }
 }
