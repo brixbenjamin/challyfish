@@ -82,4 +82,9 @@ class RunState {
   bool get isReportedToday => todayLog?.isReported ?? false;
 
   bool get isFinalDay => currentDay >= lengthDays;
+
+  /// The final day has both arrived and been resolved, so the run is ready to
+  /// be completed and graded. Elapsing alone is not enough — the user still has
+  /// the final day until they report it or rollover resolves it.
+  bool get isFinished => isFinalDay && isReportedToday;
 }

@@ -142,5 +142,63 @@
   "openSettings": "Settings",
   "@openSettings": {
     "description": "Tooltip on the dashboard's link to settings."
+  },
+
+  "gradeSovereign": "Sovereign",
+  "@gradeSovereign": {
+    "description": "[niche] Grade for a run finished with no misses. Stored as `sovereign`; only this word changes."
+  },
+
+  "gradePassed": "Passed",
+  "@gradePassed": {
+    "description": "[niche] Grade for a run finished within its miss allowance."
+  },
+
+  "gradeBroken": "Broken",
+  "@gradeBroken": {
+    "description": "[niche] Grade for a run finished over its allowance. Never 'failed' — nothing is failed out of (ADR-0003)."
+  },
+
+  "gradeSummarySovereign": "Every day of {title}. No misses.",
+  "@gradeSummarySovereign": {
+    "description": "[niche] States the Sovereign result. No congratulation.",
+    "placeholders": { "title": { "type": "String" } }
+  },
+
+  "gradeSummaryPassed": "You finished {title}. {misses} of {allowed} misses used.",
+  "@gradeSummaryPassed": {
+    "description": "[niche] States the Passed result.",
+    "placeholders": { "title": { "type": "String" }, "misses": { "type": "int" }, "allowed": { "type": "int" } }
+  },
+
+  "gradeSummaryBroken": "You finished {title} with {misses} misses. It allowed {allowed}.",
+  "@gradeSummaryBroken": {
+    "description": "[niche] States the Broken result. No consolation, no retry offer — the honest record is the product.",
+    "placeholders": { "title": { "type": "String" }, "misses": { "type": "int" }, "allowed": { "type": "int" } }
+  },
+
+  "marksEarnedLead": "Marks earned:",
+  "@marksEarnedLead": {
+    "description": "[niche] Introduces the archetype marks a run awarded. 'Mark' is the product's vocabulary."
+  },
+
+  "noMarkNote": "No mark. The days you did still count.",
+  "@noMarkNote": {
+    "description": "[niche] Shown when a Broken run earns no mark. The second sentence is load-bearing."
+  },
+
+  "linkPromptBody": "This record lives on this phone only. Attach an identity and it survives losing it.",
+  "@linkPromptBody": {
+    "description": "[niche] Shown on the completion screen to a user with no identity attached. Finishing a campaign is the moment they have the most to lose (ADR-0007)."
+  },
+
+  "linkIdentityButton": "Attach an identity",
+  "@linkIdentityButton": {
+    "description": "[niche] Opens the link sheet. 'Attach an identity', never 'sign up' — there has been an account since first launch."
+  },
+
+  "whatNextButton": "What next",
+  "@whatNextButton": {
+    "description": "[niche] Leaves the completion screen for browse."
   }
 }

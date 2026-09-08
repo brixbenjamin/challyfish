@@ -3,7 +3,9 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:uuid/uuid.dart';
 
 import '../../core/clock.dart';
+import '../../domain/campaign.dart';
 import '../../domain/day_log.dart';
+import '../../domain/grade.dart';
 import '../../domain/outcome.dart';
 import '../../domain/run.dart';
 import '../../engine/run_engine.dart';
@@ -227,6 +229,66 @@ class ProgressRepository {
     );
   }
 
+  /// Completes the run if its final day has both elapsed and been resolved.
+  ///
+  /// Returns the grade if it completed, or null if there was nothing to do.
+  /// Idempotent: a run that is already completed is never regraded.
+  ///
+  /// The grade is materialized here, once, so a finished run's result is stable
+  /// and queryable — but RunEngine remains the definition, and this value must
+  /// always equal what it computes.
+  Future<Grade?> completeRunIfFinished({
+    required CampaignRun run,
+    required Campaign campaign,
+  }) async {
+    if (run.status != RunStatus.active) return null;
+
+    // Re-read rather than trusting the caller's copy: a run completed on an
+    // earlier call is still `active` in whatever CampaignRun the caller is
+    // holding, and regrading it would break the once-only guarantee.
+    final stored = await runById(run.id);
+    if (stored == null || stored.status != RunStatus.active) return null;
+
+    final current = engine.currentDay(
+      startedAt: stored.startedAt,
+      zone: zone,
+      now: clock.nowUtc(),
+      lengthDays: campaign.lengthDays,
+    );
+    if (current < campaign.lengthDays) return null;
+
+    final logs = await logsFor(stored.id);
+
+    // Elapsing is not enough: the user still has the final day until it is
+    // reported, or until rollover resolves it.
+    final finalDay = logs.where((l) => l.dayIndex == campaign.lengthDays);
+    if (finalDay.isEmpty || !finalDay.first.isReported) return null;
+
+    final grade = engine.grade(logs, lengthDays: campaign.lengthDays);
+    final now = clock.nowUtc();
+
+    await (db.update(
+      db.campaignRuns,
+    )..where((r) => r.id.equals(stored.id))).write(
+      CampaignRunsCompanion(
+        status: Value(RunStatus.completed.key),
+        completedAt: Value(now),
+        grade: Value(grade.key),
+        updatedAt: Value(now),
+        dirty: const Value(true),
+      ),
+    );
+
+    return grade;
+  }
+
+  Future<CampaignRun?> runById(String id) async {
+    final row = await (db.select(
+      db.campaignRuns,
+    )..where((r) => r.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _toRun(row);
+  }
+
   // Drift's default sqlite storage round-trips a DateTime as a plain,
   // locale-flavored value (see database_test.dart's "round-trip" case and
   // https://drift.simonbinder.eu — the unix-timestamp column mode does not
@@ -244,6 +306,7 @@ class ProgressRepository {
     startedAt: _asUtc(row.startedAt),
     isHardened: row.isHardened,
     completedAt: row.completedAt == null ? null : _asUtc(row.completedAt!),
+    grade: row.grade == null ? null : Grade.fromKey(row.grade!),
   );
 
   DayLog _toLog(DayLogRow row) => DayLog(

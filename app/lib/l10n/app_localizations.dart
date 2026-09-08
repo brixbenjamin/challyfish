@@ -267,6 +267,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get openSettings;
+
+  /// [niche] Grade for a run finished with no misses. Stored as `sovereign`; only this word changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Sovereign'**
+  String get gradeSovereign;
+
+  /// [niche] Grade for a run finished within its miss allowance.
+  ///
+  /// In en, this message translates to:
+  /// **'Passed'**
+  String get gradePassed;
+
+  /// [niche] Grade for a run finished over its allowance. Never 'failed' — nothing is failed out of (ADR-0003).
+  ///
+  /// In en, this message translates to:
+  /// **'Broken'**
+  String get gradeBroken;
+
+  /// [niche] States the Sovereign result. No congratulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day of {title}. No misses.'**
+  String gradeSummarySovereign(String title);
+
+  /// [niche] States the Passed result.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished {title}. {misses} of {allowed} misses used.'**
+  String gradeSummaryPassed(String title, int misses, int allowed);
+
+  /// [niche] States the Broken result. No consolation, no retry offer — the honest record is the product.
+  ///
+  /// In en, this message translates to:
+  /// **'You finished {title} with {misses} misses. It allowed {allowed}.'**
+  String gradeSummaryBroken(String title, int misses, int allowed);
+
+  /// [niche] Introduces the archetype marks a run awarded. 'Mark' is the product's vocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Marks earned:'**
+  String get marksEarnedLead;
+
+  /// [niche] Shown when a Broken run earns no mark. The second sentence is load-bearing.
+  ///
+  /// In en, this message translates to:
+  /// **'No mark. The days you did still count.'**
+  String get noMarkNote;
+
+  /// [niche] Shown on the completion screen to a user with no identity attached. Finishing a campaign is the moment they have the most to lose (ADR-0007).
+  ///
+  /// In en, this message translates to:
+  /// **'This record lives on this phone only. Attach an identity and it survives losing it.'**
+  String get linkPromptBody;
+
+  /// [niche] Opens the link sheet. 'Attach an identity', never 'sign up' — there has been an account since first launch.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach an identity'**
+  String get linkIdentityButton;
+
+  /// [niche] Leaves the completion screen for browse.
+  ///
+  /// In en, this message translates to:
+  /// **'What next'**
+  String get whatNextButton;
 }
 
 class _AppLocalizationsDelegate

@@ -123,4 +123,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openSettings => 'Settings';
+
+  @override
+  String get gradeSovereign => 'Sovereign';
+
+  @override
+  String get gradePassed => 'Passed';
+
+  @override
+  String get gradeBroken => 'Broken';
+
+  @override
+  String gradeSummarySovereign(String title) {
+    return 'Every day of $title. No misses.';
+  }
+
+  @override
+  String gradeSummaryPassed(String title, int misses, int allowed) {
+    return 'You finished $title. $misses of $allowed misses used.';
+  }
+
+  @override
+  String gradeSummaryBroken(String title, int misses, int allowed) {
+    return 'You finished $title with $misses misses. It allowed $allowed.';
+  }
+
+  @override
+  String get marksEarnedLead => 'Marks earned:';
+
+  @override
+  String get noMarkNote => 'No mark. The days you did still count.';
+
+  @override
+  String get linkPromptBody =>
+      'This record lives on this phone only. Attach an identity and it survives losing it.';
+
+  @override
+  String get linkIdentityButton => 'Attach an identity';
+
+  @override
+  String get whatNextButton => 'What next';
 }
