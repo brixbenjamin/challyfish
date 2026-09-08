@@ -24,3 +24,16 @@ jobs:
       - uses: supabase/setup-cli@v1
       - run: supabase start
       - run: supabase test db
+
+  functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Edge Functions
+        # From the function's own directory: deno.json carries the import map,
+        # and deno resolves its config from the working directory.
+        working-directory: supabase/functions/delete-account
+        run: deno check index.ts
