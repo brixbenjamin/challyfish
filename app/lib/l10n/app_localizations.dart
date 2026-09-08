@@ -243,6 +243,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 mark} other{{count} marks}}'**
   String markCount(int count);
+
+  /// [niche] Submits the day's report. The commit/report verbs are the product's vocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Record'**
+  String get recordButton;
+
+  /// [niche] Hint on the optional note field. The optionality is the point.
+  ///
+  /// In en, this message translates to:
+  /// **'One line, if you want'**
+  String get notePlaceholder;
+
+  /// [niche] Tooltip on the dashboard's link to the reading section.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctrine'**
+  String get openDoctrine;
+
+  /// Tooltip on the dashboard's link to settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get openSettings;
 }
 
 class _AppLocalizationsDelegate

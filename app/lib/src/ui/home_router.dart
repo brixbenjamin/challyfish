@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../app/balance_state.dart';
 import '../app/providers.dart';
 import '../app/run_state.dart';
+import '../domain/campaign.dart';
 import '../domain/outcome.dart';
 import 'campaign_list_screen.dart';
-import 'dashboard_screen.dart';
+import 'dashboard/dashboard_screen.dart';
 
 /// Loads content, applies rollover, and shows either the campaign list or the
 /// dashboard. Plan 2 replaces this with the designed navigation; it exists here
@@ -19,7 +21,7 @@ class HomeRouter extends ConsumerStatefulWidget {
 
 class _HomeRouterState extends ConsumerState<HomeRouter>
     with WidgetsBindingObserver {
-  Future<RunState?>? _pending;
+  Future<_Home?>? _pending;
 
   @override
   void initState() {
@@ -48,7 +50,43 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     if (lifecycle == AppLifecycleState.resumed) _reload();
   }
 
-  Future<RunState?> _load() async {
+  /// The balance and the marks span the user's whole history, not the active
+  /// run, so they are assembled here beside the run state rather than inside
+  /// the dashboard.
+  Future<BalanceState> _balance() async {
+    final content = ref.read(contentRepositoryProvider);
+    final progress = ref.read(progressRepositoryProvider);
+    final userId = ref.read(userIdProvider);
+
+    final runs = await progress.allRuns(userId);
+    final logs = await progress.allDayLogs(userId);
+
+    final actionsById = <String, ActionSpec>{};
+    final archetypeIdsByCampaign = <String, List<String>>{};
+    for (final campaignId in runs.map((r) => r.campaignId).toSet()) {
+      for (final action in await content.actionsFor(campaignId)) {
+        actionsById[action.id] = action;
+      }
+      archetypeIdsByCampaign[campaignId] = await content.archetypeIdsFor(
+        campaignId,
+      );
+    }
+
+    final archetypes = (await content.archetypesById()).values.toList()
+      ..sort((a, b) => a.sort.compareTo(b.sort));
+
+    return BalanceState.load(
+      runs: runs,
+      logs: logs,
+      actionsById: actionsById,
+      archetypes: archetypes,
+      archetypeIdsByCampaign: archetypeIdsByCampaign,
+      zone: ref.read(zoneProvider),
+      now: ref.read(clockProvider).nowUtc(),
+    );
+  }
+
+  Future<_Home?> _load() async {
     final content = ref.read(contentRepositoryProvider);
     final progress = ref.read(progressRepositoryProvider);
     final userId = ref.read(userIdProvider);
@@ -83,13 +121,16 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     );
 
     final todayAction = await content.actionFor(campaign.id, state.currentDay);
-    return RunState.derive(
-      run: run,
-      campaign: campaign,
-      logs: logs,
-      todayAction: todayAction,
-      zone: ref.read(zoneProvider),
-      now: ref.read(clockProvider).nowUtc(),
+    return _Home(
+      run: RunState.derive(
+        run: run,
+        campaign: campaign,
+        logs: logs,
+        todayAction: todayAction,
+        zone: ref.read(zoneProvider),
+        now: ref.read(clockProvider).nowUtc(),
+      ),
+      balance: await _balance(),
     );
   }
 
@@ -101,7 +142,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<RunState?>(
+    return FutureBuilder<_Home?>(
       future: _pending,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -110,11 +151,15 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
           );
         }
 
-        final state = snapshot.data;
-        if (state == null) return _campaignList();
+        final home = snapshot.data;
+        if (home == null) return _campaignList();
+        final state = home.run;
 
         return DashboardScreen(
           state: state,
+          balance: home.balance,
+          onOpenDoctrine: () {},
+          onOpenSettings: () {},
           onCommit: () async {
             final action = state.todayAction;
             if (action == null) return;
@@ -171,4 +216,13 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       },
     );
   }
+}
+
+/// What the dashboard needs in one load: the derived run, and the balance and
+/// marks that span every run the user has.
+class _Home {
+  const _Home({required this.run, required this.balance});
+
+  final RunState run;
+  final BalanceState balance;
 }

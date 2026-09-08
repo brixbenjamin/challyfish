@@ -122,5 +122,25 @@
   "@markCount": {
     "description": "[niche] How many marks an archetype has earned, beside its radar label. 'Mark' is the product's vocabulary. Marks never decay, and this count sitting next to the decaying balance is what keeps a falling radar from reading as erasure (ADR-0010).",
     "placeholders": { "count": { "type": "int" } }
+  },
+
+  "recordButton": "Record",
+  "@recordButton": {
+    "description": "[niche] Submits the day's report. The commit/report verbs are the product's vocabulary."
+  },
+
+  "notePlaceholder": "One line, if you want",
+  "@notePlaceholder": {
+    "description": "[niche] Hint on the optional note field. The optionality is the point."
+  },
+
+  "openDoctrine": "Doctrine",
+  "@openDoctrine": {
+    "description": "[niche] Tooltip on the dashboard's link to the reading section."
+  },
+
+  "openSettings": "Settings",
+  "@openSettings": {
+    "description": "Tooltip on the dashboard's link to settings."
   }
 }

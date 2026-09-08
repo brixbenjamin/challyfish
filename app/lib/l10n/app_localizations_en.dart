@@ -111,4 +111,16 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get recordButton => 'Record';
+
+  @override
+  String get notePlaceholder => 'One line, if you want';
+
+  @override
+  String get openDoctrine => 'Doctrine';
+
+  @override
+  String get openSettings => 'Settings';
 }

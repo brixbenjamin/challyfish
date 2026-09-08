@@ -6,7 +6,9 @@ import 'package:timezone/timezone.dart' as tz;
 import '../core/clock.dart';
 import '../data/local/database.dart';
 import '../data/remote/content_api.dart';
+import '../data/remote/seed_snapshot.dart';
 import '../data/repositories/content_repository.dart';
+import '../data/repositories/diagnostic_repository.dart';
 import '../data/repositories/progress_repository.dart';
 
 final databaseProvider = Provider<FeralDatabase>((ref) {
@@ -37,5 +39,20 @@ final progressRepositoryProvider = Provider<ProgressRepository>((ref) {
     db: ref.watch(databaseProvider),
     clock: ref.watch(clockProvider),
     zone: ref.watch(zoneProvider),
+  );
+});
+
+final diagnosticRepositoryProvider = Provider<DiagnosticRepository>((ref) {
+  return DiagnosticRepository(
+    db: ref.watch(databaseProvider),
+    content: ref.watch(contentRepositoryProvider),
+    clock: ref.watch(clockProvider),
+  );
+});
+
+final seedSnapshotLoaderProvider = Provider<SeedSnapshotLoader>((ref) {
+  return SeedSnapshotLoader(
+    db: ref.watch(databaseProvider),
+    content: ref.watch(contentRepositoryProvider),
   );
 });
