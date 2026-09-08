@@ -100,4 +100,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get abandonAndStartButton => 'Abandon and start';
+
+  @override
+  String markCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count marks',
+      one: '1 mark',
+    );
+    return '$_temp0';
+  }
 }

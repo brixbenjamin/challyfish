@@ -116,5 +116,11 @@
   "abandonAndStartButton": "Abandon and start",
   "@abandonAndStartButton": {
     "description": "[niche] Starts this campaign in place of the active run. Names the cost in the label itself, not only in the warning above it."
+  },
+
+  "markCount": "{count, plural, =1{1 mark} other{{count} marks}}",
+  "@markCount": {
+    "description": "[niche] How many marks an archetype has earned, beside its radar label. 'Mark' is the product's vocabulary. Marks never decay, and this count sitting next to the decaying balance is what keeps a falling radar from reading as erasure (ADR-0010).",
+    "placeholders": { "count": { "type": "int" } }
   }
 }

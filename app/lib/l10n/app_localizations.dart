@@ -237,6 +237,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Abandon and start'**
   String get abandonAndStartButton;
+
+  /// [niche] How many marks an archetype has earned, beside its radar label. 'Mark' is the product's vocabulary. Marks never decay, and this count sitting next to the decaying balance is what keeps a falling radar from reading as erasure (ADR-0010).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 mark} other{{count} marks}}'**
+  String markCount(int count);
 }
 
 class _AppLocalizationsDelegate
