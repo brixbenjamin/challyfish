@@ -49,4 +49,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get outcomeMissed => 'Missed';
+
+  @override
+  String get backButton => 'Back';
+
+  @override
+  String get startButton => 'Start';
+
+  @override
+  String get browseInsteadButton => 'Look at the others';
+
+  @override
+  String get diagnosticWeakestLead =>
+      'When you had to choose, you chose this one least:';
+
+  @override
+  String get diagnosticRecommendationLead => 'Start here:';
+
+  @override
+  String questionProgress(int n, int total) {
+    return '$n of $total';
+  }
 }

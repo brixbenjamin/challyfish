@@ -159,6 +159,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Missed'**
   String get outcomeMissed;
+
+  /// Returns to the previous diagnostic question.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get backButton;
+
+  /// Starts the recommended campaign.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get startButton;
+
+  /// [niche] Declines the recommendation and opens browse.
+  ///
+  /// In en, this message translates to:
+  /// **'Look at the others'**
+  String get browseInsteadButton;
+
+  /// [niche] Introduces the weakest drive. Must read as relative, never as a low score (ADR-0009).
+  ///
+  /// In en, this message translates to:
+  /// **'When you had to choose, you chose this one least:'**
+  String get diagnosticWeakestLead;
+
+  /// Introduces the recommended campaign.
+  ///
+  /// In en, this message translates to:
+  /// **'Start here:'**
+  String get diagnosticRecommendationLead;
+
+  /// Position within the eight diagnostic questions.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} of {total}'**
+  String questionProgress(int n, int total);
 }
 
 class _AppLocalizationsDelegate

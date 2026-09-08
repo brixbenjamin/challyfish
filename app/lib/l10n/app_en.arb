@@ -49,5 +49,36 @@
     "description": "Report option. Must read exactly as easy as Done — if skipping feels like a confession, users stop reporting instead of skipping and the record stops being honest (R6)."
   },
   "outcomeMissed": "Missed",
-  "@outcomeMissed": { "description": "Written by rollover, never chosen by the user." }
+  "@outcomeMissed": { "description": "Written by rollover, never chosen by the user." },
+
+  "backButton": "Back",
+  "@backButton": {
+    "description": "Returns to the previous diagnostic question."
+  },
+
+  "startButton": "Start",
+  "@startButton": {
+    "description": "Starts the recommended campaign."
+  },
+
+  "browseInsteadButton": "Look at the others",
+  "@browseInsteadButton": {
+    "description": "[niche] Declines the recommendation and opens browse."
+  },
+
+  "diagnosticWeakestLead": "When you had to choose, you chose this one least:",
+  "@diagnosticWeakestLead": {
+    "description": "[niche] Introduces the weakest drive. Must read as relative, never as a low score (ADR-0009)."
+  },
+
+  "diagnosticRecommendationLead": "Start here:",
+  "@diagnosticRecommendationLead": {
+    "description": "Introduces the recommended campaign."
+  },
+
+  "questionProgress": "{n} of {total}",
+  "@questionProgress": {
+    "description": "Position within the eight diagnostic questions.",
+    "placeholders": { "n": { "type": "int" }, "total": { "type": "int" } }
+  }
 }
