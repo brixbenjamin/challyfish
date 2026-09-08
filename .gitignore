@@ -10,3 +10,4 @@
 # exactly how that rule gets broken by accident.
 .env*
 !.env.example
+app/env.json
