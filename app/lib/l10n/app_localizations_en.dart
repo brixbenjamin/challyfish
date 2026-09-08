@@ -271,5 +271,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'That did not send. Check the address and try again.';
 
   @override
+  String get linkSheetTitle => 'Keep this record';
+
+  @override
+  String get linkSheetBody =>
+      'Right now everything you have done lives only on this phone. Attaching an account keeps it, and lets you pick it up on another device.';
+
+  @override
+  String get notNowButton => 'Not now';
+
+  @override
+  String get continueWithApple => 'Continue with Apple';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get continueWithEmail => 'Continue with email';
+
+  @override
   String get understoodButton => 'Understood';
 }

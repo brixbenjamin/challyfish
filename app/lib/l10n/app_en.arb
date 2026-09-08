@@ -359,6 +359,36 @@
     "description": "Shown when requesting a code fails. Names the likely cause and the next step, never blames."
   },
 
+  "linkSheetTitle": "Keep this record",
+  "@linkSheetTitle": {
+    "description": "[niche] Title of the identity-link sheet. 'Record' is the product's vocabulary."
+  },
+
+  "linkSheetBody": "Right now everything you have done lives only on this phone. Attaching an account keeps it, and lets you pick it up on another device.",
+  "@linkSheetBody": {
+    "description": "[niche] Says what is at stake, once, and never again (ADR-0013)."
+  },
+
+  "notNowButton": "Not now",
+  "@notNowButton": {
+    "description": "Dismisses the link prompt. Dismissal is remembered and never asked again."
+  },
+
+  "continueWithApple": "Continue with Apple",
+  "@continueWithApple": {
+    "description": "Starts the Sign in with Apple flow. Required alongside any social login (App Store guideline 4.8)."
+  },
+
+  "continueWithGoogle": "Continue with Google",
+  "@continueWithGoogle": {
+    "description": "Starts the Google sign-in flow."
+  },
+
+  "continueWithEmail": "Continue with email",
+  "@continueWithEmail": {
+    "description": "Starts the six-digit code flow."
+  },
+
   "understoodButton": "Understood",
   "@understoodButton": {
     "description": "Acknowledges the privacy notice."

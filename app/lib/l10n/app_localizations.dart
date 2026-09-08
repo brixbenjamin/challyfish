@@ -520,6 +520,42 @@ abstract class AppLocalizations {
   /// **'That did not send. Check the address and try again.'**
   String get codeSendFailed;
 
+  /// [niche] Title of the identity-link sheet. 'Record' is the product's vocabulary.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this record'**
+  String get linkSheetTitle;
+
+  /// [niche] Says what is at stake, once, and never again (ADR-0013).
+  ///
+  /// In en, this message translates to:
+  /// **'Right now everything you have done lives only on this phone. Attaching an account keeps it, and lets you pick it up on another device.'**
+  String get linkSheetBody;
+
+  /// Dismisses the link prompt. Dismissal is remembered and never asked again.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNowButton;
+
+  /// Starts the Sign in with Apple flow. Required alongside any social login (App Store guideline 4.8).
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get continueWithApple;
+
+  /// Starts the Google sign-in flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// Starts the six-digit code flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with email'**
+  String get continueWithEmail;
+
   /// Acknowledges the privacy notice.
   ///
   /// In en, this message translates to:
