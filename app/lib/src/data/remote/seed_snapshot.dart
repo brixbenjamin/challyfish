@@ -45,7 +45,7 @@ class SeedSnapshotLoader {
         final updated = DateTime.parse(row['updated_at'] as String);
         if (high == null || updated.isAfter(high)) high = updated;
       }
-      if (high != null) content.primeWatermark(entry.key, high);
+      if (high != null) await content.primeWatermark(entry.key, high);
     }
 
     return true;

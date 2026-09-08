@@ -69,3 +69,19 @@ class DiagnosticResults extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// One row per account, mirroring `public.profiles`.
+///
+/// `displayName` is carried because the server column exists; nothing in v1
+/// surfaces it (there is no social layer).
+@DataClassName('ProfileRow')
+class Profiles extends Table {
+  TextColumn get userId => text()();
+  TextColumn get displayName => text().nullable()();
+  DateTimeColumn get onboardedAt => dateTime().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {userId};
+}

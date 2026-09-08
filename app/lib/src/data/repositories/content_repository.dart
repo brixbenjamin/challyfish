@@ -25,9 +25,6 @@ class ContentRepository {
   final FeralDatabase db;
   final ContentApi api;
 
-  /// The high-water mark per table, so a pull asks only for what changed.
-  final Map<String, DateTime> _watermarks = {};
-
   /// Every content table, and how to turn one of its rows into a local insert.
   ///
   /// One list rather than nine near-identical methods: at four tables the
@@ -184,7 +181,7 @@ class ContentRepository {
 
   Future<void> pull() async {
     for (final table in _tables) {
-      final rows = await api.fetchSince(table.name, _watermarks[table.name]);
+      final rows = await api.fetchSince(table.name, await _watermark(table.name));
       if (rows.isEmpty) continue;
 
       await db.transaction(() async {
@@ -193,17 +190,29 @@ class ContentRepository {
         }
       });
 
-      var high =
-          _watermarks[table.name] ??
-          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-      for (final row in rows) {
-        final updated = _at(row);
-        if (updated.isAfter(high)) high = updated;
-      }
       // Advanced only after the rows are committed, so an interrupted pull is
       // retried rather than skipped.
-      _watermarks[table.name] = high;
+      await _advanceWatermark(table.name, rows);
     }
+  }
+
+  /// Plan 2 kept these in a map on this object, which meant every cold start
+  /// re-downloaded the whole library. They are database state now.
+  Future<DateTime?> _watermark(String table) => db.watermarkFor(table);
+
+  Future<void> _advanceWatermark(
+    String table,
+    List<Map<String, dynamic>> rows,
+  ) async {
+    if (rows.isEmpty) return;
+    var high =
+        await db.watermarkFor(table) ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    for (final row in rows) {
+      final updated = _at(row).toUtc();
+      if (updated.isAfter(high)) high = updated;
+    }
+    await db.setWatermark(table, high);
   }
 
   /// Applies rows keyed by table name, using the same upserts as the network
@@ -219,11 +228,13 @@ class ContentRepository {
     }
   }
 
-  /// Read-only view, used by the seed snapshot loader to set the initial marks.
-  Map<String, DateTime> get watermarks => Map.unmodifiable(_watermarks);
+  /// Used by the seed snapshot loader to set the initial marks. Same storage
+  /// as a pull's own advance — there is only one watermark per table.
+  Future<void> primeWatermark(String table, DateTime value) =>
+      db.setWatermark(table, value);
 
-  void primeWatermark(String table, DateTime value) =>
-      _watermarks[table] = value;
+  /// Read-only view, for tests and diagnostics.
+  Future<DateTime?> watermarkFor(String table) => db.watermarkFor(table);
 
   Future<List<Campaign>> campaigns() async {
     final rows = await (db.select(

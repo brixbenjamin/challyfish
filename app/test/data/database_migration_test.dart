@@ -17,8 +17,8 @@ void main() {
   setUp(() => db = FeralDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  test('schemaVersion is 2', () {
-    expect(db.schemaVersion, 2);
+  test('schemaVersion is 3', () {
+    expect(db.schemaVersion, 3);
   });
 
   test('the new content tables exist and are empty', () async {

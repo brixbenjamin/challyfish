@@ -93,12 +93,15 @@ void main() {
     // Set too low and the first pull re-downloads the library; too high and
     // genuine edits are missed forever.
     expect(
-      content.watermarks['archetypes'],
+      await content.watermarkFor('archetypes'),
       DateTime.parse('2026-06-01T09:00:00Z'),
     );
-    expect(content.watermarks['packs'], DateTime.parse('2026-06-02T09:00:00Z'));
     expect(
-      content.watermarks['campaigns'],
+      await content.watermarkFor('packs'),
+      DateTime.parse('2026-06-02T09:00:00Z'),
+    );
+    expect(
+      await content.watermarkFor('campaigns'),
       DateTime.parse('2026-06-03T09:00:00Z'),
     );
   });

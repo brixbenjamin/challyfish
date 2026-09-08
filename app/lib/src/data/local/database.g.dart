@@ -4161,6 +4161,383 @@ class DiagnosticOptionsCompanion extends UpdateCompanion<DiagnosticOptionRow> {
   }
 }
 
+class $ProfilesTable extends Profiles
+    with TableInfo<$ProfilesTable, ProfileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _onboardedAtMeta = const VerificationMeta(
+    'onboardedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> onboardedAt = GeneratedColumn<DateTime>(
+    'onboarded_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
+  @override
+  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
+    'dirty',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("dirty" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    userId,
+    displayName,
+    onboardedAt,
+    updatedAt,
+    dirty,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'profiles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProfileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('onboarded_at')) {
+      context.handle(
+        _onboardedAtMeta,
+        onboardedAt.isAcceptableOrUnknown(
+          data['onboarded_at']!,
+          _onboardedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('dirty')) {
+      context.handle(
+        _dirtyMeta,
+        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {userId};
+  @override
+  ProfileRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProfileRow(
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      ),
+      onboardedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}onboarded_at'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      dirty: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dirty'],
+      )!,
+    );
+  }
+
+  @override
+  $ProfilesTable createAlias(String alias) {
+    return $ProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class ProfileRow extends DataClass implements Insertable<ProfileRow> {
+  final String userId;
+  final String? displayName;
+  final DateTime? onboardedAt;
+  final DateTime updatedAt;
+  final bool dirty;
+  const ProfileRow({
+    required this.userId,
+    this.displayName,
+    this.onboardedAt,
+    required this.updatedAt,
+    required this.dirty,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || displayName != null) {
+      map['display_name'] = Variable<String>(displayName);
+    }
+    if (!nullToAbsent || onboardedAt != null) {
+      map['onboarded_at'] = Variable<DateTime>(onboardedAt);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['dirty'] = Variable<bool>(dirty);
+    return map;
+  }
+
+  ProfilesCompanion toCompanion(bool nullToAbsent) {
+    return ProfilesCompanion(
+      userId: Value(userId),
+      displayName: displayName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(displayName),
+      onboardedAt: onboardedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(onboardedAt),
+      updatedAt: Value(updatedAt),
+      dirty: Value(dirty),
+    );
+  }
+
+  factory ProfileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProfileRow(
+      userId: serializer.fromJson<String>(json['userId']),
+      displayName: serializer.fromJson<String?>(json['displayName']),
+      onboardedAt: serializer.fromJson<DateTime?>(json['onboardedAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      dirty: serializer.fromJson<bool>(json['dirty']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'userId': serializer.toJson<String>(userId),
+      'displayName': serializer.toJson<String?>(displayName),
+      'onboardedAt': serializer.toJson<DateTime?>(onboardedAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'dirty': serializer.toJson<bool>(dirty),
+    };
+  }
+
+  ProfileRow copyWith({
+    String? userId,
+    Value<String?> displayName = const Value.absent(),
+    Value<DateTime?> onboardedAt = const Value.absent(),
+    DateTime? updatedAt,
+    bool? dirty,
+  }) => ProfileRow(
+    userId: userId ?? this.userId,
+    displayName: displayName.present ? displayName.value : this.displayName,
+    onboardedAt: onboardedAt.present ? onboardedAt.value : this.onboardedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    dirty: dirty ?? this.dirty,
+  );
+  ProfileRow copyWithCompanion(ProfilesCompanion data) {
+    return ProfileRow(
+      userId: data.userId.present ? data.userId.value : this.userId,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      onboardedAt: data.onboardedAt.present
+          ? data.onboardedAt.value
+          : this.onboardedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      dirty: data.dirty.present ? data.dirty.value : this.dirty,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProfileRow(')
+          ..write('userId: $userId, ')
+          ..write('displayName: $displayName, ')
+          ..write('onboardedAt: $onboardedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(userId, displayName, onboardedAt, updatedAt, dirty);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProfileRow &&
+          other.userId == this.userId &&
+          other.displayName == this.displayName &&
+          other.onboardedAt == this.onboardedAt &&
+          other.updatedAt == this.updatedAt &&
+          other.dirty == this.dirty);
+}
+
+class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
+  final Value<String> userId;
+  final Value<String?> displayName;
+  final Value<DateTime?> onboardedAt;
+  final Value<DateTime> updatedAt;
+  final Value<bool> dirty;
+  final Value<int> rowid;
+  const ProfilesCompanion({
+    this.userId = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.onboardedAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.dirty = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProfilesCompanion.insert({
+    required String userId,
+    this.displayName = const Value.absent(),
+    this.onboardedAt = const Value.absent(),
+    required DateTime updatedAt,
+    this.dirty = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : userId = Value(userId),
+       updatedAt = Value(updatedAt);
+  static Insertable<ProfileRow> custom({
+    Expression<String>? userId,
+    Expression<String>? displayName,
+    Expression<DateTime>? onboardedAt,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? dirty,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (userId != null) 'user_id': userId,
+      if (displayName != null) 'display_name': displayName,
+      if (onboardedAt != null) 'onboarded_at': onboardedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (dirty != null) 'dirty': dirty,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProfilesCompanion copyWith({
+    Value<String>? userId,
+    Value<String?>? displayName,
+    Value<DateTime?>? onboardedAt,
+    Value<DateTime>? updatedAt,
+    Value<bool>? dirty,
+    Value<int>? rowid,
+  }) {
+    return ProfilesCompanion(
+      userId: userId ?? this.userId,
+      displayName: displayName ?? this.displayName,
+      onboardedAt: onboardedAt ?? this.onboardedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      dirty: dirty ?? this.dirty,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (onboardedAt.present) {
+      map['onboarded_at'] = Variable<DateTime>(onboardedAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (dirty.present) {
+      map['dirty'] = Variable<bool>(dirty.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProfilesCompanion(')
+          ..write('userId: $userId, ')
+          ..write('displayName: $displayName, ')
+          ..write('onboardedAt: $onboardedAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CampaignRunsTable extends CampaignRuns
     with TableInfo<$CampaignRunsTable, CampaignRunRow> {
   @override
@@ -5917,6 +6294,291 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
   }
 }
 
+class $SyncStateTable extends SyncState
+    with TableInfo<$SyncStateTable, SyncStateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncStateTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _syncTableMeta = const VerificationMeta(
+    'syncTable',
+  );
+  @override
+  late final GeneratedColumn<String> syncTable = GeneratedColumn<String>(
+    'table_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _watermarkMeta = const VerificationMeta(
+    'watermark',
+  );
+  @override
+  late final GeneratedColumn<DateTime> watermark = GeneratedColumn<DateTime>(
+    'watermark',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastPulledAtMeta = const VerificationMeta(
+    'lastPulledAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastPulledAt = GeneratedColumn<DateTime>(
+    'last_pulled_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [syncTable, watermark, lastPulledAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_state';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncStateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('table_name')) {
+      context.handle(
+        _syncTableMeta,
+        syncTable.isAcceptableOrUnknown(data['table_name']!, _syncTableMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncTableMeta);
+    }
+    if (data.containsKey('watermark')) {
+      context.handle(
+        _watermarkMeta,
+        watermark.isAcceptableOrUnknown(data['watermark']!, _watermarkMeta),
+      );
+    }
+    if (data.containsKey('last_pulled_at')) {
+      context.handle(
+        _lastPulledAtMeta,
+        lastPulledAt.isAcceptableOrUnknown(
+          data['last_pulled_at']!,
+          _lastPulledAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {syncTable};
+  @override
+  SyncStateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncStateRow(
+      syncTable: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}table_name'],
+      )!,
+      watermark: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}watermark'],
+      ),
+      lastPulledAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_pulled_at'],
+      ),
+    );
+  }
+
+  @override
+  $SyncStateTable createAlias(String alias) {
+    return $SyncStateTable(attachedDatabase, alias);
+  }
+}
+
+class SyncStateRow extends DataClass implements Insertable<SyncStateRow> {
+  /// The remote table name, e.g. `campaigns` or `day_logs`.
+  ///
+  /// Named `syncTable` in Dart because `tableName` is drift's own hook for
+  /// overriding a table's SQL name; the column itself is still `table_name`.
+  final String syncTable;
+
+  /// Newest `updated_at` committed locally. Null means "never pulled".
+  final DateTime? watermark;
+
+  /// When the last successful pull for this table finished. Diagnostics only —
+  /// never used to decide what to fetch.
+  final DateTime? lastPulledAt;
+  const SyncStateRow({
+    required this.syncTable,
+    this.watermark,
+    this.lastPulledAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['table_name'] = Variable<String>(syncTable);
+    if (!nullToAbsent || watermark != null) {
+      map['watermark'] = Variable<DateTime>(watermark);
+    }
+    if (!nullToAbsent || lastPulledAt != null) {
+      map['last_pulled_at'] = Variable<DateTime>(lastPulledAt);
+    }
+    return map;
+  }
+
+  SyncStateCompanion toCompanion(bool nullToAbsent) {
+    return SyncStateCompanion(
+      syncTable: Value(syncTable),
+      watermark: watermark == null && nullToAbsent
+          ? const Value.absent()
+          : Value(watermark),
+      lastPulledAt: lastPulledAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastPulledAt),
+    );
+  }
+
+  factory SyncStateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncStateRow(
+      syncTable: serializer.fromJson<String>(json['syncTable']),
+      watermark: serializer.fromJson<DateTime?>(json['watermark']),
+      lastPulledAt: serializer.fromJson<DateTime?>(json['lastPulledAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncTable': serializer.toJson<String>(syncTable),
+      'watermark': serializer.toJson<DateTime?>(watermark),
+      'lastPulledAt': serializer.toJson<DateTime?>(lastPulledAt),
+    };
+  }
+
+  SyncStateRow copyWith({
+    String? syncTable,
+    Value<DateTime?> watermark = const Value.absent(),
+    Value<DateTime?> lastPulledAt = const Value.absent(),
+  }) => SyncStateRow(
+    syncTable: syncTable ?? this.syncTable,
+    watermark: watermark.present ? watermark.value : this.watermark,
+    lastPulledAt: lastPulledAt.present ? lastPulledAt.value : this.lastPulledAt,
+  );
+  SyncStateRow copyWithCompanion(SyncStateCompanion data) {
+    return SyncStateRow(
+      syncTable: data.syncTable.present ? data.syncTable.value : this.syncTable,
+      watermark: data.watermark.present ? data.watermark.value : this.watermark,
+      lastPulledAt: data.lastPulledAt.present
+          ? data.lastPulledAt.value
+          : this.lastPulledAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncStateRow(')
+          ..write('syncTable: $syncTable, ')
+          ..write('watermark: $watermark, ')
+          ..write('lastPulledAt: $lastPulledAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(syncTable, watermark, lastPulledAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncStateRow &&
+          other.syncTable == this.syncTable &&
+          other.watermark == this.watermark &&
+          other.lastPulledAt == this.lastPulledAt);
+}
+
+class SyncStateCompanion extends UpdateCompanion<SyncStateRow> {
+  final Value<String> syncTable;
+  final Value<DateTime?> watermark;
+  final Value<DateTime?> lastPulledAt;
+  final Value<int> rowid;
+  const SyncStateCompanion({
+    this.syncTable = const Value.absent(),
+    this.watermark = const Value.absent(),
+    this.lastPulledAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncStateCompanion.insert({
+    required String syncTable,
+    this.watermark = const Value.absent(),
+    this.lastPulledAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : syncTable = Value(syncTable);
+  static Insertable<SyncStateRow> custom({
+    Expression<String>? syncTable,
+    Expression<DateTime>? watermark,
+    Expression<DateTime>? lastPulledAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (syncTable != null) 'table_name': syncTable,
+      if (watermark != null) 'watermark': watermark,
+      if (lastPulledAt != null) 'last_pulled_at': lastPulledAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncStateCompanion copyWith({
+    Value<String>? syncTable,
+    Value<DateTime?>? watermark,
+    Value<DateTime?>? lastPulledAt,
+    Value<int>? rowid,
+  }) {
+    return SyncStateCompanion(
+      syncTable: syncTable ?? this.syncTable,
+      watermark: watermark ?? this.watermark,
+      lastPulledAt: lastPulledAt ?? this.lastPulledAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncTable.present) {
+      map['table_name'] = Variable<String>(syncTable.value);
+    }
+    if (watermark.present) {
+      map['watermark'] = Variable<DateTime>(watermark.value);
+    }
+    if (lastPulledAt.present) {
+      map['last_pulled_at'] = Variable<DateTime>(lastPulledAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncStateCompanion(')
+          ..write('syncTable: $syncTable, ')
+          ..write('watermark: $watermark, ')
+          ..write('lastPulledAt: $lastPulledAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$FeralDatabase extends GeneratedDatabase {
   _$FeralDatabase(QueryExecutor e) : super(e);
   $FeralDatabaseManager get managers => $FeralDatabaseManager(this);
@@ -5934,10 +6596,12 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
       $DiagnosticQuestionsTable(this);
   late final $DiagnosticOptionsTable diagnosticOptions =
       $DiagnosticOptionsTable(this);
+  late final $ProfilesTable profiles = $ProfilesTable(this);
   late final $CampaignRunsTable campaignRuns = $CampaignRunsTable(this);
   late final $DayLogsTable dayLogs = $DayLogsTable(this);
   late final $DiagnosticResultsTable diagnosticResults =
       $DiagnosticResultsTable(this);
+  late final $SyncStateTable syncState = $SyncStateTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5952,9 +6616,11 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     doctrineEntries,
     diagnosticQuestions,
     diagnosticOptions,
+    profiles,
     campaignRuns,
     dayLogs,
     diagnosticResults,
+    syncState,
   ];
 }
 
@@ -8173,6 +8839,207 @@ typedef $$DiagnosticOptionsTableProcessedTableManager =
       DiagnosticOptionRow,
       PrefetchHooks Function()
     >;
+typedef $$ProfilesTableCreateCompanionBuilder =
+    ProfilesCompanion Function({
+      required String userId,
+      Value<String?> displayName,
+      Value<DateTime?> onboardedAt,
+      required DateTime updatedAt,
+      Value<bool> dirty,
+      Value<int> rowid,
+    });
+typedef $$ProfilesTableUpdateCompanionBuilder =
+    ProfilesCompanion Function({
+      Value<String> userId,
+      Value<String?> displayName,
+      Value<DateTime?> onboardedAt,
+      Value<DateTime> updatedAt,
+      Value<bool> dirty,
+      Value<int> rowid,
+    });
+
+class $$ProfilesTableFilterComposer
+    extends Composer<_$FeralDatabase, $ProfilesTable> {
+  $$ProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get onboardedAt => $composableBuilder(
+    column: $table.onboardedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ProfilesTableOrderingComposer
+    extends Composer<_$FeralDatabase, $ProfilesTable> {
+  $$ProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get onboardedAt => $composableBuilder(
+    column: $table.onboardedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ProfilesTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $ProfilesTable> {
+  $$ProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get onboardedAt => $composableBuilder(
+    column: $table.onboardedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get dirty =>
+      $composableBuilder(column: $table.dirty, builder: (column) => column);
+}
+
+class $$ProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $ProfilesTable,
+          ProfileRow,
+          $$ProfilesTableFilterComposer,
+          $$ProfilesTableOrderingComposer,
+          $$ProfilesTableAnnotationComposer,
+          $$ProfilesTableCreateCompanionBuilder,
+          $$ProfilesTableUpdateCompanionBuilder,
+          (
+            ProfileRow,
+            BaseReferences<_$FeralDatabase, $ProfilesTable, ProfileRow>,
+          ),
+          ProfileRow,
+          PrefetchHooks Function()
+        > {
+  $$ProfilesTableTableManager(_$FeralDatabase db, $ProfilesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> userId = const Value.absent(),
+                Value<String?> displayName = const Value.absent(),
+                Value<DateTime?> onboardedAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> dirty = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProfilesCompanion(
+                userId: userId,
+                displayName: displayName,
+                onboardedAt: onboardedAt,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String userId,
+                Value<String?> displayName = const Value.absent(),
+                Value<DateTime?> onboardedAt = const Value.absent(),
+                required DateTime updatedAt,
+                Value<bool> dirty = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ProfilesCompanion.insert(
+                userId: userId,
+                displayName: displayName,
+                onboardedAt: onboardedAt,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $ProfilesTable,
+      ProfileRow,
+      $$ProfilesTableFilterComposer,
+      $$ProfilesTableOrderingComposer,
+      $$ProfilesTableAnnotationComposer,
+      $$ProfilesTableCreateCompanionBuilder,
+      $$ProfilesTableUpdateCompanionBuilder,
+      (ProfileRow, BaseReferences<_$FeralDatabase, $ProfilesTable, ProfileRow>),
+      ProfileRow,
+      PrefetchHooks Function()
+    >;
 typedef $$CampaignRunsTableCreateCompanionBuilder =
     CampaignRunsCompanion Function({
       required String id,
@@ -9042,6 +9909,170 @@ typedef $$DiagnosticResultsTableProcessedTableManager =
       DiagnosticResultRow,
       PrefetchHooks Function()
     >;
+typedef $$SyncStateTableCreateCompanionBuilder =
+    SyncStateCompanion Function({
+      required String syncTable,
+      Value<DateTime?> watermark,
+      Value<DateTime?> lastPulledAt,
+      Value<int> rowid,
+    });
+typedef $$SyncStateTableUpdateCompanionBuilder =
+    SyncStateCompanion Function({
+      Value<String> syncTable,
+      Value<DateTime?> watermark,
+      Value<DateTime?> lastPulledAt,
+      Value<int> rowid,
+    });
+
+class $$SyncStateTableFilterComposer
+    extends Composer<_$FeralDatabase, $SyncStateTable> {
+  $$SyncStateTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get syncTable => $composableBuilder(
+    column: $table.syncTable,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get watermark => $composableBuilder(
+    column: $table.watermark,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastPulledAt => $composableBuilder(
+    column: $table.lastPulledAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncStateTableOrderingComposer
+    extends Composer<_$FeralDatabase, $SyncStateTable> {
+  $$SyncStateTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get syncTable => $composableBuilder(
+    column: $table.syncTable,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get watermark => $composableBuilder(
+    column: $table.watermark,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastPulledAt => $composableBuilder(
+    column: $table.lastPulledAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncStateTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $SyncStateTable> {
+  $$SyncStateTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get syncTable =>
+      $composableBuilder(column: $table.syncTable, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get watermark =>
+      $composableBuilder(column: $table.watermark, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastPulledAt => $composableBuilder(
+    column: $table.lastPulledAt,
+    builder: (column) => column,
+  );
+}
+
+class $$SyncStateTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $SyncStateTable,
+          SyncStateRow,
+          $$SyncStateTableFilterComposer,
+          $$SyncStateTableOrderingComposer,
+          $$SyncStateTableAnnotationComposer,
+          $$SyncStateTableCreateCompanionBuilder,
+          $$SyncStateTableUpdateCompanionBuilder,
+          (
+            SyncStateRow,
+            BaseReferences<_$FeralDatabase, $SyncStateTable, SyncStateRow>,
+          ),
+          SyncStateRow,
+          PrefetchHooks Function()
+        > {
+  $$SyncStateTableTableManager(_$FeralDatabase db, $SyncStateTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncStateTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncStateTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncStateTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> syncTable = const Value.absent(),
+                Value<DateTime?> watermark = const Value.absent(),
+                Value<DateTime?> lastPulledAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncStateCompanion(
+                syncTable: syncTable,
+                watermark: watermark,
+                lastPulledAt: lastPulledAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String syncTable,
+                Value<DateTime?> watermark = const Value.absent(),
+                Value<DateTime?> lastPulledAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncStateCompanion.insert(
+                syncTable: syncTable,
+                watermark: watermark,
+                lastPulledAt: lastPulledAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncStateTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $SyncStateTable,
+      SyncStateRow,
+      $$SyncStateTableFilterComposer,
+      $$SyncStateTableOrderingComposer,
+      $$SyncStateTableAnnotationComposer,
+      $$SyncStateTableCreateCompanionBuilder,
+      $$SyncStateTableUpdateCompanionBuilder,
+      (
+        SyncStateRow,
+        BaseReferences<_$FeralDatabase, $SyncStateTable, SyncStateRow>,
+      ),
+      SyncStateRow,
+      PrefetchHooks Function()
+    >;
 
 class $FeralDatabaseManager {
   final _$FeralDatabase _db;
@@ -9064,10 +10095,14 @@ class $FeralDatabaseManager {
       $$DiagnosticQuestionsTableTableManager(_db, _db.diagnosticQuestions);
   $$DiagnosticOptionsTableTableManager get diagnosticOptions =>
       $$DiagnosticOptionsTableTableManager(_db, _db.diagnosticOptions);
+  $$ProfilesTableTableManager get profiles =>
+      $$ProfilesTableTableManager(_db, _db.profiles);
   $$CampaignRunsTableTableManager get campaignRuns =>
       $$CampaignRunsTableTableManager(_db, _db.campaignRuns);
   $$DayLogsTableTableManager get dayLogs =>
       $$DayLogsTableTableManager(_db, _db.dayLogs);
   $$DiagnosticResultsTableTableManager get diagnosticResults =>
       $$DiagnosticResultsTableTableManager(_db, _db.diagnosticResults);
+  $$SyncStateTableTableManager get syncState =>
+      $$SyncStateTableTableManager(_db, _db.syncState);
 }

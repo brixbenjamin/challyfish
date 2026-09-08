@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import 'tables/content_tables.dart';
+import 'tables/sync_tables.dart';
 import 'tables/user_tables.dart';
 
 part 'database.g.dart';
@@ -10,6 +11,7 @@ part 'database.g.dart';
 /// loop independent of the network.
 @DriftDatabase(
   tables: [
+    // content
     Archetypes,
     Packs,
     Campaigns,
@@ -19,16 +21,20 @@ part 'database.g.dart';
     DoctrineEntries,
     DiagnosticQuestions,
     DiagnosticOptions,
+    // user
+    Profiles,
     CampaignRuns,
     DayLogs,
     DiagnosticResults,
+    // sync
+    SyncState,
   ],
 )
 class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -45,6 +51,31 @@ class FeralDatabase extends _$FeralDatabase {
         await m.createTable(diagnosticOptions);
         await m.createTable(diagnosticResults);
       }
+      if (from < 3) {
+        // Strictly additive, for the same reason. diagnostic_results already
+        // carries `dirty` — it was created with that column at v2 — so there
+        // is no column to add here.
+        await m.createTable(profiles);
+        await m.createTable(syncState);
+      }
     },
   );
+
+  /// The newest `updated_at` this device has committed for [table], or null if
+  /// it has never pulled that table.
+  ///
+  /// Normalized to UTC on the way out: drift stores date times as unix seconds
+  /// and hands them back in the local zone, while every comparison a caller
+  /// makes is against a server timestamp.
+  Future<DateTime?> watermarkFor(String table) async {
+    final row = await (select(
+      syncState,
+    )..where((r) => r.syncTable.equals(table))).getSingleOrNull();
+    return row?.watermark?.toUtc();
+  }
+
+  Future<void> setWatermark(String table, DateTime value) =>
+      into(syncState).insertOnConflictUpdate(
+        SyncStateRow(syncTable: table, watermark: value, lastPulledAt: value),
+      );
 }
