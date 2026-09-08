@@ -2,9 +2,13 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:feral/src/data/local/database.dart';
 import 'package:feral/src/data/remote/auth_gateway.dart';
+import 'package:feral/src/data/repositories/entitlement_repository.dart';
+import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/repositories/identity_repository.dart';
 import 'package:feral/src/domain/identity.dart';
 import 'package:test/test.dart';
+
+import '../support/fake_purchase_gateway.dart';
 
 class FakeAuthGateway implements AuthGateway {
   String? userId = 'anon-user';
@@ -77,6 +81,7 @@ void main() {
   late FeralDatabase db;
   late FakeAuthGateway auth;
   late IdentityRepository identity;
+  late FakePurchaseGateway purchases;
 
   Future<void> seedLocalProgress() async {
     await db
@@ -125,7 +130,17 @@ void main() {
   setUp(() {
     db = FeralDatabase(NativeDatabase.memory());
     auth = FakeAuthGateway();
-    identity = IdentityRepository(db: db, auth: auth);
+    purchases = FakePurchaseGateway();
+    identity = IdentityRepository(
+      db: db,
+      auth: auth,
+      entitlements: EntitlementRepository(
+        db: db,
+        gateway: purchases,
+        clock: FixedClock(DateTime.utc(2026, 6, 1)),
+      ),
+      purchases: purchases,
+    );
   });
   tearDown(() => db.close());
 

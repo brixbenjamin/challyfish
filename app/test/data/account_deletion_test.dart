@@ -1,10 +1,14 @@
 import 'package:drift/native.dart';
 import 'package:feral/src/data/local/database.dart';
 import 'package:feral/src/data/remote/account_api.dart';
+import 'package:feral/src/data/repositories/entitlement_repository.dart';
+import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/repositories/identity_repository.dart';
 import 'package:test/test.dart';
 
 import 'identity_repository_test.dart' show FakeAuthGateway;
+
+import '../support/fake_purchase_gateway.dart';
 
 class FakeAccountApi implements AccountApi {
   bool succeed = true;
@@ -22,12 +26,23 @@ void main() {
   late FakeAuthGateway auth;
   late FakeAccountApi api;
   late IdentityRepository identity;
+  late FakePurchaseGateway purchases;
 
   setUp(() async {
     db = FeralDatabase(NativeDatabase.memory());
     auth = FakeAuthGateway();
     api = FakeAccountApi();
-    identity = IdentityRepository(db: db, auth: auth);
+    purchases = FakePurchaseGateway();
+    identity = IdentityRepository(
+      db: db,
+      auth: auth,
+      entitlements: EntitlementRepository(
+        db: db,
+        gateway: purchases,
+        clock: FixedClock(DateTime.utc(2026, 6, 1)),
+      ),
+      purchases: purchases,
+    );
     await db
         .into(db.campaignRuns)
         .insert(

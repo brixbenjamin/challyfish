@@ -3,14 +3,23 @@ import 'package:drift/drift.dart';
 import '../../domain/identity.dart';
 import '../local/database.dart';
 import '../remote/auth_gateway.dart';
+import '../remote/purchase_gateway.dart';
+import 'entitlement_repository.dart';
 
 class IdentityRepository {
   // Fields are public, as elsewhere here, so the constructor can use
   // initializing formals for its named parameters.
-  IdentityRepository({required this.db, required this.auth});
+  IdentityRepository({
+    required this.db,
+    required this.auth,
+    required this.entitlements,
+    required this.purchases,
+  });
 
   final FeralDatabase db;
   final AuthGateway auth;
+  final EntitlementRepository entitlements;
+  final PurchaseGateway purchases;
 
   bool get isLinked => auth.linkedIdentity != null;
   LinkedIdentity? get linkedIdentity => auth.linkedIdentity;
@@ -28,6 +37,11 @@ class IdentityRepository {
 
     try {
       await auth.linkIdentity(provider, credential);
+      // Linking preserves the user id (ADR-0014), and the RevenueCat app user
+      // id IS the user id (ADR-0017), so entitlements need no work here. Do not
+      // add a switchUser call for symmetry with sign-in: it would ask the store
+      // to move a purchase to the id it already belongs to, and can produce a
+      // transfer event that revokes it from its owner.
       return Linked(auth.linkedIdentity!);
     } on IdentityAlreadyAttached {
       final summary = await localProgressSummary();
@@ -97,6 +111,7 @@ class IdentityRepository {
       );
       if (link) return Linked(auth.linkedIdentity!);
       await _replaceLocalUserState();
+      await _switchStoreUser(userId);
       return SignedIn(userId, auth.linkedIdentity!);
     } catch (error) {
       // A wrong or expired code lands here, and it must cost nothing: the local
@@ -118,6 +133,7 @@ class IdentityRepository {
     try {
       final userId = await auth.signIn(provider, credential);
       await _replaceLocalUserState();
+      await _switchStoreUser(userId);
       return SignedIn(userId, auth.linkedIdentity!);
     } catch (error) {
       return Failed(error);
@@ -166,6 +182,10 @@ class IdentityRepository {
       await db.delete(db.campaignRuns).go();
       await db.delete(db.diagnosticResults).go();
       await db.delete(db.profiles).go();
+      // This device now belongs to a different account. Old rows would show a
+      // pack the new account does not own. A user table the wipe does not know
+      // about is exactly the bug plan 3's tests were written to prevent.
+      await db.delete(db.entitlements).go();
       // User-table watermarks only. Resetting a content watermark would force a
       // full library re-download for no reason.
       for (final table in [
@@ -173,6 +193,7 @@ class IdentityRepository {
         'campaign_runs',
         'day_logs',
         'diagnostic_results',
+        'entitlements',
       ]) {
         await (db.delete(
           db.syncState,
@@ -184,7 +205,24 @@ class IdentityRepository {
   /// After account deletion: wipe local user state and start over anonymously,
   /// so the app lands on a first-run screen rather than a broken signed-out one.
   Future<void> resetToFreshAnonymous() async {
+    // The store account keeps the purchase; a restore on the new anonymous id
+    // is the supported way back to it.
+    try {
+      await purchases.forgetUser();
+    } catch (_) {}
     await _replaceLocalUserState();
     await auth.signInAnonymously();
+  }
+
+  /// Points the store at the account this device now belongs to.
+  ///
+  /// The account switch has already happened. Refusing to finish it because a
+  /// purchase SDK is unreachable would leave the app matching neither account —
+  /// the next launch configures the store again, and a restore is always
+  /// available in settings.
+  Future<void> _switchStoreUser(String userId) async {
+    try {
+      await purchases.switchUser(userId);
+    } catch (_) {}
   }
 }

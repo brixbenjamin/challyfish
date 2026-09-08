@@ -124,6 +124,8 @@ final identityRepositoryProvider = Provider<IdentityRepository>(
   (ref) => IdentityRepository(
     db: ref.watch(databaseProvider),
     auth: ref.watch(authGatewayProvider),
+    entitlements: ref.watch(entitlementRepositoryProvider),
+    purchases: ref.watch(purchaseGatewayProvider),
   ),
 );
 

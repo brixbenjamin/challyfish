@@ -23,6 +23,9 @@ class FakePurchaseGateway implements PurchaseGateway {
   /// Set to make restore fail.
   Object? restoreError;
 
+  /// Makes [switchUser] throw, for the "the store is down mid-sign-in" case.
+  bool failSwitchUser = false;
+
   String? currentUserId;
   int configureCalls = 0;
   int switchUserCalls = 0;
@@ -42,6 +45,7 @@ class FakePurchaseGateway implements PurchaseGateway {
 
   @override
   Future<void> switchUser(String userId) async {
+    if (failSwitchUser) throw StateError('store unavailable');
     switchUserCalls++;
     currentUserId = userId;
     _changes.add({..._owned});
