@@ -201,4 +201,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderChannelName => 'Daily reminder';
+
+  @override
+  String get doctrineIntroTitle => 'The Zoo';
+
+  @override
+  String get doctrineIntroBody =>
+      'Safety, predictability and a single-file path, traded for the ability to choose your own. Nobody forced it on you. That is what makes it hard to see.';
+
+  @override
+  String get doctrineIntroPromise => 'Eight questions. Then one thing a day.';
+
+  @override
+  String get continueButton => 'Go on';
+
+  @override
+  String get privacyNoticeTitle => 'Before you start';
+
+  @override
+  String get privacyNoticeAccount =>
+      'Feral made you an account when you opened it. You were not asked for anything, and you do not have to give anything.';
+
+  @override
+  String get privacyNoticeStored =>
+      'It stores what you report each day, a line of note if you write one, and your answers here as four numbers. Nothing else. No location, no contacts, no health data, no tracking.';
+
+  @override
+  String get privacyNoticeLoss =>
+      'That account lives on this phone only. If you lose the phone before attaching an identity, the record is gone and nothing can bring it back. You can attach one any time in settings.';
+
+  @override
+  String get understoodButton => 'Understood';
 }

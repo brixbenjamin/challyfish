@@ -399,6 +399,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Daily reminder'**
   String get reminderChannelName;
+
+  /// [niche] The enclosure's name, on the first onboarding screen. This is the product's central metaphor and every fork replaces it.
+  ///
+  /// In en, this message translates to:
+  /// **'The Zoo'**
+  String get doctrineIntroTitle;
+
+  /// [niche] Names the adversary. A fork without a compelling adversary has a weaker product and this string is where that shows.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety, predictability and a single-file path, traded for the ability to choose your own. Nobody forced it on you. That is what makes it hard to see.'**
+  String get doctrineIntroBody;
+
+  /// [niche] What the user is about to do. Eight and one-a-day are structural, but the phrasing is the product's.
+  ///
+  /// In en, this message translates to:
+  /// **'Eight questions. Then one thing a day.'**
+  String get doctrineIntroPromise;
+
+  /// [niche] Advances onboarding. Plain 'Continue' in most forks; this wording is a voice choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Go on'**
+  String get continueButton;
+
+  /// Heading of the privacy notice, shown before the diagnostic.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you start'**
+  String get privacyNoticeTitle;
+
+  /// [niche] Contains the product name. Explains the silent anonymous account (ADR-0007).
+  ///
+  /// In en, this message translates to:
+  /// **'Feral made you an account when you opened it. You were not asked for anything, and you do not have to give anything.'**
+  String get privacyNoticeAccount;
+
+  /// Exhaustive list of what is stored. If this stops being exhaustive it is a defect, not a copy edit.
+  ///
+  /// In en, this message translates to:
+  /// **'It stores what you report each day, a line of note if you write one, and your answers here as four numbers. Nothing else. No location, no contacts, no health data, no tracking.'**
+  String get privacyNoticeStored;
+
+  /// States the accepted cost of anonymous-first auth plainly (ADR-0013).
+  ///
+  /// In en, this message translates to:
+  /// **'That account lives on this phone only. If you lose the phone before attaching an identity, the record is gone and nothing can bring it back. You can attach one any time in settings.'**
+  String get privacyNoticeLoss;
+
+  /// Acknowledges the privacy notice.
+  ///
+  /// In en, this message translates to:
+  /// **'Understood'**
+  String get understoodButton;
 }
 
 class _AppLocalizationsDelegate

@@ -256,5 +256,50 @@
   "reminderChannelName": "Daily reminder",
   "@reminderChannelName": {
     "description": "Android notification channel name, shown in system settings."
+  },
+
+  "doctrineIntroTitle": "The Zoo",
+  "@doctrineIntroTitle": {
+    "description": "[niche] The enclosure's name, on the first onboarding screen. This is the product's central metaphor and every fork replaces it."
+  },
+
+  "doctrineIntroBody": "Safety, predictability and a single-file path, traded for the ability to choose your own. Nobody forced it on you. That is what makes it hard to see.",
+  "@doctrineIntroBody": {
+    "description": "[niche] Names the adversary. A fork without a compelling adversary has a weaker product and this string is where that shows."
+  },
+
+  "doctrineIntroPromise": "Eight questions. Then one thing a day.",
+  "@doctrineIntroPromise": {
+    "description": "[niche] What the user is about to do. Eight and one-a-day are structural, but the phrasing is the product's."
+  },
+
+  "continueButton": "Go on",
+  "@continueButton": {
+    "description": "[niche] Advances onboarding. Plain 'Continue' in most forks; this wording is a voice choice."
+  },
+
+  "privacyNoticeTitle": "Before you start",
+  "@privacyNoticeTitle": {
+    "description": "Heading of the privacy notice, shown before the diagnostic."
+  },
+
+  "privacyNoticeAccount": "Feral made you an account when you opened it. You were not asked for anything, and you do not have to give anything.",
+  "@privacyNoticeAccount": {
+    "description": "[niche] Contains the product name. Explains the silent anonymous account (ADR-0007)."
+  },
+
+  "privacyNoticeStored": "It stores what you report each day, a line of note if you write one, and your answers here as four numbers. Nothing else. No location, no contacts, no health data, no tracking.",
+  "@privacyNoticeStored": {
+    "description": "Exhaustive list of what is stored. If this stops being exhaustive it is a defect, not a copy edit."
+  },
+
+  "privacyNoticeLoss": "That account lives on this phone only. If you lose the phone before attaching an identity, the record is gone and nothing can bring it back. You can attach one any time in settings.",
+  "@privacyNoticeLoss": {
+    "description": "States the accepted cost of anonymous-first auth plainly (ADR-0013)."
+  },
+
+  "understoodButton": "Understood",
+  "@understoodButton": {
+    "description": "Acknowledges the privacy notice."
   }
 }

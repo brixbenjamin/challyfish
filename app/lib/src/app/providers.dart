@@ -1,4 +1,5 @@
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -10,6 +11,7 @@ import '../data/remote/seed_snapshot.dart';
 import '../data/repositories/content_repository.dart';
 import '../data/repositories/diagnostic_repository.dart';
 import '../data/repositories/progress_repository.dart';
+import '../notifications/reminder_scheduler.dart';
 
 final databaseProvider = Provider<FeralDatabase>((ref) {
   final db = FeralDatabase(driftDatabase(name: 'feral'));
@@ -55,4 +57,8 @@ final seedSnapshotLoaderProvider = Provider<SeedSnapshotLoader>((ref) {
     db: ref.watch(databaseProvider),
     content: ref.watch(contentRepositoryProvider),
   );
+});
+
+final reminderSchedulerProvider = Provider<ReminderScheduler>((ref) {
+  return LocalReminderScheduler(FlutterLocalNotificationsPlugin());
 });

@@ -4,14 +4,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app/balance_state.dart';
 import '../app/providers.dart';
 import '../app/run_state.dart';
+import '../data/repositories/diagnostic_repository.dart';
+import '../domain/archetype.dart';
 import '../domain/campaign.dart';
+import '../domain/diagnostic.dart';
+import '../domain/doctrine.dart';
+import '../domain/grade.dart';
 import '../domain/outcome.dart';
-import 'campaign_list_screen.dart';
+import 'browse/campaign_detail_screen.dart';
+import 'browse/pack_list_screen.dart';
+import 'completion/completion_screen.dart';
 import 'dashboard/dashboard_screen.dart';
+import 'doctrine/doctrine_entry_screen.dart';
+import 'doctrine/doctrine_list_screen.dart';
+import 'onboarding/diagnostic_result_screen.dart';
+import 'onboarding/diagnostic_screen.dart';
+import 'onboarding/doctrine_intro_screen.dart';
+import 'onboarding/privacy_notice_screen.dart';
+import 'settings/settings_screen.dart';
 
-/// Loads content, applies rollover, and shows either the campaign list or the
-/// dashboard. Plan 2 replaces this with the designed navigation; it exists here
-/// only so the loop can be exercised on a device.
+/// Where the app is. Onboarding runs once; after that the user is either in a
+/// run, looking at a finished one, or browsing for the next.
+enum _Step { loading, intro, privacy, diagnostic, result, home }
+
+/// Loads content, routes the first run through onboarding, and then shows the
+/// dashboard, the completion screen, or browse.
+///
+/// **Every network await here is wrapped and non-fatal.** A first launch with
+/// no signal must still reach a started campaign, so the bundled snapshot is
+/// applied before any pull is attempted and a failed pull changes nothing.
 class HomeRouter extends ConsumerStatefulWidget {
   const HomeRouter({super.key});
 
@@ -21,13 +42,20 @@ class HomeRouter extends ConsumerStatefulWidget {
 
 class _HomeRouterState extends ConsumerState<HomeRouter>
     with WidgetsBindingObserver {
-  Future<_Home?>? _pending;
+  _Step _step = _Step.loading;
+
+  List<DiagnosticQuestion> _questions = const [];
+  StoredDiagnostic? _diagnostic;
+  Archetype? _weakest;
+  Campaign? _recommended;
+
+  _Home? _home;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _pending = _load();
+    _boot();
   }
 
   @override
@@ -41,18 +69,83 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   /// otherwise still be showing yesterday's day and yesterday's action — which
   /// is precisely the daily loop, not an edge case. Re-deriving on resume also
   /// runs rollover, so the missed day is written when the user comes back.
-  ///
-  /// It does not cover a session left in the foreground across local midnight.
-  /// Plan 2's real navigation should derive against a live time source rather
-  /// than a cached future; this is the cheap half of that in scaffolding.
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
-    if (lifecycle == AppLifecycleState.resumed) _reload();
+    if (lifecycle == AppLifecycleState.resumed && _step == _Step.home) {
+      _reloadHome();
+    }
   }
 
-  /// The balance and the marks span the user's whole history, not the active
-  /// run, so they are assembled here beside the run state rather than inside
-  /// the dashboard.
+  // --------------------------------------------------------------- bootstrap
+
+  Future<void> _bootstrapContent() async {
+    // Bundled content first: a first launch with no signal must still reach a
+    // started campaign.
+    await ref.read(seedSnapshotLoaderProvider).loadIfEmpty();
+
+    // Then reconcile, if we can. A failed pull is never fatal — whatever is
+    // cached still works.
+    try {
+      await ref.read(contentRepositoryProvider).pull();
+    } catch (_) {}
+  }
+
+  Future<void> _boot() async {
+    await _bootstrapContent();
+
+    final diagnostic = ref.read(diagnosticRepositoryProvider);
+    final userId = ref.read(userIdProvider);
+
+    if (await diagnostic.hasCompleted(userId)) {
+      await _loadHome();
+      return;
+    }
+
+    final questions = await diagnostic.questions();
+    if (!mounted) return;
+    setState(() {
+      _questions = questions;
+      _step = _Step.intro;
+    });
+  }
+
+  // -------------------------------------------------------------- diagnostic
+
+  Future<void> _submitDiagnostic(List<DiagnosticPick> picks) async {
+    final content = ref.read(contentRepositoryProvider);
+    final stored = await ref
+        .read(diagnosticRepositoryProvider)
+        .submit(userId: ref.read(userIdProvider), picks: picks);
+
+    final archetypes = await content.archetypesById();
+    final recommended = await content.campaignById(
+      stored.recommendedCampaignId,
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _diagnostic = stored;
+      _weakest = archetypes[stored.weakestArchetypeId];
+      _recommended = recommended;
+      _step = _Step.result;
+    });
+  }
+
+  // -------------------------------------------------------------------- runs
+
+  Future<void> _startRun(String campaignId) async {
+    final progress = ref.read(progressRepositoryProvider);
+    final userId = ref.read(userIdProvider);
+
+    // Exactly one run may be active. Replacing one is the only destructive
+    // action in the product, and the detail screen has already said so.
+    final active = await progress.activeRun(userId);
+    if (active != null) await progress.abandonRun(active.id);
+
+    await progress.startRun(userId: userId, campaignId: campaignId);
+    await _loadHome();
+  }
+
   Future<BalanceState> _balance() async {
     final content = ref.read(contentRepositoryProvider);
     final progress = ref.read(progressRepositoryProvider);
@@ -86,143 +179,336 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     );
   }
 
-  Future<_Home?> _load() async {
+  Future<List<Archetype>> _archetypesFor(String campaignId) async {
+    final content = ref.read(contentRepositoryProvider);
+    final byId = await content.archetypesById();
+    return [
+      for (final id in await content.archetypeIdsFor(campaignId))
+        if (byId[id] != null) byId[id]!,
+    ];
+  }
+
+  Future<List<PackView>> _browse() async {
+    final content = ref.read(contentRepositoryProvider);
+    return [
+      for (final pack in await content.packs())
+        PackView(
+          pack: pack,
+          campaigns: await content.campaignsFor(pack.id),
+          // Entitlements are plan 4. Until then only the core pack is usable,
+          // and everything else renders as a teaser that cannot be started.
+          isUnlocked: pack.isCore,
+        ),
+    ];
+  }
+
+  Future<_Home> _buildHome() async {
     final content = ref.read(contentRepositoryProvider);
     final progress = ref.read(progressRepositoryProvider);
-    final userId = ref.read(userIdProvider);
+    final engine = progress.engine;
 
-    // A failed pull is not fatal: whatever is already cached still works.
-    try {
-      await content.pull();
-    } catch (_) {}
+    final run = await progress.activeRun(ref.read(userIdProvider));
+    final campaign = run == null
+        ? null
+        : await content.campaignById(run.campaignId);
 
-    final run = await progress.activeRun(userId);
-    if (run == null) return null;
+    // No run, or content lagging a run after a partial sync. Browse is a
+    // recoverable place to be; the run is untouched and reappears when the
+    // content arrives.
+    if (run == null || campaign == null) {
+      return _Home(browse: await _browse(), balance: await _balance());
+    }
 
-    final campaigns = await content.campaigns();
-    final campaign = campaigns.firstWhere((c) => c.id == run.campaignId);
     final actions = await content.actionsFor(campaign.id);
+    if (actions.isNotEmpty) {
+      await progress.applyRollover(
+        run: run,
+        lengthDays: campaign.lengthDays,
+        actionIdForDay: (day) => actions
+            .firstWhere((a) => a.dayIndex == day, orElse: () => actions.first)
+            .id,
+      );
+    }
 
-    await progress.applyRollover(
+    // Rollover may have resolved the final day, so completion is attempted
+    // after it and before the run state is shown.
+    final grade = await progress.completeRunIfFinished(
       run: run,
-      lengthDays: campaign.lengthDays,
-      actionIdForDay: (day) => actions
-          .firstWhere((a) => a.dayIndex == day, orElse: () => actions.first)
-          .id,
+      campaign: campaign,
     );
+    if (grade != null) {
+      final logs = await progress.logsFor(run.id);
+      return _Home(
+        completed: _Completed(
+          grade: grade,
+          campaign: campaign,
+          missCount: engine.missCount(logs),
+          missAllowance: engine.missAllowance(campaign.lengthDays),
+          marksEarned: grade.earnsMark
+              ? await _archetypesFor(campaign.id)
+              : const [],
+        ),
+        browse: await _browse(),
+        balance: await _balance(),
+      );
+    }
 
     final logs = await progress.logsFor(run.id);
-    final state = RunState.derive(
+    final zone = ref.read(zoneProvider);
+    final now = ref.read(clockProvider).nowUtc();
+    final day = RunState.derive(
       run: run,
       campaign: campaign,
       logs: logs,
-      zone: ref.read(zoneProvider),
-      now: ref.read(clockProvider).nowUtc(),
-    );
+      zone: zone,
+      now: now,
+    ).currentDay;
 
-    final todayAction = await content.actionFor(campaign.id, state.currentDay);
     return _Home(
       run: RunState.derive(
         run: run,
         campaign: campaign,
         logs: logs,
-        todayAction: todayAction,
-        zone: ref.read(zoneProvider),
-        now: ref.read(clockProvider).nowUtc(),
+        todayAction: await content.actionFor(campaign.id, day),
+        zone: zone,
+        now: now,
       ),
+      browse: await _browse(),
       balance: await _balance(),
     );
   }
 
-  void _reload() {
+  Future<void> _loadHome() async {
+    final home = await _buildHome();
+    if (!mounted) return;
     setState(() {
-      _pending = _load();
+      _home = home;
+      _step = _Step.home;
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<_Home?>(
-      future: _pending,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+  Future<void> _reloadHome() async {
+    final home = await _buildHome();
+    if (!mounted) return;
+    setState(() => _home = home);
+  }
 
-        final home = snapshot.data;
-        if (home == null) return _campaignList();
-        final state = home.run;
+  // -------------------------------------------------------------- navigation
 
-        return DashboardScreen(
-          state: state,
-          balance: home.balance,
-          onOpenDoctrine: () {},
-          onOpenSettings: () {},
-          onCommit: () async {
-            final action = state.todayAction;
-            if (action == null) return;
-            await ref
-                .read(progressRepositoryProvider)
-                .commitToday(
-                  run: state.run,
-                  dayIndex: state.currentDay,
-                  actionId: action.id,
-                );
-            _reload();
-          },
-          onReport: (Outcome outcome, String? note) async {
-            final action = state.todayAction;
-            if (action == null) return;
-            await ref
-                .read(progressRepositoryProvider)
-                .report(
-                  run: state.run,
-                  dayIndex: state.currentDay,
-                  actionId: action.id,
-                  outcome: outcome,
-                  note: note,
-                );
-            _reload();
-          },
-        );
-      },
+  Future<void> _openDoctrine() async {
+    final content = ref.read(contentRepositoryProvider);
+    final groups = await content.doctrineGroups();
+    final entries = <String, List<DoctrineEntry>>{};
+    for (final group in groups) {
+      entries[group.id] = await content.doctrineEntriesFor(group.id);
+    }
+    if (!mounted) return;
+
+    final navigator = Navigator.of(context);
+    await navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => DoctrineListScreen(
+          groups: groups,
+          entriesByGroup: entries,
+          onOpen: (entry) => navigator.push(
+            MaterialPageRoute<void>(
+              builder: (_) => DoctrineEntryScreen(entry: entry),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _campaignList() {
-    return FutureBuilder(
-      future: ref.read(contentRepositoryProvider).campaigns(),
-      builder: (context, snapshot) {
-        final campaigns = snapshot.data;
-        if (campaigns == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return CampaignListScreen(
-          campaigns: campaigns,
-          onStart: (campaign) async {
-            await ref
-                .read(progressRepositoryProvider)
-                .startRun(
-                  userId: ref.read(userIdProvider),
-                  campaignId: campaign.id,
-                );
-            _reload();
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsScreen(
+          scheduler: ref.read(reminderSchedulerProvider),
+          // Identity linking and purchases are plans 3 and 4; the rows are
+          // present and inert rather than absent, so the shape is honest.
+          isLinked: false,
+          onLink: () {},
+          onRestorePurchases: () {},
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCampaign(
+    Campaign campaign, {
+    required bool isUnlocked,
+  }) async {
+    final progress = ref.read(progressRepositoryProvider);
+    final targets = await _archetypesFor(campaign.id);
+    final hasActiveRun =
+        await progress.activeRun(ref.read(userIdProvider)) != null;
+    if (!mounted) return;
+
+    final navigator = Navigator.of(context);
+    await navigator.push(
+      MaterialPageRoute<void>(
+        builder: (_) => CampaignDetailScreen(
+          campaign: campaign,
+          targets: targets,
+          missAllowance: progress.engine.missAllowance(campaign.lengthDays),
+          isUnlocked: isUnlocked,
+          hasActiveRun: hasActiveRun,
+          onStart: () async {
+            navigator.pop();
+            await _startRun(campaign.id);
           },
-        );
+          // Purchases are plan 4. Nothing but the core pack exists yet, so a
+          // locked pack cannot in practice be reached.
+          onUnlock: () {},
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------------- build
+
+  @override
+  Widget build(BuildContext context) {
+    return switch (_step) {
+      _Step.loading => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      _Step.intro => DoctrineIntroScreen(
+        onContinue: () => setState(() => _step = _Step.privacy),
+      ),
+      _Step.privacy => PrivacyNoticeScreen(
+        onAccept: () => setState(() => _step = _Step.diagnostic),
+      ),
+      _Step.diagnostic => DiagnosticScreen(
+        questions: _questions,
+        onComplete: _submitDiagnostic,
+      ),
+      _Step.result => _result(),
+      _Step.home => _homeScreen(),
+    };
+  }
+
+  Widget _result() {
+    final diagnostic = _diagnostic;
+    final weakest = _weakest;
+    final recommended = _recommended;
+
+    // The recommendation cannot be shown without all three. Browse is the
+    // recoverable fallback rather than an error screen — the user still starts
+    // a campaign, which is the only thing this screen exists to achieve.
+    if (diagnostic == null || weakest == null || recommended == null) {
+      _loadHome();
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return DiagnosticResultScreen(
+      result: diagnostic,
+      weakest: weakest,
+      recommended: recommended,
+      onStart: () => _startRun(recommended.id),
+      onBrowse: _loadHome,
+    );
+  }
+
+  Widget _homeScreen() {
+    final home = _home;
+    if (home == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final completed = home.completed;
+    if (completed != null) {
+      return CompletionScreen(
+        grade: completed.grade,
+        campaign: completed.campaign,
+        missCount: completed.missCount,
+        missAllowance: completed.missAllowance,
+        marksEarned: completed.marksEarned,
+        isLinked: false,
+        onLink: () {},
+        onBrowse: _reloadHome,
+      );
+    }
+
+    final run = home.run;
+    final balance = home.balance;
+    if (run == null || balance == null) {
+      return PackListScreen(
+        packs: home.browse,
+        onOpen: (campaign) => _openCampaign(
+          campaign,
+          isUnlocked: home.browse
+              .firstWhere((v) => v.pack.id == campaign.packId)
+              .isUnlocked,
+        ),
+      );
+    }
+
+    return DashboardScreen(
+      state: run,
+      balance: balance,
+      onOpenDoctrine: _openDoctrine,
+      onOpenSettings: _openSettings,
+      onCommit: () async {
+        final action = run.todayAction;
+        if (action == null) return;
+        await ref
+            .read(progressRepositoryProvider)
+            .commitToday(
+              run: run.run,
+              dayIndex: run.currentDay,
+              actionId: action.id,
+            );
+        await _reloadHome();
+      },
+      onReport: (Outcome outcome, String? note) async {
+        final action = run.todayAction;
+        if (action == null) return;
+        await ref
+            .read(progressRepositoryProvider)
+            .report(
+              run: run.run,
+              dayIndex: run.currentDay,
+              actionId: action.id,
+              outcome: outcome,
+              note: note,
+            );
+        await _reloadHome();
       },
     );
   }
 }
 
-/// What the dashboard needs in one load: the derived run, and the balance and
-/// marks that span every run the user has.
+/// What the home step needs in one load. The run state and the balance have
+/// different lifetimes — the balance spans every run the user has — so they are
+/// assembled together here rather than merged into one view model.
 class _Home {
-  const _Home({required this.run, required this.balance});
+  const _Home({
+    required this.browse,
+    required this.balance,
+    this.run,
+    this.completed,
+  });
 
-  final RunState run;
-  final BalanceState balance;
+  final RunState? run;
+  final BalanceState? balance;
+  final _Completed? completed;
+  final List<PackView> browse;
+}
+
+class _Completed {
+  const _Completed({
+    required this.grade,
+    required this.campaign,
+    required this.missCount,
+    required this.missAllowance,
+    required this.marksEarned,
+  });
+
+  final Grade grade;
+  final Campaign campaign;
+  final int missCount;
+  final int missAllowance;
+  final List<Archetype> marksEarned;
 }
