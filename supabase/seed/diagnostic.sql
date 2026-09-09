@@ -11,7 +11,20 @@ insert into public.diagnostic_questions (id, prompt, sort) values
   ('dddddddd-0000-0000-0000-000000000007', 'Closer to you?', 7),
   ('dddddddd-0000-0000-0000-000000000008', 'Closer to you?', 8);
 
-insert into public.diagnostic_options (question_id, label, archetype_id, sort) values
+-- Ids derived from (question_id, sort) for the reason spelled out at the top of
+-- actions.sql: this table is keyed on id but separately unique on
+-- (question_id, sort), so an id that changes between one `db reset` and the
+-- next arrives at a device as a duplicate rather than as an update, and the
+-- content pull cannot get past it.
+insert into public.diagnostic_options (id, question_id, label, archetype_id, sort)
+select
+  md5('feral:diagnostic_option:' || v.question_id || ':' || v.sort)::uuid,
+  v.question_id::uuid,
+  v.label,
+  v.archetype_id::uuid,
+  v.sort
+from (
+  values
   -- 1. psycho vs killer
   ('dddddddd-0000-0000-0000-000000000001', 'Commit to something before you can justify it',
    'cccccccc-0000-0000-0000-000000000001', 0),
@@ -51,4 +64,5 @@ insert into public.diagnostic_options (question_id, label, archetype_id, sort) v
   ('dddddddd-0000-0000-0000-000000000008', 'Act on instinct and correct afterwards',
    'cccccccc-0000-0000-0000-000000000003', 0),
   ('dddddddd-0000-0000-0000-000000000008', 'Say out loud what you are drawn to',
-   'cccccccc-0000-0000-0000-000000000004', 1);
+   'cccccccc-0000-0000-0000-000000000004', 1)
+) as v(question_id, label, archetype_id, sort);
