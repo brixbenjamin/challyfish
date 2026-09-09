@@ -53,9 +53,14 @@ class EntitlementRepository {
     // A store that cannot be reached is not a reason to lock someone out of
     // what they bought: the rows alone still answer.
     Set<String> owned;
+    final sw = Stopwatch()..start();
     try {
       owned = await gateway.ownedProductIds();
-    } catch (_) {
+      // ignore: avoid_print
+      print('[BOOTPROBE] ownedProductIds took \${sw.elapsedMilliseconds}ms');
+    } catch (e) {
+      // ignore: avoid_print
+      print('[BOOTPROBE] ownedProductIds threw after \${sw.elapsedMilliseconds}ms: \$e');
       owned = const {};
     }
 
@@ -110,7 +115,10 @@ class EntitlementRepository {
   }) async {
     final before = await unlockedPackIds(userId: userId, packs: packs);
 
+    final rsw = Stopwatch()..start();
     final result = await gateway.restore();
+    // ignore: avoid_print
+    print('[BOOTPROBE] gateway.restore took \${rsw.elapsedMilliseconds}ms ok=\${result.succeeded}');
     if (!result.succeeded) {
       return RestoreSummary(succeeded: false, error: result.error);
     }

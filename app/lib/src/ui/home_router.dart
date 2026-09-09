@@ -110,21 +110,30 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   }
 
   Future<void> _boot() async {
+    debugPrint('[BOOTPROBE] boot: start');
     await _bootstrapContent();
+    debugPrint('[BOOTPROBE] boot: content bootstrapped');
 
     final diagnostic = ref.read(diagnosticRepositoryProvider);
     final userId = ref.read(userIdProvider);
+    debugPrint('[BOOTPROBE] boot: userId resolved');
 
     await _configurePurchases(userId);
+    debugPrint('[BOOTPROBE] boot: purchases configured');
     // Deliberately not awaited: a slow store must not delay the first frame.
     unawaited(_restoreOnLaunch(userId));
+    debugPrint('[BOOTPROBE] boot: restore dispatched');
 
     if (await diagnostic.hasCompleted(userId)) {
+      debugPrint('[BOOTPROBE] boot: diagnostic complete -> loadHome');
       await _loadHome();
+      debugPrint('[BOOTPROBE] boot: loadHome returned');
       return;
     }
+    debugPrint('[BOOTPROBE] boot: diagnostic not complete');
 
     final questions = await diagnostic.questions();
+    debugPrint('[BOOTPROBE] boot: questions loaded (\${questions.length})');
     if (!mounted) return;
     setState(() {
       _questions = questions;
@@ -140,8 +149,12 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   /// not involve the store at all.
   Future<void> _configurePurchases(String userId) async {
     try {
+      debugPrint('[BOOTPROBE] configure: calling gateway');
       await ref.read(purchaseGatewayProvider).configure(userId);
-    } catch (_) {}
+      debugPrint('[BOOTPROBE] configure: returned');
+    } catch (e) {
+      debugPrint('[BOOTPROBE] configure: threw \$e');
+    }
   }
 
   /// Once per launch, so a reinstall recovers without anyone having to find a
@@ -269,8 +282,10 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   }
 
   Future<List<PackView>> _browse() async {
+    debugPrint('[BOOTPROBE] browse: start');
     final content = ref.read(contentRepositoryProvider);
     final packs = await content.packs();
+    debugPrint('[BOOTPROBE] browse: packs loaded');
 
     final campaignsByPack = <String, List<Campaign>>{};
     for (final pack in packs) {
@@ -283,6 +298,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     final unlocked = await ref
         .read(entitlementRepositoryProvider)
         .unlockedPackIds(userId: ref.read(userIdProvider), packs: packs);
+    debugPrint('[BOOTPROBE] browse: entitlements resolved');
 
     return packViewsFrom(
       packs: packs,
@@ -292,6 +308,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   }
 
   Future<_Home> _buildHome() async {
+    debugPrint('[BOOTPROBE] buildHome: start');
     final content = ref.read(contentRepositoryProvider);
     final progress = ref.read(progressRepositoryProvider);
     final engine = progress.engine;
@@ -373,7 +390,9 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   }
 
   Future<void> _loadHome() async {
+    debugPrint('[BOOTPROBE] loadHome: start');
     final home = await _buildHome();
+    debugPrint('[BOOTPROBE] loadHome: built');
     if (!mounted) return;
     setState(() {
       _home = home;
@@ -778,6 +797,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[BOOTPROBE] build(): step=\$_step');
     return switch (_step) {
       _Step.loading => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -806,6 +826,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     // recoverable fallback rather than an error screen — the user still starts
     // a campaign, which is the only thing this screen exists to achieve.
     if (diagnostic == null || weakest == null || recommended == null) {
+      debugPrint('[BOOTPROBE] result(): fallback spinner, calling loadHome');
       _loadHome();
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

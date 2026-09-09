@@ -103,7 +103,6 @@ class RevenueCatGateway implements PurchaseGateway {
   Future<List<StoreProduct>> products(Iterable<String> productIds) async {
     final ids = productIds.toList();
     if (ids.isEmpty) return const [];
-
     final products = await rc.Purchases.getProducts(
       ids,
       productCategory: rc.ProductCategory.nonSubscription,

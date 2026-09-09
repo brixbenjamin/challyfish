@@ -22,7 +22,7 @@ const edge = Pack(
   title: 'The Edge',
   description: 'Harder.',
   isCore: false,
-  storeProductId: 'com.example.feral.pack.edge',
+  storeProductId: 'pack.edge',
   sort: 2,
 );
 
@@ -35,11 +35,7 @@ void main() {
     db = FeralDatabase(NativeDatabase.memory());
     gateway = FakePurchaseGateway(
       catalogue: const [
-        StoreProduct(
-          id: 'com.example.feral.pack.edge',
-          title: 'The Edge',
-          priceString: '4,99 €',
-        ),
+        StoreProduct(id: 'pack.edge', title: 'The Edge', priceString: '4,99 €'),
       ],
     );
     repo = EntitlementRepository(
@@ -101,7 +97,7 @@ void main() {
 
   test('the SDK cache alone unlocks the pack, with no row at all', () async {
     await gateway.configure('user-1');
-    await gateway.purchase('com.example.feral.pack.edge');
+    await gateway.purchase('pack.edge');
 
     expect(
       await repo.unlockedPackIds(userId: 'user-1', packs: const [core, edge]),
@@ -132,7 +128,7 @@ void main() {
 
   test('restore unlocks what the store account owns', () async {
     await gateway.configure('user-1');
-    gateway.storeOwned.add('com.example.feral.pack.edge');
+    gateway.storeOwned.add('pack.edge');
 
     final summary = await repo.restore(
       userId: 'user-1',

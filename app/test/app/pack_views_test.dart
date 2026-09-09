@@ -18,7 +18,7 @@ const edge = Pack(
   title: 'The Edge',
   description: 'Harder.',
   isCore: false,
-  storeProductId: 'com.example.feral.pack.edge',
+  storeProductId: 'pack.edge',
   sort: 2,
 );
 

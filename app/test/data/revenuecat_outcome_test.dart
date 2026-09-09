@@ -5,7 +5,7 @@ import 'package:purchases_flutter/purchases_flutter.dart'
 import 'package:test/test.dart';
 
 void main() {
-  const owned = {'com.example.feral.pack.edge'};
+  const owned = {'pack.edge'};
 
   test('a cancelled purchase is a decision, not an error', () {
     expect(

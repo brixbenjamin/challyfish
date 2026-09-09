@@ -9,4 +9,4 @@ insert into public.packs
   (id, key, title, description, is_core, store_product_id, sort)
 values
   ('aaaaaaaa-0000-0000-0000-000000000002', 'edge', 'The Edge',
-   '[TO AUTHOR]', false, 'com.example.feral.pack.edge', 2);
+   '[TO AUTHOR]', false, 'pack.edge', 2);

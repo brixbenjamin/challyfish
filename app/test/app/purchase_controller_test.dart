@@ -23,7 +23,7 @@ const edge = Pack(
   title: 'The Edge',
   description: 'Harder.',
   isCore: false,
-  storeProductId: 'com.example.feral.pack.edge',
+  storeProductId: 'pack.edge',
   sort: 2,
 );
 const unpriced = Pack(
@@ -44,11 +44,7 @@ void main() {
     db = FeralDatabase(NativeDatabase.memory());
     gateway = FakePurchaseGateway(
       catalogue: const [
-        StoreProduct(
-          id: 'com.example.feral.pack.edge',
-          title: 'The Edge',
-          priceString: '4,99 €',
-        ),
+        StoreProduct(id: 'pack.edge', title: 'The Edge', priceString: '4,99 €'),
       ],
     );
     controller = PurchaseController(
@@ -105,10 +101,8 @@ void main() {
 
   test('already-owned restores instead of apologising', () async {
     await gateway.configure('user-1');
-    gateway.storeOwned.add('com.example.feral.pack.edge');
-    gateway.nextOutcome = const PurchaseAlreadyOwned({
-      'com.example.feral.pack.edge',
-    });
+    gateway.storeOwned.add('pack.edge');
+    gateway.nextOutcome = const PurchaseAlreadyOwned({'pack.edge'});
 
     final state = await controller.buy(userId: 'user-1', pack: edge);
 
@@ -168,7 +162,7 @@ void main() {
 
   test('restore reports how many packs it unlocked', () async {
     await gateway.configure('user-1');
-    gateway.storeOwned.add('com.example.feral.pack.edge');
+    gateway.storeOwned.add('pack.edge');
 
     final summary = await controller.restore(
       userId: 'user-1',

@@ -3,7 +3,7 @@ import { planWrites } from "./mapping.ts";
 
 const USER = "11111111-1111-1111-1111-111111111111";
 const OTHER = "22222222-2222-2222-2222-222222222222";
-const PRODUCT = "com.example.feral.pack.edge";
+const PRODUCT = "pack.edge";
 
 function event(overrides: Record<string, unknown>) {
   return {

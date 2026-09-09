@@ -14,7 +14,7 @@ const edge = Pack(
   title: 'The Edge',
   description: 'Three campaigns for people who finished the free ones.',
   isCore: false,
-  storeProductId: 'com.example.feral.pack.edge',
+  storeProductId: 'pack.edge',
   sort: 2,
 );
 

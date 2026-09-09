@@ -9,11 +9,7 @@ void main() {
   setUp(() {
     gateway = FakePurchaseGateway(
       catalogue: const [
-        StoreProduct(
-          id: 'com.example.feral.pack.edge',
-          title: 'The Edge',
-          priceString: '4,99 €',
-        ),
+        StoreProduct(id: 'pack.edge', title: 'The Edge', priceString: '4,99 €'),
       ],
     );
   });
@@ -27,18 +23,16 @@ void main() {
 
   test('a purchase succeeds and reports what is now owned', () async {
     await gateway.configure('user-1');
-    final outcome = await gateway.purchase('com.example.feral.pack.edge');
+    final outcome = await gateway.purchase('pack.edge');
 
     expect(outcome, isA<PurchaseSucceeded>());
-    expect((outcome as PurchaseSucceeded).ownedProductIds, {
-      'com.example.feral.pack.edge',
-    });
-    expect(await gateway.ownedProductIds(), {'com.example.feral.pack.edge'});
+    expect((outcome as PurchaseSucceeded).ownedProductIds, {'pack.edge'});
+    expect(await gateway.ownedProductIds(), {'pack.edge'});
   });
 
   test('a cancelled purchase owns nothing and is not an error', () async {
     gateway.nextOutcome = const PurchaseCancelled();
-    final outcome = await gateway.purchase('com.example.feral.pack.edge');
+    final outcome = await gateway.purchase('pack.edge');
 
     expect(outcome, isA<PurchaseCancelled>());
     expect(await gateway.ownedProductIds(), isEmpty);
@@ -46,20 +40,17 @@ void main() {
 
   test('a pending purchase owns nothing yet', () async {
     gateway.nextOutcome = const PurchasePending();
-    expect(
-      await gateway.purchase('com.example.feral.pack.edge'),
-      isA<PurchasePending>(),
-    );
+    expect(await gateway.purchase('pack.edge'), isA<PurchasePending>());
     expect(await gateway.ownedProductIds(), isEmpty);
   });
 
   test('restore returns what the store account already owns', () async {
-    gateway.storeOwned.add('com.example.feral.pack.edge');
+    gateway.storeOwned.add('pack.edge');
     final result = await gateway.restore();
 
     expect(result.succeeded, isTrue);
-    expect(result.ownedProductIds, {'com.example.feral.pack.edge'});
-    expect(await gateway.ownedProductIds(), {'com.example.feral.pack.edge'});
+    expect(result.ownedProductIds, {'pack.edge'});
+    expect(await gateway.ownedProductIds(), {'pack.edge'});
   });
 
   test('restore with nothing to restore succeeds and is empty', () async {
@@ -70,7 +61,7 @@ void main() {
 
   test('switching user swaps the owned set', () async {
     await gateway.configure('user-1');
-    await gateway.purchase('com.example.feral.pack.edge');
+    await gateway.purchase('pack.edge');
 
     await gateway.switchUser('user-2');
     expect(gateway.currentUserId, 'user-2');
@@ -86,18 +77,18 @@ void main() {
     final seen = <Set<String>>[];
     final sub = gateway.ownedProductChanges.listen(seen.add);
 
-    await gateway.purchase('com.example.feral.pack.edge');
+    await gateway.purchase('pack.edge');
     await Future<void>.delayed(Duration.zero);
 
     expect(seen, [
-      {'com.example.feral.pack.edge'},
+      {'pack.edge'},
     ]);
     await sub.cancel();
   });
 
   test('products come back for known ids only', () async {
     final products = await gateway.products(const [
-      'com.example.feral.pack.edge',
+      'pack.edge',
       'com.example.feral.pack.ghost',
     ]);
     expect(products, hasLength(1));

@@ -11,3 +11,4 @@
 .env*
 !.env.example
 app/env.json
+app/env.device.json

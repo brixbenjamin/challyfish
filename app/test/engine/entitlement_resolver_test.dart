@@ -16,7 +16,7 @@ const edge = Pack(
   title: 'The Edge',
   description: 'Harder.',
   isCore: false,
-  storeProductId: 'com.example.feral.pack.edge',
+  storeProductId: 'pack.edge',
   sort: 2,
 );
 const unpriced = Pack(
@@ -52,17 +52,14 @@ void main() {
   test('an owned store product unlocks its pack before any row exists', () {
     // This is the seconds between the store confirming and the webhook landing.
     // Without it the user pays and watches nothing happen.
-    expect(unlocked(products: {'com.example.feral.pack.edge'}), {
-      'p-core',
-      'p-edge',
-    });
+    expect(unlocked(products: {'pack.edge'}), {'p-core', 'p-edge'});
   });
 
   test('a row and a product agreeing produce one unlock, not two', () {
-    expect(
-      unlocked(rows: {'p-edge'}, products: {'com.example.feral.pack.edge'}),
-      {'p-core', 'p-edge'},
-    );
+    expect(unlocked(rows: {'p-edge'}, products: {'pack.edge'}), {
+      'p-core',
+      'p-edge',
+    });
   });
 
   test('an unknown product id unlocks nothing', () {
