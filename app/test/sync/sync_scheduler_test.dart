@@ -16,10 +16,15 @@ class FakeSync implements SyncRunner {
   /// the user just signed into from one of the account they left.
   final List<String> userIds = [];
 
+  /// How long a round trip takes. Zero everywhere except where a test needs a
+  /// sync to still be in flight while something else happens.
+  Duration delay = Duration.zero;
+
   @override
   Future<SyncOutcome> sync(String userId) async {
     calls++;
     userIds.add(userId);
+    if (delay > Duration.zero) await Future<void>.delayed(delay);
     const ok = PushResult(succeeded: true);
     const bad = PushResult(succeeded: false, error: 'boom');
     return succeed
@@ -134,6 +139,71 @@ void main() {
           'account this device is no longer authenticated as, and every one of '
           'those requests is refused by row-level security',
     );
+  });
+
+  // ---------------------------------------------------------------- restore
+  //
+  // ADR-0024. Signing in clears this device's user tables and then has to pull
+  // the account's record back. Until that pull lands the local store answers
+  // "nothing here" to every question the router asks it, so the router is not
+  // allowed to ask. These are the three things it needs from the scheduler to
+  // wait honestly: an answer, a truthful failure, and an answer about the right
+  // account.
+
+  test('restoring an account waits for its pull and says it worked', () async {
+    final restored = await scheduler.restore('existing-user');
+
+    expect(restored, isTrue);
+    expect(sync.userIds, ['existing-user']);
+  });
+
+  test('a restore the server refuses reports failure rather than success', () async {
+    sync.succeed = false;
+
+    expect(
+      await scheduler.restore('existing-user'),
+      isFalse,
+      reason:
+          'a restore that reports success it did not have sends the user on to '
+          'a screen chosen against an empty store, which is the whole bug',
+    );
+  });
+
+  test('a restore with no connection reports failure', () async {
+    gate.goOffline();
+
+    expect(await scheduler.restore('existing-user'), isFalse);
+    expect(sync.calls, 0);
+  });
+
+  test('a restore never coalesces onto the previous session\'s sync', () async {
+    sync.delay = const Duration(milliseconds: 40);
+    unawaited(scheduler.syncNow(userId: 'anon-user'));
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+
+    sync.delay = Duration.zero;
+    final restored = await scheduler.restore('existing-user');
+
+    expect(restored, isTrue);
+    expect(
+      sync.userIds.last,
+      'existing-user',
+      reason:
+          'handing back the old session\'s future would let the router proceed '
+          'on a pull that fetched the account the user just left',
+    );
+  });
+
+  test('a restore re-targets the scheduler at the account it restored', () async {
+    scheduler.start('anon-user');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await scheduler.restore('existing-user');
+    sync.userIds.clear();
+
+    gate.goOnline();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(sync.userIds.toSet(), {'existing-user'});
   });
 
   test('a failure retries and stays quiet at first', () async {

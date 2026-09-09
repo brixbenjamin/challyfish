@@ -61,7 +61,7 @@ class SyncScheduler {
 
   StreamSubscription<bool>? _connectivitySub;
   Timer? _retryTimer;
-  Future<void>? _inFlight;
+  Future<bool>? _inFlight;
   int _consecutiveFailures = 0;
 
   /// How many consecutive failures before the user is told. Two failures is a
@@ -88,18 +88,53 @@ class SyncScheduler {
   /// asking for syncs of an account this device is no longer authenticated as,
   /// and row-level security refuses every one of them.
   void start(String userId) {
+    _target(userId);
+    unawaited(syncNow(userId: userId));
+  }
+
+  /// Points the scheduler at the account that just signed in and **waits** for
+  /// one round trip, reporting whether it succeeded.
+  ///
+  /// The one place in the product where a caller waits on a sync (ADR-0024).
+  /// Signing in clears this device's user tables first, so until this pull
+  /// lands the local store answers "nothing here" to every question the router
+  /// asks — which is how a returning user was routed back through onboarding
+  /// and invited to take a diagnostic their account already had.
+  ///
+  /// A sync of the *previous* session may still be in flight. It is waited out
+  /// rather than coalesced onto: [syncNow] would hand back that future, and its
+  /// success says nothing about whether this account's record has arrived.
+  Future<bool> restore(String userId) async {
+    final previous = _inFlight;
+    if (previous != null) {
+      try {
+        await previous;
+      } catch (_) {
+        // Whatever the old session's sync did is not this account's business.
+      }
+    }
+    _target(userId);
+    return syncNow(userId: userId);
+  }
+
+  /// Drops the previous session's listener and listens for this one. A listener
+  /// left over from the old session would keep asking for syncs of an account
+  /// this device is no longer authenticated as, and row-level security refuses
+  /// every one of them.
+  void _target(String userId) {
     unawaited(_connectivitySub?.cancel());
     _retryTimer?.cancel();
     _connectivitySub = gate.onlineChanges.listen((online) {
       if (online) unawaited(syncNow(userId: userId));
     });
-    unawaited(syncNow(userId: userId));
   }
 
   /// Coalescing matters: the dashboard, the report sheet and a foreground event
   /// can all ask within the same frame, and three concurrent pushes of the same
   /// dirty rows is how duplicate work becomes duplicate bugs.
-  Future<void> syncNow({required String userId}) {
+  /// Returns whether the round trip succeeded, for the one caller that waits on
+  /// the answer ([restore]). Everything else fires and forgets.
+  Future<bool> syncNow({required String userId}) {
     final existing = _inFlight;
     if (existing != null) return existing;
     final run = _run(userId).whenComplete(() => _inFlight = null);
@@ -107,10 +142,10 @@ class SyncScheduler {
     return run;
   }
 
-  Future<void> _run(String userId) async {
+  Future<bool> _run(String userId) async {
     if (!await gate.isOnline()) {
       _setStatus(SyncStatus.offline);
-      return;
+      return false;
     }
 
     _setStatus(SyncStatus.syncing);
@@ -124,7 +159,7 @@ class SyncScheduler {
       _consecutiveFailures = 0;
       _retryTimer?.cancel();
       _setStatus(SyncStatus.idle);
-      return;
+      return true;
     }
 
     _consecutiveFailures++;
@@ -153,6 +188,7 @@ class SyncScheduler {
       backoff.delayFor(_consecutiveFailures),
       () => unawaited(syncNow(userId: userId)),
     );
+    return false;
   }
 
   void dispose() {

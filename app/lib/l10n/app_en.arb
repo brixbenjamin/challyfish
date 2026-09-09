@@ -566,5 +566,21 @@
         "type": "int"
       }
     }
+  },
+  "restoringRecordTitle": "Getting your record",
+  "@restoringRecordTitle": {
+    "description": "Heading of the state shown between a successful sign-in and that account's record arriving. Names what is being waited for, because the user is waiting for something of theirs — never a bare spinner."
+  },
+  "restoringRecordBody": "Signed in. Bringing this account's campaigns and history onto this phone.",
+  "@restoringRecordBody": {
+    "description": "Body of the restoring state. Says the sign-in worked, so the wait does not read as a failure."
+  },
+  "restoringRecordFailed": "Your record is safe, but it could not be reached just now. Check your connection and try again.",
+  "@restoringRecordFailed": {
+    "description": "Shown when the pull after signing in fails. It must say the record still exists: this is the moment a user most fears having lost it."
+  },
+  "tryAgainButton": "Try again",
+  "@tryAgainButton": {
+    "description": "Retries the pull on the restoring state."
   }
 }

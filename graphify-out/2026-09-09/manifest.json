@@ -24,16 +24,16 @@
     "semantic_hash": "44993f07cbdd7cae667f23f696521bcf"
   },
   "app/lib/l10n/app_localizations.dart": {
-    "mtime": 1788958643.2053,
-    "seen": 1788958844.146803,
-    "ast_hash": "901c168a78dd61790d842ce3a146b1bb",
-    "semantic_hash": ""
+    "mtime": 1788957541.3463464,
+    "seen": 1788957715.4160142,
+    "ast_hash": "897e444575f706332d73cfb8ebe932bb",
+    "semantic_hash": "897e444575f706332d73cfb8ebe932bb"
   },
   "app/lib/l10n/app_localizations_en.dart": {
-    "mtime": 1788958643.2033722,
-    "seen": 1788958844.1468039,
-    "ast_hash": "8379ec7f1feb37e7a3e4a11b91df5e70",
-    "semantic_hash": ""
+    "mtime": 1788957541.344406,
+    "seen": 1788957715.4160142,
+    "ast_hash": "b93a30866498232f99e0cbef55ce0a68",
+    "semantic_hash": "b93a30866498232f99e0cbef55ce0a68"
   },
   "app/lib/main.dart": {
     "mtime": 1788883921.9412081,
@@ -360,9 +360,9 @@
     "semantic_hash": "321f8f6a79a939bb12e5a717a1b40448"
   },
   "app/lib/src/sync/sync_scheduler.dart": {
-    "mtime": 1788958443.403687,
-    "seen": 1788958844.1468291,
-    "ast_hash": "309f94e13d02095b2937acf5366edc00",
+    "mtime": 1788954872.6655369,
+    "seen": 1788957715.416037,
+    "ast_hash": "58910eb47d80fb684dce75f36406a386",
     "semantic_hash": ""
   },
   "app/lib/src/ui/browse/campaign_detail_screen.dart": {
@@ -414,9 +414,9 @@
     "semantic_hash": "b2b60bdc0f295fe68ed6d8669ff3d961"
   },
   "app/lib/src/ui/home_router.dart": {
-    "mtime": 1788958821.5691087,
-    "seen": 1788958844.146833,
-    "ast_hash": "927eed6108d636daeaa9bc76e05397e6",
+    "mtime": 1788956093.321334,
+    "seen": 1788957715.416041,
+    "ast_hash": "51ef5bbe2ab103328831107a1851b39a",
     "semantic_hash": ""
   },
   "app/lib/src/ui/identity/email_code_screen.dart": {
@@ -756,9 +756,9 @@
     "semantic_hash": "6ce02fbbc9039ce7f8d05833dd8e0026"
   },
   "app/test/sync/sync_scheduler_test.dart": {
-    "mtime": 1788958415.2076406,
-    "seen": 1788958844.146858,
-    "ast_hash": "57e5cb00bbb92c52d88ee73cdcc44e2c",
+    "mtime": 1788954859.7196565,
+    "seen": 1788957715.416066,
+    "ast_hash": "f206824e1d2937b323afabea7d8a4ca9",
     "semantic_hash": ""
   },
   "app/test/ui/archetype_radar_test.dart": {
@@ -1287,12 +1287,6 @@
     "mtime": 1788956073.184437,
     "seen": 1788957715.416047,
     "ast_hash": "c8538a97cd03b242b35c11a67d7845ce",
-    "semantic_hash": ""
-  },
-  "app/test/ui/sign_in_restore_test.dart": {
-    "mtime": 1788958814.817501,
-    "seen": 1788958844.1468658,
-    "ast_hash": "b948c828823a8695e8a95259dfb01936",
     "semantic_hash": ""
   }
 }

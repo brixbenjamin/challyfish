@@ -40,7 +40,7 @@ import 'sync/sync_banner.dart';
 
 /// Where the app is. Onboarding runs once; after that the user is either in a
 /// run, looking at a finished one, or browsing for the next.
-enum _Step { loading, intro, privacy, diagnostic, result, home }
+enum _Step { loading, restoring, intro, privacy, diagnostic, result, home }
 
 /// Loads content, routes the first run through onboarding, and then shows the
 /// dashboard, the completion screen, or browse.
@@ -51,6 +51,10 @@ enum _Step { loading, intro, privacy, diagnostic, result, home }
 class HomeRouter extends ConsumerStatefulWidget {
   const HomeRouter({super.key});
 
+  /// The retry on the restoring state. Named here because the state it belongs
+  /// to is the router's own, not a screen's.
+  static const restoreRetryKey = Key('restore-retry'); // niche:allow widget key
+
   @override
   ConsumerState<HomeRouter> createState() => _HomeRouterState();
 }
@@ -58,6 +62,11 @@ class HomeRouter extends ConsumerStatefulWidget {
 class _HomeRouterState extends ConsumerState<HomeRouter>
     with WidgetsBindingObserver {
   _Step _step = _Step.loading;
+
+  /// Whether the pull that follows a sign-in came back empty-handed. The
+  /// restoring state stays either way; this only decides whether it is still
+  /// waiting or asking to be retried.
+  bool _restoreFailed = false;
 
   List<DiagnosticQuestion> _questions = const [];
   StoredDiagnostic? _diagnostic;
@@ -141,7 +150,10 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     }
   }
 
-  Future<void> _boot() async {
+  /// [alreadySynced] is set only by the sign-in path, which has just waited on
+  /// a sync of its own ([_restoreThenBoot]). Starting the scheduler again there
+  /// would fire a second full round trip for nothing.
+  Future<void> _boot({bool alreadySynced = false}) async {
     await _bootstrapContent();
 
     final diagnostic = ref.read(diagnosticRepositoryProvider);
@@ -154,7 +166,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     // whole sync engine is dead code and no row a user writes ever reaches the
     // server. Started rather than awaited: a first screen must never wait on a
     // network round trip.
-    ref.read(syncSchedulerProvider).start(userId);
+    if (!alreadySynced) ref.read(syncSchedulerProvider).start(userId);
 
     if (await diagnostic.hasCompleted(userId)) {
       await _loadHome();
@@ -610,7 +622,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         ref.invalidate(userIdProvider);
         if (!mounted) return true;
         Navigator.of(context).popUntil((route) => route.isFirst);
-        await _boot();
+        await _restoreThenBoot();
         return true;
       case Failed():
         if (mounted) {
@@ -624,6 +636,38 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       case CodeSent():
         return false;
     }
+  }
+
+  /// The wait a sign-in owes the user (ADR-0024).
+  ///
+  /// `_replaceLocalUserState` has just emptied every user table, so until this
+  /// account's record is pulled back the store answers "nothing here" to every
+  /// question boot asks it — and boot's first question is whether this user has
+  /// taken the diagnostic. A local read always finishes before a round trip, so
+  /// routing here without waiting sent a returning user through onboarding
+  /// *every* time, and let them write a second diagnostic over an account that
+  /// already had one.
+  ///
+  /// A failed pull holds this state rather than falling through. Onboarding
+  /// would invite that second diagnostic; an empty dashboard would read as the
+  /// record being gone. Neither is true, and a retry is the only forward path
+  /// there is once the session has swapped.
+  Future<void> _restoreThenBoot() async {
+    setState(() {
+      _step = _Step.restoring;
+      _restoreFailed = false;
+    });
+
+    final restored = await ref
+        .read(syncSchedulerProvider)
+        .restore(ref.read(userIdProvider));
+    if (!mounted) return;
+
+    if (!restored) {
+      setState(() => _restoreFailed = true);
+      return;
+    }
+    await _boot(alreadySynced: true);
   }
 
   Future<void> _reloadHome() async {
@@ -821,6 +865,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       _Step.loading => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
+      _Step.restoring => _restoring(),
       _Step.intro => DoctrineIntroScreen(
         onContinue: () => setState(() => _step = _Step.privacy),
       ),
@@ -834,6 +879,43 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       _Step.result => _result(),
       _Step.home => _homeScreen(),
     };
+  }
+
+  /// Named, not a bare spinner: this user is waiting for a record that exists,
+  /// which is not the same wait as an app starting up.
+  Widget _restoring() {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.restoringRecordTitle, style: theme.textTheme.titleLarge),
+              const SizedBox(height: 12),
+              Text(
+                _restoreFailed
+                    ? l10n.restoringRecordFailed
+                    : l10n.restoringRecordBody,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+              if (_restoreFailed)
+                FilledButton(
+                  key: HomeRouter.restoreRetryKey,
+                  onPressed: _restoreThenBoot,
+                  child: Text(l10n.tryAgainButton),
+                )
+              else
+                const CircularProgressIndicator(),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _result() {

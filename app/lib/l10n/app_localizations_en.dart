@@ -428,4 +428,18 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get restoringRecordTitle => 'Getting your record';
+
+  @override
+  String get restoringRecordBody =>
+      'Signed in. Bringing this account\'s campaigns and history onto this phone.';
+
+  @override
+  String get restoringRecordFailed =>
+      'Your record is safe, but it could not be reached just now. Check your connection and try again.';
+
+  @override
+  String get tryAgainButton => 'Try again';
 }

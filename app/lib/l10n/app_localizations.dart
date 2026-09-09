@@ -783,6 +783,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Restored 1 pack.} other{Restored {count} packs.}}'**
   String restoredPacks(int count);
+
+  /// Heading of the state shown between a successful sign-in and that account's record arriving. Names what is being waited for, because the user is waiting for something of theirs — never a bare spinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting your record'**
+  String get restoringRecordTitle;
+
+  /// Body of the restoring state. Says the sign-in worked, so the wait does not read as a failure.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in. Bringing this account\'s campaigns and history onto this phone.'**
+  String get restoringRecordBody;
+
+  /// Shown when the pull after signing in fails. It must say the record still exists: this is the moment a user most fears having lost it.
+  ///
+  /// In en, this message translates to:
+  /// **'Your record is safe, but it could not be reached just now. Check your connection and try again.'**
+  String get restoringRecordFailed;
+
+  /// Retries the pull on the restoring state.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgainButton;
 }
 
 class _AppLocalizationsDelegate
