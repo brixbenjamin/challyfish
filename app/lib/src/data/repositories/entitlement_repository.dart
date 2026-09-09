@@ -53,14 +53,9 @@ class EntitlementRepository {
     // A store that cannot be reached is not a reason to lock someone out of
     // what they bought: the rows alone still answer.
     Set<String> owned;
-    final sw = Stopwatch()..start();
     try {
       owned = await gateway.ownedProductIds();
-      // ignore: avoid_print
-      print('[BOOTPROBE] ownedProductIds took \${sw.elapsedMilliseconds}ms');
-    } catch (e) {
-      // ignore: avoid_print
-      print('[BOOTPROBE] ownedProductIds threw after \${sw.elapsedMilliseconds}ms: \$e');
+    } catch (_) {
       owned = const {};
     }
 
@@ -107,18 +102,18 @@ class EntitlementRepository {
 
   /// Asks the store what this account owns and unlocks accordingly.
   ///
-  /// Safe to call at any time, including on launch: it is idempotent, and a
-  /// failure changes nothing.
+  /// Idempotent, and a failure changes nothing — but **only ever call this from
+  /// something the user tapped.** It reaches `AppStore.sync()`, which makes iOS
+  /// ask for an Apple Account every single time; calling it on launch or on
+  /// resume is what turns that into a prompt nobody asked for, and Apple and
+  /// RevenueCat both forbid it. Settings owns the tap.
   Future<RestoreSummary> restore({
     required String userId,
     required List<Pack> packs,
   }) async {
     final before = await unlockedPackIds(userId: userId, packs: packs);
 
-    final rsw = Stopwatch()..start();
     final result = await gateway.restore();
-    // ignore: avoid_print
-    print('[BOOTPROBE] gateway.restore took \${rsw.elapsedMilliseconds}ms ok=\${result.succeeded}');
     if (!result.succeeded) {
       return RestoreSummary(succeeded: false, error: result.error);
     }
