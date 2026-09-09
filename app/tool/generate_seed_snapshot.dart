@@ -3,9 +3,17 @@
 // Run with `supabase start` up, from the app directory:
 //   cd app && dart run tool/generate_seed_snapshot.dart
 //
-// The output is checked in. Regenerate it whenever core content changes; a
-// stale snapshot is a release-time concern, not a runtime one, because the
-// watermark pull reconciles it on first connection.
+// The output is checked in. Regenerate it whenever core content changes.
+//
+// A stale snapshot used to be described here as a release-time concern that the
+// watermark pull reconciles on first connection. It is not, and that sentence
+// cost a day: the pull reconciles values, not identities. Ids are what the
+// snapshot pins, so every seeded row needs an id that is a function of its
+// content rather than of when the database was created — see the header of
+// supabase/seed/actions.sql. Ids are now stable across a `db reset`; the
+// created_at/updated_at columns still are not, so regenerating always produces
+// a diff. That is fine, and the distinction is the whole point: the pull
+// reconciles timestamps on its own, and cannot reconcile an id.
 import 'dart:convert';
 import 'dart:io';
 

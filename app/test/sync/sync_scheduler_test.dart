@@ -12,9 +12,14 @@ class FakeSync implements SyncRunner {
   bool succeed = true;
   final List<SyncNotice> notices = [];
 
+  /// Who each sync was for. The count alone cannot tell a sync of the account
+  /// the user just signed into from one of the account they left.
+  final List<String> userIds = [];
+
   @override
   Future<SyncOutcome> sync(String userId) async {
     calls++;
+    userIds.add(userId);
     const ok = PushResult(succeeded: true);
     const bad = PushResult(succeeded: false, error: 'boom');
     return succeed
@@ -105,6 +110,30 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 20));
 
     expect(sync.calls, greaterThanOrEqualTo(1));
+  });
+
+  test('starting again re-targets the scheduler at the new session', () async {
+    scheduler.start('anon-user');
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    // Signing in replaces the session, and the app boots again against it.
+    scheduler.start('existing-user');
+    // Both start-up syncs are allowed to finish before the count is taken, so
+    // what follows measures the listeners rather than coalescing.
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    sync.userIds.clear();
+
+    gate.goOnline();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(
+      sync.userIds.toSet(),
+      {'existing-user'},
+      reason:
+          'a listener left over from the previous session keeps syncing the '
+          'account this device is no longer authenticated as, and every one of '
+          'those requests is refused by row-level security',
+    );
   });
 
   test('a failure retries and stays quiet at first', () async {

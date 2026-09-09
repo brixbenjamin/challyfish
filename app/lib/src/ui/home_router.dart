@@ -90,9 +90,24 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   /// runs rollover, so the missed day is written when the user comes back.
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
-    if (lifecycle == AppLifecycleState.resumed && _step == _Step.home) {
-      _reloadHome();
-    }
+    if (lifecycle != AppLifecycleState.resumed) return;
+    // Coming back is the one moment we know the user is here and the phone is
+    // awake, which makes it the cheapest chance to send what a backgrounded app
+    // could not.
+    _syncSoon();
+    if (_step == _Step.home) _reloadHome();
+  }
+
+  /// Asks for a push of what was just written.
+  ///
+  /// Never awaited. The write is already saved locally and the screen has
+  /// already moved on; a tap in the daily loop must not wait on a round trip.
+  /// A failure is the scheduler's business — it retries with backoff, and the
+  /// banner is what tells the user if it keeps failing.
+  void _syncSoon() {
+    unawaited(
+      ref.read(syncSchedulerProvider).syncNow(userId: ref.read(userIdProvider)),
+    );
   }
 
   // --------------------------------------------------------------- bootstrap
@@ -104,9 +119,26 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
 
     // Then reconcile, if we can. A failed pull is never fatal — whatever is
     // cached still works.
+    //
+    // Non-fatal is not the same as unrecorded, and this catch used to be
+    // `catch (_) {}`. A content pull that threw on every launch — which is what
+    // a duplicate action id did — left the library quietly frozen at whatever
+    // the bundle shipped, with nothing anywhere to say so. Reporting it keeps
+    // launch working while making the failure something a developer can see.
     try {
       await ref.read(contentRepositoryProvider).pull();
-    } catch (_) {}
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'feral', // niche:allow developer diagnostic, never on screen
+          context: ErrorDescription(
+            'pulling content on launch', // niche:allow developer diagnostic
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _boot() async {
@@ -116,6 +148,13 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     final userId = ref.read(userIdProvider);
 
     await _configurePurchases(userId);
+
+    // Everything the user writes is written locally first and pushed by the
+    // scheduler. Nothing else in the app starts it, so without this line the
+    // whole sync engine is dead code and no row a user writes ever reaches the
+    // server. Started rather than awaited: a first screen must never wait on a
+    // network round trip.
+    ref.read(syncSchedulerProvider).start(userId);
 
     if (await diagnostic.hasCompleted(userId)) {
       await _loadHome();
@@ -159,6 +198,8 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         .read(diagnosticRepositoryProvider)
         .submit(userId: ref.read(userIdProvider), picks: picks);
 
+    _syncSoon();
+
     final archetypes = await content.archetypesById();
     final recommended = await content.campaignById(
       stored.recommendedCampaignId,
@@ -199,6 +240,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       isUnlocked: unlocked,
     );
     ref.invalidate(unlockedPackIdsProvider);
+    _syncSoon();
     await _loadHome();
   }
 
@@ -554,6 +596,11 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         // The record never moved; it just has an owner now. Reloading is what
         // retires the completion prompt, which stops applying the moment the
         // account is linked (ADR-0013).
+        //
+        // Linking is also the moment the user expects to see their record
+        // somewhere other than this phone, so it is worth one sync of its own
+        // rather than waiting for the next write or the next launch.
+        _syncSoon();
         if (mounted) await _reloadHome();
         return true;
       case SignedIn():
@@ -866,6 +913,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
               dayIndex: run.currentDay,
               actionId: action.id,
             );
+        _syncSoon();
         await _reloadHome();
       },
       onReport: (Outcome outcome, String? note) async {
@@ -880,6 +928,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
               outcome: outcome,
               note: note,
             );
+        _syncSoon();
         await _reloadHome();
       },
     );

@@ -98,24 +98,28 @@ class ContentRepository {
             ),
           ),
     ),
-    _ContentTable(
-      'actions',
-      (row) => db
+    _ContentTable('actions', (row) {
+      final action = ActionsCompanion.insert(
+        id: row['id'] as String,
+        campaignId: row['campaign_id'] as String,
+        dayIndex: row['day_index'] as int,
+        title: row['title'] as String,
+        bodyMd: row['body_md'] as String,
+        archetypeId: row['archetype_id'] as String,
+        whyDoctrineId: Value(row['why_doctrine_id'] as String?),
+        effort: Value(row['effort'] as int? ?? 1),
+        updatedAt: _at(row),
+      );
+      return db
           .into(db.actions)
-          .insertOnConflictUpdate(
-            ActionsCompanion.insert(
-              id: row['id'] as String,
-              campaignId: row['campaign_id'] as String,
-              dayIndex: row['day_index'] as int,
-              title: row['title'] as String,
-              bodyMd: row['body_md'] as String,
-              archetypeId: row['archetype_id'] as String,
-              whyDoctrineId: Value(row['why_doctrine_id'] as String?),
-              effort: Value(row['effort'] as int? ?? 1),
-              updatedAt: _at(row),
-            ),
-          ),
-    ),
+          .insert(
+            action,
+            onConflict: _byIdOrNaturalKey(action, [
+              db.actions.campaignId,
+              db.actions.dayIndex,
+            ]),
+          );
+    }),
     _ContentTable(
       'doctrine_groups',
       (row) => db
@@ -159,21 +163,25 @@ class ContentRepository {
             ),
           ),
     ),
-    _ContentTable(
-      'diagnostic_options',
-      (row) => db
+    _ContentTable('diagnostic_options', (row) {
+      final option = DiagnosticOptionsCompanion.insert(
+        id: row['id'] as String,
+        questionId: row['question_id'] as String,
+        label: row['label'] as String,
+        archetypeId: row['archetype_id'] as String,
+        sort: row['sort'] as int,
+        updatedAt: _at(row),
+      );
+      return db
           .into(db.diagnosticOptions)
-          .insertOnConflictUpdate(
-            DiagnosticOptionsCompanion.insert(
-              id: row['id'] as String,
-              questionId: row['question_id'] as String,
-              label: row['label'] as String,
-              archetypeId: row['archetype_id'] as String,
-              sort: row['sort'] as int,
-              updatedAt: _at(row),
-            ),
-          ),
-    ),
+          .insert(
+            option,
+            onConflict: _byIdOrNaturalKey(option, [
+              db.diagnosticOptions.questionId,
+              db.diagnosticOptions.sort,
+            ]),
+          );
+    }),
   ];
 
   static DateTime _at(Map<String, dynamic> row) =>
@@ -401,6 +409,26 @@ class ContentRepository {
     ];
   }
 }
+
+/// Upserts [row] on its primary key *or* on [naturalKey], whichever it collides
+/// with.
+///
+/// Two content tables carry both an id and a separate unique index over the
+/// thing that actually identifies the row — an action's (campaign, day), an
+/// option's (question, position). Matching on the id alone is what made a
+/// re-issued id fatal: the row arrives as an insert, the natural key refuses it,
+/// and the whole pull throws on a content edit that is entirely legitimate.
+/// Matching on either means an id change is an update, and so is a day change.
+///
+/// The id clause is second because a row that collides on both is the ordinary
+/// case — the same row, pulled again — and either clause writes the same values.
+UpsertClause<T, D> _byIdOrNaturalKey<T extends Table, D>(
+  Insertable<D> row,
+  List<Column<Object>> naturalKey,
+) => UpsertMultiple([
+  DoUpdate((_) => row, target: naturalKey),
+  DoUpdate((_) => row),
+]);
 
 class _ContentTable {
   _ContentTable(this.name, this.upsert);

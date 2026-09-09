@@ -247,4 +247,56 @@ void main() {
 
     expect(await repo.archetypeIdsFor('campaign-1'), ['arch-killer']);
   });
+
+  /// The bundled snapshot pins whatever ids the database held when it was
+  /// generated, and a re-seeded server hands out different ones for the same
+  /// campaign day. Keyed on id alone that reads as a second action for a day
+  /// that can only have one, the unique index refuses it, and the pull dies
+  /// there — taking every table after `actions` with it, silently, for as long
+  /// as the app is installed.
+  test(
+    'an action re-issued under a new id replaces the row it identifies',
+    () async {
+      final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
+      await seeded.applyRows({
+        'actions': [actionRow('bundled-id', 1, '2026-06-01T09:00:00Z')],
+      });
+
+      final repo = ContentRepository(
+        db: db,
+        api: FakeContentApi({
+          'actions': [actionRow('server-id', 1, '2026-06-02T09:00:00Z')],
+        }),
+      );
+      await repo.pull();
+
+      final rows = await db.select(db.actions).get();
+      expect(
+        rows.map((r) => r.id),
+        ['server-id'],
+        reason: 'one day of one campaign is one action, whatever it is called',
+      );
+    },
+  );
+
+  /// The other direction, which the natural key alone would miss: the id is
+  /// stable and the day moved. Both are content edits, and neither may be the
+  /// one that breaks the pull.
+  test('an action that moves to another day keeps its identity', () async {
+    final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
+    await seeded.applyRows({
+      'actions': [actionRow('action-1', 1, '2026-06-01T09:00:00Z')],
+    });
+
+    final repo = ContentRepository(
+      db: db,
+      api: FakeContentApi({
+        'actions': [actionRow('action-1', 2, '2026-06-02T09:00:00Z')],
+      }),
+    );
+    await repo.pull();
+
+    final rows = await db.select(db.actions).get();
+    expect(rows.map((r) => (r.id, r.dayIndex)), [('action-1', 2)]);
+  });
 }

@@ -80,7 +80,16 @@ class SyncScheduler {
     _status.add(next);
   }
 
+  /// Points the scheduler at [userId] and syncs immediately.
+  ///
+  /// Called again whenever the session changes — signing in and deleting an
+  /// account both replace the user id. The previous subscription is dropped
+  /// rather than added to: a listener left over from the old session would keep
+  /// asking for syncs of an account this device is no longer authenticated as,
+  /// and row-level security refuses every one of them.
   void start(String userId) {
+    unawaited(_connectivitySub?.cancel());
+    _retryTimer?.cancel();
     _connectivitySub = gate.onlineChanges.listen((online) {
       if (online) unawaited(syncNow(userId: userId));
     });
