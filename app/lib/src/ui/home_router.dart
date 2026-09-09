@@ -469,7 +469,12 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   /// provider needs. Returns true when the identity question was answered.
   ///
   /// The sequence lives in [LinkFlow]; this only knows how to ask on screen.
-  Future<bool> _openLinkFlow() async {
+  ///
+  /// [purpose] changes the sheet's words and nothing else. Which of the two
+  /// operations actually happens is settled by the server — whether the
+  /// identity is already taken — never by where the user tapped (ADR-0014), so
+  /// the start screen's offer is free to be wrong about it.
+  Future<bool> _openLinkFlow({LinkPurpose purpose = LinkPurpose.keep}) async {
     final l10n = context.l10n;
     final flow = LinkFlow(
       identity: ref.read(identityRepositoryProvider),
@@ -479,6 +484,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     final chosen = await showModalBottomSheet<AuthProvider>(
       context: context,
       builder: (sheetContext) => LinkSheet(
+        purpose: purpose,
         providers: const [
           AuthProvider.apple,
           AuthProvider.google,
@@ -605,15 +611,27 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   Future<bool> _settle(AttachOutcome outcome) async {
     switch (outcome) {
       case Linked():
-        // The record never moved; it just has an owner now. Reloading is what
-        // retires the completion prompt, which stops applying the moment the
-        // account is linked (ADR-0013).
+        // The record never moved; it just has an owner now.
         //
-        // Linking is also the moment the user expects to see their record
-        // somewhere other than this phone, so it is worth one sync of its own
-        // rather than waiting for the next write or the next launch.
+        // Linking is the moment the user expects to see their record somewhere
+        // other than this phone, so it is worth one sync of its own rather than
+        // waiting for the next write or the next launch.
         _syncSoon();
-        if (mounted) await _reloadHome();
+        if (!mounted) return true;
+
+        // Reached from the start screen, by someone who said they had an
+        // account and turned out not to: the address is theirs now and the
+        // onboarding they were standing in is still the way forward. There is
+        // no home to reload yet, and leaving them on the intro would read as
+        // the tap having done nothing.
+        if (_step == _Step.intro) {
+          setState(() => _step = _Step.privacy);
+          return true;
+        }
+
+        // Reloading is what retires the completion prompt, which stops applying
+        // the moment the account is linked (ADR-0013).
+        await _reloadHome();
         return true;
       case SignedIn():
         // The local rows are gone and this account's record has to be pulled.
@@ -868,6 +886,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       _Step.restoring => _restoring(),
       _Step.intro => DoctrineIntroScreen(
         onContinue: () => setState(() => _step = _Step.privacy),
+        onSignIn: () => unawaited(_openLinkFlow(purpose: LinkPurpose.signIn)),
       ),
       _Step.privacy => PrivacyNoticeScreen(
         onAccept: () => setState(() => _step = _Step.diagnostic),

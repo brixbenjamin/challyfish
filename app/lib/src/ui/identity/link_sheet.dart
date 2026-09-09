@@ -11,15 +11,23 @@ import '../../../l10n/app_localizations.dart';
 import '../../core/l10n_ext.dart';
 import '../../domain/identity.dart';
 
+/// Why the sheet is open. The providers and the mechanics are identical; the
+/// words are not. [keep] is offered to a user whose record is on this phone and
+/// who might lose it; [signIn] to a user whose record is on an account and who
+/// wants it here.
+enum LinkPurpose { keep, signIn }
+
 class LinkSheet extends StatelessWidget {
   const LinkSheet({
     required this.providers,
     required this.onChoose,
     required this.onCancel,
+    this.purpose = LinkPurpose.keep,
     super.key,
   });
 
   final List<AuthProvider> providers;
+  final LinkPurpose purpose;
   final void Function(AuthProvider) onChoose;
   final VoidCallback onCancel;
 
@@ -34,6 +42,18 @@ class LinkSheet extends StatelessWidget {
     AuthProvider.apple => l10n.continueWithApple,
     AuthProvider.google => l10n.continueWithGoogle,
     AuthProvider.email => l10n.continueWithEmail,
+  };
+
+  /// Chosen here rather than passed in, for the same reason as [labelFor]:
+  /// every word a user sees comes from one file (ADR-0022).
+  String _title(AppLocalizations l10n) => switch (purpose) {
+    LinkPurpose.keep => l10n.linkSheetTitle,
+    LinkPurpose.signIn => l10n.signInSheetTitle,
+  };
+
+  String _body(AppLocalizations l10n) => switch (purpose) {
+    LinkPurpose.keep => l10n.linkSheetBody,
+    LinkPurpose.signIn => l10n.signInSheetBody,
   };
 
   /// App Store Review Guideline 4.8: offering a third-party social login
@@ -59,12 +79,12 @@ class LinkSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              l10n.linkSheetTitle,
+              _title(l10n),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             // Says what is at stake once, plainly, and never again (ADR-0013).
-            Text(l10n.linkSheetBody, key: explanationKey),
+            Text(_body(l10n), key: explanationKey),
             const SizedBox(height: 20),
             for (final provider in _effectiveProviders) ...[
               FilledButton(

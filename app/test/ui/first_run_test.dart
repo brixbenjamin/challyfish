@@ -32,18 +32,40 @@ void main() {
   testWidgets('the intro can be moved past in one tap', (tester) async {
     var advanced = false;
     await tester.pumpWidget(
-      wrap(DoctrineIntroScreen(onContinue: () => advanced = true)),
+      wrap(
+        DoctrineIntroScreen(
+          onContinue: () => advanced = true,
+          onSignIn: () {},
+        ),
+      ),
     );
     await tester.tap(find.text(l10n.continueButton));
     expect(advanced, isTrue);
   });
 
+  testWidgets('a returning user can say so before answering anything', (
+    tester,
+  ) async {
+    var signIn = 0;
+    await tester.pumpWidget(
+      wrap(DoctrineIntroScreen(onContinue: () {}, onSignIn: () => signIn++)),
+    );
+
+    // Someone who already has an account has already answered the diagnostic.
+    // Without this the only way to it is to answer all eight again, and the
+    // second set of answers then outranks the first (ADR-0024).
+    await tester.tap(find.byKey(DoctrineIntroScreen.signInKey));
+    expect(signIn, 1);
+  });
+
   testWidgets('no account screen appears anywhere in onboarding', (
     tester,
   ) async {
-    // ADR-0007: nothing stands between install and the diagnostic.
+    // ADR-0007: nothing stands between install and the diagnostic. An offer is
+    // not a gate — the continue button is still the first thing here, and the
+    // words below stay banned so this never grows into a sign-in wall.
     for (final screen in [
-      wrap(DoctrineIntroScreen(onContinue: () {})),
+      wrap(DoctrineIntroScreen(onContinue: () {}, onSignIn: () {})),
       wrap(PrivacyNoticeScreen(onAccept: () {})),
     ]) {
       await tester.pumpWidget(screen);

@@ -216,6 +216,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueButton => 'Go on';
 
   @override
+  String get haveAccountButton => 'I already have an account';
+
+  @override
   String get privacyNoticeTitle => 'Before you start';
 
   @override
@@ -290,6 +293,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get linkSheetBody =>
       'Right now everything you have done lives only on this phone. Attaching an account keeps it, and lets you pick it up on another device.';
+
+  @override
+  String get signInSheetTitle => 'Pick it up here';
+
+  @override
+  String get signInSheetBody =>
+      'Your record lives on the account, not on this phone. Sign in and it comes back — campaigns, history, and the questions you have already answered.';
 
   @override
   String get notNowButton => 'Not now';

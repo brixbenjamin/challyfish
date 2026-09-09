@@ -424,6 +424,12 @@ abstract class AppLocalizations {
   /// **'Go on'**
   String get continueButton;
 
+  /// Opens the sign-in sheet from the first onboarding screen, so a returning user is not made to answer the diagnostic a second time. Secondary to the continue button: an offer, never a gate (ADR-0007).
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get haveAccountButton;
+
   /// Heading of the privacy notice, shown before the diagnostic.
   ///
   /// In en, this message translates to:
@@ -555,6 +561,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Right now everything you have done lives only on this phone. Attaching an account keeps it, and lets you pick it up on another device.'**
   String get linkSheetBody;
+
+  /// [niche] Title of the same sheet when it is opened by a returning user from the start screen, where there is no local record to keep.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick it up here'**
+  String get signInSheetTitle;
+
+  /// [niche] The sign-in counterpart of linkSheetBody. Must say the diagnostic does not have to be answered again: that is the whole reason this entry point exists (ADR-0024).
+  ///
+  /// In en, this message translates to:
+  /// **'Your record lives on the account, not on this phone. Sign in and it comes back — campaigns, history, and the questions you have already answered.'**
+  String get signInSheetBody;
 
   /// Dismisses the link prompt. Dismissal is remembered and never asked again.
   ///

@@ -9,7 +9,11 @@ void main() {
   late List<AuthProvider> chosen;
   late int cancels;
 
-  Future<void> pump(WidgetTester tester, List<AuthProvider> providers) {
+  Future<void> pump(
+    WidgetTester tester,
+    List<AuthProvider> providers, {
+    LinkPurpose purpose = LinkPurpose.keep,
+  }) {
     chosen = [];
     cancels = 0;
     return tester.pumpWidget(
@@ -17,6 +21,7 @@ void main() {
         Scaffold(
           body: LinkSheet(
             providers: providers,
+            purpose: purpose,
             onChoose: chosen.add,
             onCancel: () => cancels++,
           ),
@@ -69,6 +74,22 @@ void main() {
     ]) {
       expect(body.toLowerCase(), isNot(contains(banned)));
     }
+  });
+
+  testWidgets('signing in is not described as keeping what is on this phone', (
+    tester,
+  ) async {
+    await pump(tester, AuthProvider.values, purpose: LinkPurpose.signIn);
+
+    // Opened from the start screen there is nothing on this phone yet, so the
+    // linking copy would be describing something that does not exist. What this
+    // user needs to hear is the opposite: their record is elsewhere and this
+    // brings it back.
+    final body = tester
+        .widget<Text>(find.byKey(LinkSheet.explanationKey))
+        .data!;
+    expect(body.toLowerCase(), isNot(contains('lives only on this phone')));
+    expect(body.toLowerCase(), contains('already answered'));
   });
 
   testWidgets('Apple is offered whenever Google is', (tester) async {

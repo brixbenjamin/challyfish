@@ -296,6 +296,10 @@
   "@continueButton": {
     "description": "[niche] Advances onboarding. Plain 'Continue' in most forks; this wording is a voice choice."
   },
+  "haveAccountButton": "I already have an account",
+  "@haveAccountButton": {
+    "description": "Opens the sign-in sheet from the first onboarding screen, so a returning user is not made to answer the diagnostic a second time. Secondary to the continue button: an offer, never a gate (ADR-0007)."
+  },
   "privacyNoticeTitle": "Before you start",
   "@privacyNoticeTitle": {
     "description": "Heading of the privacy notice, shown before the diagnostic."
@@ -388,6 +392,14 @@
   "linkSheetBody": "Right now everything you have done lives only on this phone. Attaching an account keeps it, and lets you pick it up on another device.",
   "@linkSheetBody": {
     "description": "[niche] Says what is at stake, once, and never again (ADR-0013)."
+  },
+  "signInSheetTitle": "Pick it up here",
+  "@signInSheetTitle": {
+    "description": "[niche] Title of the same sheet when it is opened by a returning user from the start screen, where there is no local record to keep."
+  },
+  "signInSheetBody": "Your record lives on the account, not on this phone. Sign in and it comes back — campaigns, history, and the questions you have already answered.",
+  "@signInSheetBody": {
+    "description": "[niche] The sign-in counterpart of linkSheetBody. Must say the diagnostic does not have to be answered again: that is the whole reason this entry point exists (ADR-0024)."
   },
   "notNowButton": "Not now",
   "@notNowButton": {
