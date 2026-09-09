@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   }
 
   const expected = Deno.env.get("REVENUECAT_WEBHOOK_SECRET") ?? "";
-  const provided = req.headers.get("Authorization") ?? "";
+  const provided = req.headers.get("X-RevenueCat-Webhook-Signature") ?? "";
   if (expected.length === 0 || !secretMatches(provided, expected)) {
     return json(401, { error: "unauthorized" });
   }
