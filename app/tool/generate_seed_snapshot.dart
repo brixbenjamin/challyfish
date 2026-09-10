@@ -25,11 +25,31 @@ const tables = [
   'campaigns',
   'campaign_archetypes',
   'actions',
+  'action_bodies',
   'doctrine_groups',
   'doctrine_entries',
   'diagnostic_questions',
   'diagnostic_options',
 ];
+
+/// Tables whose snapshot is a deliberate subset. Everything else is dumped whole.
+///
+/// The bundled snapshot exists so a first launch with no network is not an empty
+/// app. That is a free-pack concern only: shipping paid copy inside the binary
+/// hands it to anyone who unzips a release (ADR-0025).
+///
+/// This tool connects as `postgres` and so bypasses row-level security entirely.
+/// Task 1's policy does not protect it and never will -- it is a privileged build
+/// step, not a client -- which is why the filter has to live here.
+const partialTables = <String, String>{
+  'action_bodies': '''
+    select row_to_json(t) from public.action_bodies t
+      join public.actions a   on a.id = t.action_id
+      join public.campaigns c on c.id = a.campaign_id
+      join public.packs p     on p.id = c.pack_id
+     where p.is_core
+  ''',
+};
 
 Future<void> main() async {
   final connection = await Connection.open(
@@ -51,12 +71,36 @@ Future<void> main() async {
     // the driver instead hands back `numeric` as a Dart String, which the
     // descriptors reject — a divergence no fabricated fixture would reveal.
     final rows = await connection.execute(
-      'select row_to_json(t) from public.$table t',
+      partialTables[table] ?? 'select row_to_json(t) from public.$table t',
     );
     snapshot[table] = [for (final row in rows) row[0]! as Map<String, dynamic>];
     stdout.writeln('$table: ${rows.length} row(s)');
   }
+
+  // Not a comment, because the comment was already there and the filter was
+  // still forgotten. This checks the built snapshot rather than the query that
+  // built it, so it still holds if a future table starts carrying paid copy.
+  final paidIds = await connection.execute('''
+    select a.id::text
+      from public.actions a
+      join public.campaigns c on c.id = a.campaign_id
+      join public.packs p     on p.id = c.pack_id
+     where not p.is_core
+  ''');
+  final paid = {for (final row in paidIds) row[0]! as String};
+  final leaked = [
+    for (final row in snapshot['action_bodies'] as List<Map<String, dynamic>>)
+      if (paid.contains(row['action_id'] as String)) row['action_id'] as String,
+  ];
   await connection.close();
+
+  if (leaked.isNotEmpty) {
+    stderr.writeln(
+      'refusing to write: ${leaked.length} paid body/bodies in the snapshot '
+      '(${leaked.take(3).join(', ')}...)',
+    );
+    exit(1);
+  }
 
   final file = File('assets/seed/core_content.json');
   await file.parent.create(recursive: true);
