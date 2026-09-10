@@ -2086,15 +2086,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _bodyMdMeta = const VerificationMeta('bodyMd');
-  @override
-  late final GeneratedColumn<String> bodyMd = GeneratedColumn<String>(
-    'body_md',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _archetypeIdMeta = const VerificationMeta(
     'archetypeId',
   );
@@ -2144,7 +2135,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     campaignId,
     dayIndex,
     title,
-    bodyMd,
     archetypeId,
     whyDoctrineId,
     effort,
@@ -2190,14 +2180,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
       );
     } else if (isInserting) {
       context.missing(_titleMeta);
-    }
-    if (data.containsKey('body_md')) {
-      context.handle(
-        _bodyMdMeta,
-        bodyMd.isAcceptableOrUnknown(data['body_md']!, _bodyMdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_bodyMdMeta);
     }
     if (data.containsKey('archetype_id')) {
       context.handle(
@@ -2262,10 +2244,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
-      bodyMd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}body_md'],
-      )!,
       archetypeId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}archetype_id'],
@@ -2296,7 +2274,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   final String campaignId;
   final int dayIndex;
   final String title;
-  final String bodyMd;
 
   /// Exactly one archetype per action (ADR-0004). Not nullable.
   final String archetypeId;
@@ -2308,7 +2285,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     required this.campaignId,
     required this.dayIndex,
     required this.title,
-    required this.bodyMd,
     required this.archetypeId,
     this.whyDoctrineId,
     required this.effort,
@@ -2321,7 +2297,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     map['campaign_id'] = Variable<String>(campaignId);
     map['day_index'] = Variable<int>(dayIndex);
     map['title'] = Variable<String>(title);
-    map['body_md'] = Variable<String>(bodyMd);
     map['archetype_id'] = Variable<String>(archetypeId);
     if (!nullToAbsent || whyDoctrineId != null) {
       map['why_doctrine_id'] = Variable<String>(whyDoctrineId);
@@ -2337,7 +2312,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       campaignId: Value(campaignId),
       dayIndex: Value(dayIndex),
       title: Value(title),
-      bodyMd: Value(bodyMd),
       archetypeId: Value(archetypeId),
       whyDoctrineId: whyDoctrineId == null && nullToAbsent
           ? const Value.absent()
@@ -2357,7 +2331,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       campaignId: serializer.fromJson<String>(json['campaignId']),
       dayIndex: serializer.fromJson<int>(json['dayIndex']),
       title: serializer.fromJson<String>(json['title']),
-      bodyMd: serializer.fromJson<String>(json['bodyMd']),
       archetypeId: serializer.fromJson<String>(json['archetypeId']),
       whyDoctrineId: serializer.fromJson<String?>(json['whyDoctrineId']),
       effort: serializer.fromJson<int>(json['effort']),
@@ -2372,7 +2345,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       'campaignId': serializer.toJson<String>(campaignId),
       'dayIndex': serializer.toJson<int>(dayIndex),
       'title': serializer.toJson<String>(title),
-      'bodyMd': serializer.toJson<String>(bodyMd),
       'archetypeId': serializer.toJson<String>(archetypeId),
       'whyDoctrineId': serializer.toJson<String?>(whyDoctrineId),
       'effort': serializer.toJson<int>(effort),
@@ -2385,7 +2357,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     String? campaignId,
     int? dayIndex,
     String? title,
-    String? bodyMd,
     String? archetypeId,
     Value<String?> whyDoctrineId = const Value.absent(),
     int? effort,
@@ -2395,7 +2366,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     campaignId: campaignId ?? this.campaignId,
     dayIndex: dayIndex ?? this.dayIndex,
     title: title ?? this.title,
-    bodyMd: bodyMd ?? this.bodyMd,
     archetypeId: archetypeId ?? this.archetypeId,
     whyDoctrineId: whyDoctrineId.present
         ? whyDoctrineId.value
@@ -2411,7 +2381,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           : this.campaignId,
       dayIndex: data.dayIndex.present ? data.dayIndex.value : this.dayIndex,
       title: data.title.present ? data.title.value : this.title,
-      bodyMd: data.bodyMd.present ? data.bodyMd.value : this.bodyMd,
       archetypeId: data.archetypeId.present
           ? data.archetypeId.value
           : this.archetypeId,
@@ -2430,7 +2399,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           ..write('campaignId: $campaignId, ')
           ..write('dayIndex: $dayIndex, ')
           ..write('title: $title, ')
-          ..write('bodyMd: $bodyMd, ')
           ..write('archetypeId: $archetypeId, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
@@ -2445,7 +2413,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     campaignId,
     dayIndex,
     title,
-    bodyMd,
     archetypeId,
     whyDoctrineId,
     effort,
@@ -2459,7 +2426,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           other.campaignId == this.campaignId &&
           other.dayIndex == this.dayIndex &&
           other.title == this.title &&
-          other.bodyMd == this.bodyMd &&
           other.archetypeId == this.archetypeId &&
           other.whyDoctrineId == this.whyDoctrineId &&
           other.effort == this.effort &&
@@ -2471,7 +2437,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   final Value<String> campaignId;
   final Value<int> dayIndex;
   final Value<String> title;
-  final Value<String> bodyMd;
   final Value<String> archetypeId;
   final Value<String?> whyDoctrineId;
   final Value<int> effort;
@@ -2482,7 +2447,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     this.campaignId = const Value.absent(),
     this.dayIndex = const Value.absent(),
     this.title = const Value.absent(),
-    this.bodyMd = const Value.absent(),
     this.archetypeId = const Value.absent(),
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
@@ -2494,7 +2458,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     required String campaignId,
     required int dayIndex,
     required String title,
-    required String bodyMd,
     required String archetypeId,
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
@@ -2504,7 +2467,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
        campaignId = Value(campaignId),
        dayIndex = Value(dayIndex),
        title = Value(title),
-       bodyMd = Value(bodyMd),
        archetypeId = Value(archetypeId),
        updatedAt = Value(updatedAt);
   static Insertable<ActionRow> custom({
@@ -2512,7 +2474,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     Expression<String>? campaignId,
     Expression<int>? dayIndex,
     Expression<String>? title,
-    Expression<String>? bodyMd,
     Expression<String>? archetypeId,
     Expression<String>? whyDoctrineId,
     Expression<int>? effort,
@@ -2524,7 +2485,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
       if (campaignId != null) 'campaign_id': campaignId,
       if (dayIndex != null) 'day_index': dayIndex,
       if (title != null) 'title': title,
-      if (bodyMd != null) 'body_md': bodyMd,
       if (archetypeId != null) 'archetype_id': archetypeId,
       if (whyDoctrineId != null) 'why_doctrine_id': whyDoctrineId,
       if (effort != null) 'effort': effort,
@@ -2538,7 +2498,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     Value<String>? campaignId,
     Value<int>? dayIndex,
     Value<String>? title,
-    Value<String>? bodyMd,
     Value<String>? archetypeId,
     Value<String?>? whyDoctrineId,
     Value<int>? effort,
@@ -2550,7 +2509,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
       campaignId: campaignId ?? this.campaignId,
       dayIndex: dayIndex ?? this.dayIndex,
       title: title ?? this.title,
-      bodyMd: bodyMd ?? this.bodyMd,
       archetypeId: archetypeId ?? this.archetypeId,
       whyDoctrineId: whyDoctrineId ?? this.whyDoctrineId,
       effort: effort ?? this.effort,
@@ -2573,9 +2531,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
-    }
-    if (bodyMd.present) {
-      map['body_md'] = Variable<String>(bodyMd.value);
     }
     if (archetypeId.present) {
       map['archetype_id'] = Variable<String>(archetypeId.value);
@@ -2602,10 +2557,276 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
           ..write('campaignId: $campaignId, ')
           ..write('dayIndex: $dayIndex, ')
           ..write('title: $title, ')
-          ..write('bodyMd: $bodyMd, ')
           ..write('archetypeId: $archetypeId, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ActionBodiesTable extends ActionBodies
+    with TableInfo<$ActionBodiesTable, ActionBodyRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActionBodiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _actionIdMeta = const VerificationMeta(
+    'actionId',
+  );
+  @override
+  late final GeneratedColumn<String> actionId = GeneratedColumn<String>(
+    'action_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMdMeta = const VerificationMeta('bodyMd');
+  @override
+  late final GeneratedColumn<String> bodyMd = GeneratedColumn<String>(
+    'body_md',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [actionId, bodyMd, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'action_bodies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ActionBodyRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('action_id')) {
+      context.handle(
+        _actionIdMeta,
+        actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionIdMeta);
+    }
+    if (data.containsKey('body_md')) {
+      context.handle(
+        _bodyMdMeta,
+        bodyMd.isAcceptableOrUnknown(data['body_md']!, _bodyMdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {actionId};
+  @override
+  ActionBodyRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ActionBodyRow(
+      actionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_id'],
+      )!,
+      bodyMd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body_md'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ActionBodiesTable createAlias(String alias) {
+    return $ActionBodiesTable(attachedDatabase, alias);
+  }
+}
+
+class ActionBodyRow extends DataClass implements Insertable<ActionBodyRow> {
+  final String actionId;
+  final String bodyMd;
+  final DateTime updatedAt;
+  const ActionBodyRow({
+    required this.actionId,
+    required this.bodyMd,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['action_id'] = Variable<String>(actionId);
+    map['body_md'] = Variable<String>(bodyMd);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ActionBodiesCompanion toCompanion(bool nullToAbsent) {
+    return ActionBodiesCompanion(
+      actionId: Value(actionId),
+      bodyMd: Value(bodyMd),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ActionBodyRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ActionBodyRow(
+      actionId: serializer.fromJson<String>(json['actionId']),
+      bodyMd: serializer.fromJson<String>(json['bodyMd']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'actionId': serializer.toJson<String>(actionId),
+      'bodyMd': serializer.toJson<String>(bodyMd),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ActionBodyRow copyWith({
+    String? actionId,
+    String? bodyMd,
+    DateTime? updatedAt,
+  }) => ActionBodyRow(
+    actionId: actionId ?? this.actionId,
+    bodyMd: bodyMd ?? this.bodyMd,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ActionBodyRow copyWithCompanion(ActionBodiesCompanion data) {
+    return ActionBodyRow(
+      actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      bodyMd: data.bodyMd.present ? data.bodyMd.value : this.bodyMd,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActionBodyRow(')
+          ..write('actionId: $actionId, ')
+          ..write('bodyMd: $bodyMd, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(actionId, bodyMd, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ActionBodyRow &&
+          other.actionId == this.actionId &&
+          other.bodyMd == this.bodyMd &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ActionBodiesCompanion extends UpdateCompanion<ActionBodyRow> {
+  final Value<String> actionId;
+  final Value<String> bodyMd;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ActionBodiesCompanion({
+    this.actionId = const Value.absent(),
+    this.bodyMd = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ActionBodiesCompanion.insert({
+    required String actionId,
+    required String bodyMd,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : actionId = Value(actionId),
+       bodyMd = Value(bodyMd),
+       updatedAt = Value(updatedAt);
+  static Insertable<ActionBodyRow> custom({
+    Expression<String>? actionId,
+    Expression<String>? bodyMd,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (actionId != null) 'action_id': actionId,
+      if (bodyMd != null) 'body_md': bodyMd,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ActionBodiesCompanion copyWith({
+    Value<String>? actionId,
+    Value<String>? bodyMd,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ActionBodiesCompanion(
+      actionId: actionId ?? this.actionId,
+      bodyMd: bodyMd ?? this.bodyMd,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (actionId.present) {
+      map['action_id'] = Variable<String>(actionId.value);
+    }
+    if (bodyMd.present) {
+      map['body_md'] = Variable<String>(bodyMd.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActionBodiesCompanion(')
+          ..write('actionId: $actionId, ')
+          ..write('bodyMd: $bodyMd, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -7003,6 +7224,7 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
   late final $CampaignArchetypesTable campaignArchetypes =
       $CampaignArchetypesTable(this);
   late final $ActionsTable actions = $ActionsTable(this);
+  late final $ActionBodiesTable actionBodies = $ActionBodiesTable(this);
   late final $DoctrineGroupsTable doctrineGroups = $DoctrineGroupsTable(this);
   late final $DoctrineEntriesTable doctrineEntries = $DoctrineEntriesTable(
     this,
@@ -7028,6 +7250,7 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     campaigns,
     campaignArchetypes,
     actions,
+    actionBodies,
     doctrineGroups,
     doctrineEntries,
     diagnosticQuestions,
@@ -8094,7 +8317,6 @@ typedef $$ActionsTableCreateCompanionBuilder =
       required String campaignId,
       required int dayIndex,
       required String title,
-      required String bodyMd,
       required String archetypeId,
       Value<String?> whyDoctrineId,
       Value<int> effort,
@@ -8107,7 +8329,6 @@ typedef $$ActionsTableUpdateCompanionBuilder =
       Value<String> campaignId,
       Value<int> dayIndex,
       Value<String> title,
-      Value<String> bodyMd,
       Value<String> archetypeId,
       Value<String?> whyDoctrineId,
       Value<int> effort,
@@ -8141,11 +8362,6 @@ class $$ActionsTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get bodyMd => $composableBuilder(
-    column: $table.bodyMd,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8199,11 +8415,6 @@ class $$ActionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get bodyMd => $composableBuilder(
-    column: $table.bodyMd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get archetypeId => $composableBuilder(
     column: $table.archetypeId,
     builder: (column) => ColumnOrderings(column),
@@ -8247,9 +8458,6 @@ class $$ActionsTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
-
-  GeneratedColumn<String> get bodyMd =>
-      $composableBuilder(column: $table.bodyMd, builder: (column) => column);
 
   GeneratedColumn<String> get archetypeId => $composableBuilder(
     column: $table.archetypeId,
@@ -8303,7 +8511,6 @@ class $$ActionsTableTableManager
                 Value<String> campaignId = const Value.absent(),
                 Value<int> dayIndex = const Value.absent(),
                 Value<String> title = const Value.absent(),
-                Value<String> bodyMd = const Value.absent(),
                 Value<String> archetypeId = const Value.absent(),
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
@@ -8314,7 +8521,6 @@ class $$ActionsTableTableManager
                 campaignId: campaignId,
                 dayIndex: dayIndex,
                 title: title,
-                bodyMd: bodyMd,
                 archetypeId: archetypeId,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
@@ -8327,7 +8533,6 @@ class $$ActionsTableTableManager
                 required String campaignId,
                 required int dayIndex,
                 required String title,
-                required String bodyMd,
                 required String archetypeId,
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
@@ -8338,7 +8543,6 @@ class $$ActionsTableTableManager
                 campaignId: campaignId,
                 dayIndex: dayIndex,
                 title: title,
-                bodyMd: bodyMd,
                 archetypeId: archetypeId,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
@@ -8365,6 +8569,168 @@ typedef $$ActionsTableProcessedTableManager =
       $$ActionsTableUpdateCompanionBuilder,
       (ActionRow, BaseReferences<_$FeralDatabase, $ActionsTable, ActionRow>),
       ActionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ActionBodiesTableCreateCompanionBuilder =
+    ActionBodiesCompanion Function({
+      required String actionId,
+      required String bodyMd,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ActionBodiesTableUpdateCompanionBuilder =
+    ActionBodiesCompanion Function({
+      Value<String> actionId,
+      Value<String> bodyMd,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ActionBodiesTableFilterComposer
+    extends Composer<_$FeralDatabase, $ActionBodiesTable> {
+  $$ActionBodiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bodyMd => $composableBuilder(
+    column: $table.bodyMd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ActionBodiesTableOrderingComposer
+    extends Composer<_$FeralDatabase, $ActionBodiesTable> {
+  $$ActionBodiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bodyMd => $composableBuilder(
+    column: $table.bodyMd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ActionBodiesTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $ActionBodiesTable> {
+  $$ActionBodiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get actionId =>
+      $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<String> get bodyMd =>
+      $composableBuilder(column: $table.bodyMd, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ActionBodiesTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $ActionBodiesTable,
+          ActionBodyRow,
+          $$ActionBodiesTableFilterComposer,
+          $$ActionBodiesTableOrderingComposer,
+          $$ActionBodiesTableAnnotationComposer,
+          $$ActionBodiesTableCreateCompanionBuilder,
+          $$ActionBodiesTableUpdateCompanionBuilder,
+          (
+            ActionBodyRow,
+            BaseReferences<_$FeralDatabase, $ActionBodiesTable, ActionBodyRow>,
+          ),
+          ActionBodyRow,
+          PrefetchHooks Function()
+        > {
+  $$ActionBodiesTableTableManager(_$FeralDatabase db, $ActionBodiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ActionBodiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ActionBodiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ActionBodiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> actionId = const Value.absent(),
+                Value<String> bodyMd = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ActionBodiesCompanion(
+                actionId: actionId,
+                bodyMd: bodyMd,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String actionId,
+                required String bodyMd,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ActionBodiesCompanion.insert(
+                actionId: actionId,
+                bodyMd: bodyMd,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ActionBodiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $ActionBodiesTable,
+      ActionBodyRow,
+      $$ActionBodiesTableFilterComposer,
+      $$ActionBodiesTableOrderingComposer,
+      $$ActionBodiesTableAnnotationComposer,
+      $$ActionBodiesTableCreateCompanionBuilder,
+      $$ActionBodiesTableUpdateCompanionBuilder,
+      (
+        ActionBodyRow,
+        BaseReferences<_$FeralDatabase, $ActionBodiesTable, ActionBodyRow>,
+      ),
+      ActionBodyRow,
       PrefetchHooks Function()
     >;
 typedef $$DoctrineGroupsTableCreateCompanionBuilder =
@@ -10725,6 +11091,8 @@ class $FeralDatabaseManager {
       $$CampaignArchetypesTableTableManager(_db, _db.campaignArchetypes);
   $$ActionsTableTableManager get actions =>
       $$ActionsTableTableManager(_db, _db.actions);
+  $$ActionBodiesTableTableManager get actionBodies =>
+      $$ActionBodiesTableTableManager(_db, _db.actionBodies);
   $$DoctrineGroupsTableTableManager get doctrineGroups =>
       $$DoctrineGroupsTableTableManager(_db, _db.doctrineGroups);
   $$DoctrineEntriesTableTableManager get doctrineEntries =>

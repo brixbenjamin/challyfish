@@ -61,7 +61,6 @@ class Actions extends Table {
   TextColumn get campaignId => text()();
   IntColumn get dayIndex => integer()();
   TextColumn get title => text()();
-  TextColumn get bodyMd => text()();
 
   /// Exactly one archetype per action (ADR-0004). Not nullable.
   TextColumn get archetypeId => text()();
@@ -76,6 +75,20 @@ class Actions extends Table {
   List<Set<Column<Object>>> get uniqueKeys => [
     {campaignId, dayIndex},
   ];
+}
+
+/// The authored copy, kept apart from the action so the server can withhold it
+/// for a pack the user does not own (ADR-0025). Locally this is a plain cache
+/// like every other content table; the boundary is enforced in Postgres, and a
+/// row's presence here means only that the server was once willing to send it.
+@DataClassName('ActionBodyRow')
+class ActionBodies extends Table {
+  TextColumn get actionId => text()();
+  TextColumn get bodyMd => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {actionId};
 }
 
 @DataClassName('CampaignArchetypeRow')

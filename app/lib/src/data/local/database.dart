@@ -17,6 +17,7 @@ part 'database.g.dart';
     Campaigns,
     CampaignArchetypes,
     Actions,
+    ActionBodies,
     DoctrineGroups,
     DoctrineEntries,
     DiagnosticQuestions,
@@ -35,7 +36,7 @@ class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +64,19 @@ class FeralDatabase extends _$FeralDatabase {
         // Additive, like every migration before it. Nothing existing moves,
         // so an upgrade cannot lose a day log.
         await m.createTable(entitlements);
+      }
+      if (from < 5) {
+        // The first migration that is not purely additive. The principle above
+        // protects campaign_runs and day_logs -- a user's own record, which has
+        // no other copy -- and neither is touched here.
+        //
+        // Bodies are not carried across. Pre-launch there is no install holding
+        // content worth preserving, and content is a cache with a server behind
+        // it: the next pull refills it, and a development device that is offline
+        // at the moment it upgrades can reinstall. Once the app ships this is no
+        // longer true, and a migration at that point must copy rather than drop.
+        await m.createTable(actionBodies);
+        await m.alterTable(TableMigration(actions));
       }
     },
   );

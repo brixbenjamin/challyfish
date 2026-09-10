@@ -156,7 +156,6 @@ void main() {
               campaignId: 'campaign-1',
               dayIndex: day,
               title: 'Day $day',
-              bodyMd: 'do it',
               archetypeId: 'arch-a',
               updatedAt: now,
             ),

@@ -21,12 +21,15 @@ Campaign toCampaign(CampaignRow row) => Campaign(
   sort: row.sort,
 );
 
-ActionSpec toAction(ActionRow row) => ActionSpec(
+/// A null [body] is a real state, not a failure: a locked pack, or an owned pack
+/// whose bodies have not been pulled yet. Callers degrade to the existing
+/// "content unavailable" path (ADR-0025).
+ActionSpec toAction(ActionRow row, [ActionBodyRow? body]) => ActionSpec(
   id: row.id,
   campaignId: row.campaignId,
   dayIndex: row.dayIndex,
   title: row.title,
-  bodyMd: row.bodyMd,
+  bodyMd: body?.bodyMd,
   archetypeId: row.archetypeId,
   whyDoctrineId: row.whyDoctrineId,
   effort: row.effort,

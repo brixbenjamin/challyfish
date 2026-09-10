@@ -92,7 +92,12 @@ class DashboardScreen extends StatelessWidget {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 12),
-                  Text(action.bodyMd),
+                  // The title is a public teaser and the copy is not, so the
+                  // body can be absent while the action is present: a locked
+                  // pack, or an owned one whose bodies have not arrived yet
+                  // (ADR-0025). It degrades to the same recoverable "content
+                  // unavailable" wording as a missing action, never to a blank.
+                  Text(action.bodyMd ?? l10n.contentUnavailable),
                   const SizedBox(height: 24),
                   if (state.isReportedToday)
                     Text(

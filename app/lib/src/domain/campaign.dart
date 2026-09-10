@@ -36,7 +36,7 @@ class ActionSpec {
     required this.campaignId,
     required this.dayIndex,
     required this.title,
-    required this.bodyMd,
+    this.bodyMd,
     required this.archetypeId,
     this.whyDoctrineId,
     this.effort = 1,
@@ -48,7 +48,11 @@ class ActionSpec {
   /// 1-based. Contiguous from 1 to the campaign's lengthDays.
   final int dayIndex;
   final String title;
-  final String bodyMd;
+
+  /// Null when the copy is not available: a locked pack, or an owned pack
+  /// whose bodies have not been pulled yet (ADR-0025). Callers degrade to the
+  /// existing "content unavailable" path rather than failing.
+  final String? bodyMd;
   final String archetypeId;
   final String? whyDoctrineId;
   final int effort;
