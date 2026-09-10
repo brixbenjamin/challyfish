@@ -74,14 +74,14 @@ class SyncRepository implements SyncRunner {
 
   /// Pull order mirrors push order for the same foreign-key reason.
   ///
-  /// `entitlements` is pull-only and has no push counterpart: it is written by
-  /// the purchase webhook and is `select`-only to the client (ADR-0017).
+  /// `entitlements` is absent: it is pull-only, has no push counterpart, and is
+  /// reconciled as a complete set by [reconcileEntitlements] rather than
+  /// incrementally, because an incremental fetch cannot observe a deletion.
   static const pullOrder = [
     'profiles',
     'campaign_runs',
     'day_logs',
     'diagnostic_results',
-    'entitlements',
   ];
 
   final List<SyncNotice> _notices = [];
@@ -285,7 +285,114 @@ class SyncRepository implements SyncRunner {
       // row seen.
       await _advanceWatermark(table, rows);
     }
+
+    // Entitlements last, and as a complete set. A throw here is "we did not
+    // find out", never "they own nothing", so it fails the pull rather than
+    // purging on an unanswered question.
+    try {
+      merged += (await reconcileEntitlements(userId)).length;
+    } catch (error) {
+      return PullResult(succeeded: false, mergedRows: merged, error: error);
+    }
     return PullResult(succeeded: true, mergedRows: merged);
+  }
+
+  /// Entitlements are pulled as a complete set rather than incrementally.
+  ///
+  /// A refund deletes the server row, and a deleted row carries no newer
+  /// `updated_at` — so an incremental pull can never observe a revocation. This
+  /// is affordable here and nowhere else: it is one row per owned pack.
+  ///
+  /// Throws if the fetch fails, and deliberately purges nothing in that case.
+  /// The caller treats a throw as "we did not find out", never as "they own
+  /// nothing" (ADR-0025).
+  Future<Set<String>> reconcileEntitlements(String userId) async {
+    final remote = await api.fetchSince('entitlements', null, userId);
+    final confirmed = {for (final row in remote) row['pack_id'] as String};
+
+    await db.transaction(() async {
+      for (final row in remote) {
+        await db
+            .into(db.entitlements)
+            .insertOnConflictUpdate(
+              EntitlementRow(
+                userId: row['user_id'] as String,
+                packId: row['pack_id'] as String,
+                source: row['source'] as String,
+                acquiredAt: DateTime.parse(
+                  row['acquired_at'] as String,
+                ).toUtc(),
+                updatedAt: _remoteUpdatedAt(row),
+                local: false,
+              ),
+            );
+      }
+
+      // Server-sourced rows the server has stopped returning. A local grant is
+      // an optimistic guess about a purchase the webhook has not confirmed yet,
+      // not a claim the server has contradicted, so it is left alone.
+      await (db.delete(db.entitlements)..where(
+        (e) =>
+            e.userId.equals(userId) &
+            e.local.equals(false) &
+            e.packId.isNotIn(confirmed),
+      )).go();
+    });
+
+    await _purgeUnentitledBodies(userId, confirmed);
+    return confirmed;
+  }
+
+  /// Deletes the copy for packs this account does not own, and closes any run
+  /// standing on one. Called only with a set that actually arrived.
+  ///
+  /// The run is abandoned rather than deleted: `campaign_runs.status` already
+  /// models that state, and every day_log under it survives, because effort is
+  /// never erased (ADR-0003).
+  Future<void> _purgeUnentitledBodies(
+    String userId,
+    Set<String> confirmed,
+  ) async {
+    final locallyGranted = await (db.select(
+      db.entitlements,
+    )..where((e) => e.userId.equals(userId) & e.local.equals(true))).get();
+    final owned = {...confirmed, ...locallyGranted.map((e) => e.packId)};
+
+    final orphaned =
+        db.selectOnly(db.actions).join([
+            innerJoin(
+              db.campaigns,
+              db.campaigns.id.equalsExp(db.actions.campaignId),
+            ),
+            innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
+          ])
+          ..addColumns([db.actions.id, db.campaigns.id])
+          ..where(db.packs.isCore.equals(false) & db.packs.id.isNotIn(owned));
+    final rows = await orphaned.get();
+    if (rows.isEmpty) return;
+
+    final actionIds = rows.map((r) => r.read(db.actions.id)!).toList();
+    final campaignIds = rows.map((r) => r.read(db.campaigns.id)!).toSet();
+
+    await db.transaction(() async {
+      await (db.delete(
+        db.actionBodies,
+      )..where((b) => b.actionId.isIn(actionIds))).go();
+
+      // Dirty, so the abandonment is pushed. The row and its day logs stay.
+      await (db.update(db.campaignRuns)..where(
+        (r) =>
+            r.userId.equals(userId) &
+            r.campaignId.isIn(campaignIds) &
+            r.status.equals(RunStatus.active.key),
+      )).write(
+        CampaignRunsCompanion(
+          status: Value(RunStatus.abandoned.key),
+          updatedAt: Value(clock.nowUtc()),
+          dirty: const Value(true),
+        ),
+      );
+    });
   }
 
   Future<void> _advanceWatermark(
@@ -423,28 +530,6 @@ class SyncRepository implements SyncRunner {
                 recommendedCampaignId: row['recommended_campaign_id'] as String,
                 updatedAt: _remoteUpdatedAt(row),
                 dirty: false,
-              ),
-            );
-
-      case 'entitlements':
-        // No _remoteWins check, and that is deliberate. Everywhere else it
-        // protects a local write the user already saw succeed; here the client
-        // has no writes to protect. It cannot push this table, and its only
-        // local rows are optimistic guesses about what the server is about to
-        // say. When the server speaks it is right — including when it says
-        // less than the cache did, which is what a refund looks like.
-        await db
-            .into(db.entitlements)
-            .insertOnConflictUpdate(
-              EntitlementRow(
-                userId: row['user_id'] as String,
-                packId: row['pack_id'] as String,
-                source: row['source'] as String,
-                acquiredAt: DateTime.parse(
-                  row['acquired_at'] as String,
-                ).toUtc(),
-                updatedAt: _remoteUpdatedAt(row),
-                local: false,
               ),
             );
     }

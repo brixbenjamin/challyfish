@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/local/database.dart';
@@ -12,6 +12,7 @@ class FakeProgressApi implements ProgressApi {
 
   final Map<String, List<Map<String, dynamic>>> rows;
   final List<String> fetched = [];
+  final List<DateTime?> fetchedSince = [];
   final List<String> upserted = [];
 
   @override
@@ -21,6 +22,7 @@ class FakeProgressApi implements ProgressApi {
     String userId,
   ) async {
     fetched.add(table);
+    fetchedSince.add(since);
     return rows[table] ?? const [];
   }
 
@@ -126,13 +128,24 @@ void main() {
     },
   );
 
-  test('the watermark advances so a second pull asks for less', () async {
+  test('entitlements keep no watermark, because a refund has no timestamp',
+      () async {
+    // Deliberately not the incremental contract this test used to assert. A
+    // refund deletes the server row, and a deleted row carries no newer
+    // updated_at, so a watermark would make revocation unobservable forever
+    // (ADR-0025). The set is fetched whole every time instead: one row per
+    // owned pack, and a user owns one.
     final api = FakeProgressApi({
       'entitlements': [entitlementRow()],
     });
     await repoWith(api).pull('user-1');
 
-    expect(await db.watermarkFor('entitlements'), DateTime.utc(2026, 6, 1, 10));
+    expect(await db.watermarkFor('entitlements'), isNull);
+    expect(
+      api.fetchedSince[api.fetched.indexOf('entitlements')],
+      isNull,
+      reason: 'a complete set is asked for unconditionally',
+    );
   });
 
   test('entitlements are never pushed', () async {
@@ -147,13 +160,14 @@ void main() {
     expect(SyncRepository.pushOrder, isNot(contains('entitlements')));
   });
 
-  test('entitlements are pulled last', () async {
+  test('entitlements are pulled last, outside the incremental order', () async {
     final api = FakeProgressApi(const {});
     await repoWith(api).pull('user-1');
 
-    // Foreign keys: a row referencing a run must arrive after the run. Nothing
-    // references an entitlement, so it costs nothing to put it at the end and
-    // it keeps the ordering rule uniform.
-    expect(SyncRepository.pullOrder.last, 'entitlements');
+    // Still last -- nothing references an entitlement, and the purge it drives
+    // must see the rest of the pull's result. But it is no longer a member of
+    // pullOrder, which is the incremental path it cannot use (ADR-0025).
+    expect(SyncRepository.pullOrder, isNot(contains('entitlements')));
+    expect(api.fetched.last, 'entitlements');
   });
 }
