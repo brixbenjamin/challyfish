@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(13);
 
 -- Structural validation only. The safety floor in design spec section 9 cannot
 -- be checked by a machine and is an authoring obligation (Q11).
@@ -94,6 +94,26 @@ select is_empty(
       where store_product_id is not null
       group by store_product_id having count(*) > 1 $$,
   'no two packs share a store product id'
+);
+
+-- ADR-0025: the authored copy lives in its own table now.
+
+-- Every action has exactly one body. A seeded action without one is a day the
+-- app cannot render; a body without an action is a row nothing can reach.
+select is_empty(
+  $$ select a.id from public.actions a
+      left join public.action_bodies b on b.action_id = a.id
+      where b.action_id is null $$,
+  'every action has a body'
+);
+
+-- The gate that stops unauthored copy shipping must still see it. If this passes
+-- while placeholders are present, the gate has stopped looking rather than the
+-- copy having been written.
+select isnt_empty(
+  $$ select b.action_id from public.action_bodies b
+      where b.body_md like '%[TO AUTHOR]%' or b.body_md like '%[PLACEHOLDER]%' $$,
+  'placeholder bodies are still visible to an unauthored-copy check'
 );
 
 select * from finish();

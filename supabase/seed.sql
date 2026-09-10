@@ -16,3 +16,4 @@
 \i seed/packs.sql
 \i seed/campaigns.sql
 \i seed/actions.sql
+\i seed/action_bodies.sql

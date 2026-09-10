@@ -27,9 +27,11 @@ insert into public.campaigns (id, pack_id, key, title, intro_md, length_days, so
 values ('bbbbbbbb-2222-2222-2222-222222222222',
         'aaaaaaaa-2222-2222-2222-222222222222', 'c1', 'One', 'i', 21, 1);
 
-insert into public.actions (id, campaign_id, day_index, title, body_md, archetype_id)
+-- No body: the copy lives in public.action_bodies now (ADR-0025), and nothing
+-- below reads it. day_logs references the action, not its body.
+insert into public.actions (id, campaign_id, day_index, title, archetype_id)
 values ('dddddddd-0000-0000-0000-000000000001',
-        'bbbbbbbb-2222-2222-2222-222222222222', 1, 'Do the thing', 'b',
+        'bbbbbbbb-2222-2222-2222-222222222222', 1, 'Do the thing',
         'cccccccc-2222-2222-2222-222222222222');
 
 -- User B's own rows in the three tables the spec names explicitly.

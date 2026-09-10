@@ -17,9 +17,14 @@ declare
 begin
   select count(*) into unauthored
   from (
-    select 1 from public.actions
-      where body_md like '%[TO AUTHOR]%' or title like '%[TO AUTHOR]%'
-         or body_md like '%[PLACEHOLDER]%' or title like '%[PLACEHOLDER]%'
+    -- The copy left public.actions for public.action_bodies (ADR-0025). Read
+    -- through the join: a predicate against the old column matches nothing and
+    -- the gate passes everything, reporting success because it stopped looking.
+    select 1
+      from public.actions a
+      join public.action_bodies b on b.action_id = a.id
+      where b.body_md like '%[TO AUTHOR]%' or a.title like '%[TO AUTHOR]%'
+         or b.body_md like '%[PLACEHOLDER]%' or a.title like '%[PLACEHOLDER]%'
     union all
     select 1 from public.campaigns
       where intro_md like '%[TO AUTHOR]%'
