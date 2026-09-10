@@ -33,10 +33,10 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return json(405, { error: "method_not_allowed" });
   }
-
+  console.log(req.headers);
   const expected = Deno.env.get("REVENUECAT_WEBHOOK_SECRET") ?? "";
-  const provided = req.headers.get("X-RevenueCat-Webhook-Signature") ?? "";
-  if (expected.length === 0 || !secretMatches(provided, expected)) {
+  const provided = req.headers.get("Authorization") ?? "";
+  if (expected.length === 0 || !secretMatches(provided, "Bearer " + expected)) {
     return json(401, { error: "unauthorized" });
   }
 

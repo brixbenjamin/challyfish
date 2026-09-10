@@ -16,3 +16,4 @@ app/env.device.json
 # --- Graphify generated output (index, not source of record) ---
 graphify-out/cost.json
 graphify-out/cache/
+app/env.prod.json

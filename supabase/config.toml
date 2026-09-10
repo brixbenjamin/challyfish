@@ -252,14 +252,14 @@ otp_length = 6
 otp_expiry = 3600
 
 # Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+[auth.email.smtp]
+enabled = true
+host = "smtp-relay.brevo.com"
+port = 587
+user = "b8b532001@smtp-brevo.com"
+pass = "env(BREVO_API_KEY)"
+admin_email = "dev@benjaminbrix.com"
+sender_name = "Feral Maxx App"
 
 # Feral sends codes, never links (ADR-0016). GoTrue's stock templates render
 # only {{ .ConfirmationURL }}, so without these two overrides the six-digit
