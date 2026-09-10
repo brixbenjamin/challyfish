@@ -51,6 +51,7 @@ dependencies:
   google_sign_in: ^7.2.0
   crypto: ^3.0.7
   purchases_flutter: ^8.10.0
+  google_fonts: ^8.2.1
 
 dev_dependencies:
   flutter_test:
@@ -87,6 +88,12 @@ flutter:
   # reach a started campaign (Task 7), and this file is how.
   assets:
     - assets/seed/core_content.json
+
+    # Inter, bundled rather than fetched at runtime. google_fonts matches these
+    # by filename, and main() forbids the runtime fetch, so a cold offline
+    # first launch renders in Inter instead of silently dropping to a system
+    # fallback. OFL.txt is the upstream licence, carried with the faces.
+    - assets/google_fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

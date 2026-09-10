@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 
@@ -9,9 +10,15 @@ import 'src/core/zone_provider.dart';
 import 'src/data/remote/supabase_bootstrap.dart';
 import 'src/niche/brand.dart';
 import 'src/ui/home_router.dart';
+import 'src/ui/theme/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // The Inter faces are bundled (assets/google_fonts/). Forbidding the runtime
+  // fetch means a cold, offline first launch renders in Inter rather than
+  // silently degrading to the platform fallback, and the app carries no
+  // network dependency it did not choose.
+  GoogleFonts.config.allowRuntimeFetching = false;
   tzdata.initializeTimeZones();
   await initializeSupabase();
   // The id itself is not carried anywhere: userIdProvider reads whoever the
@@ -40,7 +47,7 @@ class FeralApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: Brand.appName,
-      theme: Brand.theme(),
+      theme: appDarkTheme(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: const HomeRouter(),
