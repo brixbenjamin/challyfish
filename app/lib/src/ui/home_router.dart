@@ -762,20 +762,37 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         await progress.activeRun(ref.read(userIdProvider)) != null;
     if (!mounted) return;
 
+    // The unlock sheet opens on top of this screen and changes the only thing
+    // it asks — pay, or start. Captured once at push time, `isUnlocked` would
+    // still say "pay" after the user had paid, so it is re-read when the sheet
+    // closes and the screen rebuilt around the new answer.
+    var unlocked = isUnlocked;
+
     final navigator = Navigator.of(context);
     await navigator.push(
       MaterialPageRoute<void>(
-        builder: (_) => CampaignDetailScreen(
-          campaign: campaign,
-          targets: targets,
-          missAllowance: progress.engine.missAllowance(campaign.lengthDays),
-          isUnlocked: isUnlocked,
-          hasActiveRun: hasActiveRun,
-          onStart: () async {
-            navigator.pop();
-            await _startRun(campaign.id);
-          },
-          onUnlock: () => _openUnlockSheetFor(campaign),
+        builder: (_) => StatefulBuilder(
+          builder: (detailContext, refreshDetail) => CampaignDetailScreen(
+            campaign: campaign,
+            targets: targets,
+            missAllowance: progress.engine.missAllowance(campaign.lengthDays),
+            isUnlocked: unlocked,
+            hasActiveRun: hasActiveRun,
+            onStart: () async {
+              navigator.pop();
+              await _startRun(campaign.id);
+            },
+            onUnlock: () async {
+              await _openUnlockSheetFor(campaign);
+              // Asked of the entitlement repository rather than inferred from
+              // what the sheet returned: a purchase, a restore and a webhook
+              // that landed while the sheet was open all unlock the pack, and
+              // only the repository knows about all three.
+              final owned = await _isCampaignUnlocked(campaign.id);
+              if (!detailContext.mounted) return;
+              refreshDetail(() => unlocked = owned);
+            },
+          ),
         ),
       ),
     );
