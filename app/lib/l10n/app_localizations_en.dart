@@ -463,4 +463,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tryAgainButton => 'Try again';
+
+  @override
+  String radarSummary(String distribution, String marks) {
+    return 'Recent activity — $distribution. $marks';
+  }
+
+  @override
+  String get radarSummaryEmpty =>
+      'Recent-activity radar. Nothing recorded yet.';
+
+  @override
+  String radarAxisBand(String name, String band) {
+    return '$name $band';
+  }
+
+  @override
+  String get radarListSeparator => ', ';
+
+  @override
+  String get radarBandNone => 'none';
+
+  @override
+  String get radarBandLow => 'low';
+
+  @override
+  String get radarBandMedium => 'medium';
+
+  @override
+  String get radarBandHigh => 'high';
+
+  @override
+  String radarMarkEntry(String name, int count) {
+    return '$name $count';
+  }
+
+  @override
+  String radarMarks(int count, String details) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Marks: $details.',
+      zero: 'No marks yet.',
+    );
+    return '$_temp0';
+  }
 }

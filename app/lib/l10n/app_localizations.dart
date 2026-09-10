@@ -843,6 +843,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get tryAgainButton;
+
+  /// [niche] The screen-reader description of the archetype radar. Names the distribution in coarse bands and then the permanent marks. The figure itself carries no text, so this sentence is the whole reading.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activity — {distribution}. {marks}'**
+  String radarSummary(String distribution, String marks);
+
+  /// [niche] The screen-reader description of the radar before the user has acted at all. Calm, not an error: the four axes are always there, and nothing has been recorded on them yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent-activity radar. Nothing recorded yet.'**
+  String get radarSummaryEmpty;
+
+  /// One axis inside the radar's screen-reader description: an archetype name followed by its coarse band word. Separated from the next by radarListSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} {band}'**
+  String radarAxisBand(String name, String band);
+
+  /// Joins the per-axis phrases inside the radar's screen-reader description. A locale that does not separate list items with a comma and a space changes it here.
+  ///
+  /// In en, this message translates to:
+  /// **', '**
+  String get radarListSeparator;
+
+  /// [niche] Coarse band for a radar axis the user has not acted in recently. Deliberately 'none' and not 'zero' or 'empty': it describes the reading, it does not score it.
+  ///
+  /// In en, this message translates to:
+  /// **'none'**
+  String get radarBandNone;
+
+  /// [niche] Coarse band for a radar axis below one third of the highest. A plain instrument reading, never a warning.
+  ///
+  /// In en, this message translates to:
+  /// **'low'**
+  String get radarBandLow;
+
+  /// [niche] Coarse band for a radar axis between one third and two thirds of the highest.
+  ///
+  /// In en, this message translates to:
+  /// **'medium'**
+  String get radarBandMedium;
+
+  /// [niche] Coarse band for a radar axis at or above two thirds of the highest. Not praise: the radar answers which drive is low, and 'high' is the other end of the same scale.
+  ///
+  /// In en, this message translates to:
+  /// **'high'**
+  String get radarBandHigh;
+
+  /// One archetype's permanent mark count inside the radar's screen-reader description, for example 'Psycho 2'.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} {count}'**
+  String radarMarkEntry(String name, int count);
+
+  /// [niche] The marks clause of the radar's screen-reader description. Marks never decay (ADR-0010), and stating them beside a falling distribution is what keeps the reading from sounding like erasure.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No marks yet.} other{Marks: {details}.}}'**
+  String radarMarks(int count, String details);
 }
 
 class _AppLocalizationsDelegate

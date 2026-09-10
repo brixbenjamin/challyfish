@@ -606,5 +606,77 @@
   "tryAgainButton": "Try again",
   "@tryAgainButton": {
     "description": "Retries the pull on the restoring state."
+  },
+  "radarSummary": "Recent activity \u2014 {distribution}. {marks}",
+  "@radarSummary": {
+    "description": "[niche] The screen-reader description of the archetype radar. Names the distribution in coarse bands and then the permanent marks. The figure itself carries no text, so this sentence is the whole reading.",
+    "placeholders": {
+      "distribution": {
+        "type": "String"
+      },
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "radarSummaryEmpty": "Recent-activity radar. Nothing recorded yet.",
+  "@radarSummaryEmpty": {
+    "description": "[niche] The screen-reader description of the radar before the user has acted at all. Calm, not an error: the four axes are always there, and nothing has been recorded on them yet."
+  },
+  "radarAxisBand": "{name} {band}",
+  "@radarAxisBand": {
+    "description": "One axis inside the radar's screen-reader description: an archetype name followed by its coarse band word. Separated from the next by radarListSeparator.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "band": {
+        "type": "String"
+      }
+    }
+  },
+  "radarListSeparator": ", ",
+  "@radarListSeparator": {
+    "description": "Joins the per-axis phrases inside the radar's screen-reader description. A locale that does not separate list items with a comma and a space changes it here."
+  },
+  "radarBandNone": "none",
+  "@radarBandNone": {
+    "description": "[niche] Coarse band for a radar axis the user has not acted in recently. Deliberately 'none' and not 'zero' or 'empty': it describes the reading, it does not score it."
+  },
+  "radarBandLow": "low",
+  "@radarBandLow": {
+    "description": "[niche] Coarse band for a radar axis below one third of the highest. A plain instrument reading, never a warning."
+  },
+  "radarBandMedium": "medium",
+  "@radarBandMedium": {
+    "description": "[niche] Coarse band for a radar axis between one third and two thirds of the highest."
+  },
+  "radarBandHigh": "high",
+  "@radarBandHigh": {
+    "description": "[niche] Coarse band for a radar axis at or above two thirds of the highest. Not praise: the radar answers which drive is low, and 'high' is the other end of the same scale."
+  },
+  "radarMarkEntry": "{name} {count}",
+  "@radarMarkEntry": {
+    "description": "One archetype's permanent mark count inside the radar's screen-reader description, for example 'Psycho 2'.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "radarMarks": "{count, plural, =0{No marks yet.} other{Marks: {details}.}}",
+  "@radarMarks": {
+    "description": "[niche] The marks clause of the radar's screen-reader description. Marks never decay (ADR-0010), and stating them beside a falling distribution is what keeps the reading from sounding like erasure.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "details": {
+        "type": "String"
+      }
+    }
   }
 }
