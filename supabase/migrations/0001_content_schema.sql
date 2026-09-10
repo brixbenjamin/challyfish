@@ -1,5 +1,7 @@
--- Content zone: anon-readable, service-role-written. Locked packs are browsable
--- teasers by design (ADR-0008), so nothing here is secret.
+-- Content zone: anon-readable, service-role-written -- with one exception.
+-- Teaser rows are browsable by design (ADR-0008), so nothing in them is secret.
+-- The authored copy is not a teaser: action_bodies carries it and is gated by
+-- entitlement in 0003 (ADR-0025).
 
 create or replace function public.touch_updated_at()
 returns trigger language plpgsql as $$
@@ -96,7 +98,6 @@ create table public.actions (
   campaign_id uuid not null references public.campaigns (id) on delete cascade,
   day_index int not null check (day_index > 0),
   title text not null,
-  body_md text not null,
   -- Exactly one archetype per action. Not nullable, not a join table (ADR-0004).
   archetype_id uuid not null references public.archetypes (id),
   why_doctrine_id uuid references public.doctrine_entries (id),
@@ -109,6 +110,16 @@ create table public.actions (
 
 create index actions_campaign_idx on public.actions (campaign_id, day_index);
 
+-- The authored copy. Separated from the action so that entitlement can be a
+-- row-level policy rather than an application check (ADR-0025): everything else
+-- about an action is public, and this is not.
+create table public.action_bodies (
+  action_id  uuid primary key references public.actions (id) on delete cascade,
+  body_md    text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- The watermark pull filters on updated_at across every content table.
 create index archetypes_updated_idx on public.archetypes (updated_at);
 create index doctrine_groups_updated_idx on public.doctrine_groups (updated_at);
@@ -116,13 +127,14 @@ create index doctrine_entries_updated_idx on public.doctrine_entries (updated_at
 create index packs_updated_idx on public.packs (updated_at);
 create index campaigns_updated_idx on public.campaigns (updated_at);
 create index actions_updated_idx on public.actions (updated_at);
+create index action_bodies_updated_idx on public.action_bodies (updated_at);
 
 do $$
 declare t text;
 begin
   foreach t in array array[
     'archetypes', 'doctrine_groups', 'doctrine_entries',
-    'packs', 'campaigns', 'campaign_archetypes', 'actions'
+    'packs', 'campaigns', 'campaign_archetypes', 'actions', 'action_bodies'
   ] loop
     execute format(
       'create trigger %I_touch before update on public.%I
