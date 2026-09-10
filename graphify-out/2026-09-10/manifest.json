@@ -24,14 +24,14 @@
     "semantic_hash": "44993f07cbdd7cae667f23f696521bcf"
   },
   "app/lib/l10n/app_localizations.dart": {
-    "mtime": 1789032778.6988263,
-    "seen": 1789032928.734305,
+    "mtime": 1789032659.3798833,
+    "seen": 1789032688.840138,
     "ast_hash": "d98b0ada0554b0739a3b08c9c1dc11dc",
     "semantic_hash": ""
   },
   "app/lib/l10n/app_localizations_en.dart": {
-    "mtime": 1789032778.6964157,
-    "seen": 1789032928.734306,
+    "mtime": 1789032659.37805,
+    "seen": 1789032688.840139,
     "ast_hash": "0ca0d16d1a531f8628b88ceefacbb049",
     "semantic_hash": ""
   },
