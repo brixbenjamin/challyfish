@@ -170,37 +170,9 @@ class IdentityRepository {
   /// Clear this device's user state so the signed-in account's record can be
   /// pulled cleanly.
   ///
-  /// Content tables are deliberately untouched: they are user-agnostic, and
-  /// re-downloading the library after a sign-in would be a pointless round trip
-  /// on a connection we already know is working.
-  ///
-  /// The discarded rows are NOT pushed first. Uploading records the user just
-  /// agreed to discard would be worse than discarding them.
-  Future<void> _replaceLocalUserState() async {
-    await db.transaction(() async {
-      await db.delete(db.dayLogs).go();
-      await db.delete(db.campaignRuns).go();
-      await db.delete(db.diagnosticResults).go();
-      await db.delete(db.profiles).go();
-      // This device now belongs to a different account. Old rows would show a
-      // pack the new account does not own. A user table the wipe does not know
-      // about is exactly the bug plan 3's tests were written to prevent.
-      await db.delete(db.entitlements).go();
-      // User-table watermarks only. Resetting a content watermark would force a
-      // full library re-download for no reason.
-      for (final table in [
-        'profiles',
-        'campaign_runs',
-        'day_logs',
-        'diagnostic_results',
-        'entitlements',
-      ]) {
-        await (db.delete(
-          db.syncState,
-        )..where((s) => s.syncTable.equals(table))).go();
-      }
-    });
-  }
+  /// See [replaceLocalUserState], which holds the body so it can be tested
+  /// against a real database.
+  Future<void> _replaceLocalUserState() => replaceLocalUserState(db);
 
   /// After account deletion: wipe local user state and start over anonymously,
   /// so the app lands on a first-run screen rather than a broken signed-out one.
@@ -225,4 +197,73 @@ class IdentityRepository {
       await purchases.switchUser(userId);
     } catch (_) {}
   }
+}
+
+/// Clear this device's user state so the signed-in account's record can be
+/// pulled cleanly.
+///
+/// Content tables are deliberately untouched -- they are user-agnostic, and
+/// re-downloading the library after a sign-in would be a pointless round trip
+/// on a connection we already know is working -- with the single exception of
+/// action_bodies, explained below.
+///
+/// The discarded rows are NOT pushed first. Uploading records the user just
+/// agreed to discard would be worse than discarding them.
+///
+/// Extracted to a top-level function so it can be tested against a real
+/// database. [IdentityRepository] remains the only production caller.
+Future<void> replaceLocalUserState(FeralDatabase db) async {
+  await db.transaction(() async {
+    await db.delete(db.dayLogs).go();
+    await db.delete(db.campaignRuns).go();
+    await db.delete(db.diagnosticResults).go();
+    await db.delete(db.profiles).go();
+    // This device now belongs to a different account. Old rows would show a
+    // pack the new account does not own. A user table the wipe does not know
+    // about is exactly the bug plan 3's tests were written to prevent.
+    await db.delete(db.entitlements).go();
+
+    // Content is normally left alone across a sign-in, and for every other
+    // content table that is still right. action_bodies is the exception: it is
+    // the one table whose visible rows depend on *who is asking*, so rows the
+    // previous account could read are not rows this one may keep (ADR-0025).
+    // The core pack is kept because it is free to everyone, which also means a
+    // sign-in never leaves the app with nothing to show.
+    final paidActionIds =
+        db.selectOnly(db.actions).join([
+            innerJoin(
+              db.campaigns,
+              db.campaigns.id.equalsExp(db.actions.campaignId),
+            ),
+            innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
+          ])
+          ..addColumns([db.actions.id])
+          ..where(db.packs.isCore.equals(false));
+    final ids = (await paidActionIds.get())
+        .map((r) => r.read(db.actions.id)!)
+        .toList();
+    if (ids.isNotEmpty) {
+      await (db.delete(db.actionBodies)
+            ..where((b) => b.actionId.isIn(ids)))
+          .go();
+    }
+
+    // User-table watermarks, plus action_bodies. Every other content watermark
+    // is left alone -- resetting one would force a full library re-download for
+    // no reason -- but action_bodies' visible row set is per user while its mark
+    // is per device, so a stale mark would hide a newly-signed-in account's
+    // own pack behind an `updated_at >` filter it can never satisfy.
+    for (final table in [
+      'profiles',
+      'campaign_runs',
+      'day_logs',
+      'diagnostic_results',
+      'entitlements',
+      'action_bodies',
+    ]) {
+      await (db.delete(
+        db.syncState,
+      )..where((s) => s.syncTable.equals(table))).go();
+    }
+  });
 }
