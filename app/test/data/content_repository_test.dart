@@ -141,6 +141,7 @@ void main() {
       'campaigns',
       'campaign_archetypes',
       'actions',
+      'action_bodies',
       'doctrine_groups',
       'doctrine_entries',
       'diagnostic_questions',

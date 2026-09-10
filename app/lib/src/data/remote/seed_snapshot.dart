@@ -21,6 +21,13 @@ class SeedSnapshotLoader {
            readSnapshot ??
            (() => rootBundle.loadString('assets/seed/core_content.json'));
 
+  /// Tables the snapshot carries a deliberate subset of. Their rows are applied
+  /// like any other, but they establish no high-water mark: a mark taken from
+  /// the free pack's bodies sits above every paid body's timestamp, and the
+  /// incremental pull would then filter out exactly what a purchase paid for
+  /// (ADR-0025).
+  static const _partialTables = {'action_bodies'};
+
   final FeralDatabase db;
   final ContentRepository content;
   final Future<String> Function() _readSnapshot;
@@ -39,6 +46,7 @@ class SeedSnapshotLoader {
     });
 
     for (final entry in raw.entries) {
+      if (_partialTables.contains(entry.key)) continue;
       final rows = (entry.value as List).cast<Map<String, dynamic>>();
       DateTime? high;
       for (final row in rows) {

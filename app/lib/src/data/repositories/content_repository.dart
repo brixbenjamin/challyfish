@@ -104,7 +104,6 @@ class ContentRepository {
         campaignId: row['campaign_id'] as String,
         dayIndex: row['day_index'] as int,
         title: row['title'] as String,
-        bodyMd: row['body_md'] as String,
         archetypeId: row['archetype_id'] as String,
         whyDoctrineId: Value(row['why_doctrine_id'] as String?),
         effort: Value(row['effort'] as int? ?? 1),
@@ -118,6 +117,20 @@ class ContentRepository {
               db.actions.campaignId,
               db.actions.dayIndex,
             ]),
+          );
+    }),
+    _ContentTable('action_bodies', (row) {
+      // Keyed on action_id, which is the primary key, so a re-pull of the same
+      // body is an update rather than a duplicate. There is no natural-key
+      // fallback here because there is no natural key: the action's id is it.
+      return db
+          .into(db.actionBodies)
+          .insertOnConflictUpdate(
+            ActionBodiesCompanion.insert(
+              actionId: row['action_id'] as String,
+              bodyMd: row['body_md'] as String,
+              updatedAt: _at(row),
+            ),
           );
     }),
     _ContentTable(
@@ -255,24 +268,47 @@ class ContentRepository {
   }
 
   Future<List<ActionSpec>> actionsFor(String campaignId) async {
-    final rows =
-        await (db.select(db.actions)
-              ..where((a) => a.campaignId.equals(campaignId))
-              ..orderBy([(a) => OrderingTerm(expression: a.dayIndex)]))
-            .get();
-    return rows.map(toAction).toList();
+    final query =
+        db.select(db.actions).join([
+            leftOuterJoin(
+              db.actionBodies,
+              db.actionBodies.actionId.equalsExp(db.actions.id),
+            ),
+          ])
+          ..where(db.actions.campaignId.equals(campaignId))
+          ..orderBy([OrderingTerm(expression: db.actions.dayIndex)]);
+    final rows = await query.get();
+    return [
+      for (final row in rows)
+        toAction(
+          row.readTable(db.actions),
+          row.readTableOrNull(db.actionBodies),
+        ),
+    ];
   }
 
-  /// Null when the action is not cached. Callers must degrade to a recoverable
-  /// "content unavailable" state — the run is never lost.
+  /// Null when the action itself is not cached. An action that is cached without
+  /// its body returns a spec with a null `bodyMd` — a locked pack, or one whose
+  /// bodies have not arrived — and callers degrade to the same recoverable
+  /// "content unavailable" state either way.
   Future<ActionSpec?> actionFor(String campaignId, int dayIndex) async {
-    final row =
-        await (db.select(db.actions)..where(
-              (a) =>
-                  a.campaignId.equals(campaignId) & a.dayIndex.equals(dayIndex),
-            ))
-            .getSingleOrNull();
-    return row == null ? null : toAction(row);
+    final query =
+        db.select(db.actions).join([
+          leftOuterJoin(
+            db.actionBodies,
+            db.actionBodies.actionId.equalsExp(db.actions.id),
+          ),
+        ])..where(
+          db.actions.campaignId.equals(campaignId) &
+              db.actions.dayIndex.equals(dayIndex),
+        );
+    final row = await query.getSingleOrNull();
+    return row == null
+        ? null
+        : toAction(
+            row.readTable(db.actions),
+            row.readTableOrNull(db.actionBodies),
+          );
   }
 
   Future<List<Pack>> packs() async {

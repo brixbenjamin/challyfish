@@ -98,4 +98,11 @@ class FeralDatabase extends _$FeralDatabase {
       into(syncState).insertOnConflictUpdate(
         SyncStateRow(syncTable: table, watermark: value, lastPulledAt: value),
       );
+
+  /// Drops [table]'s high-water mark, so the next pull asks for everything the
+  /// server is willing to give rather than only what changed. Used when the
+  /// visible row set moves without any row changing — which is true of exactly
+  /// one table, `action_bodies` (ADR-0025).
+  Future<void> clearWatermark(String table) =>
+      (delete(syncState)..where((s) => s.syncTable.equals(table))).go();
 }

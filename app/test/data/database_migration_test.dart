@@ -17,11 +17,12 @@ void main() {
   setUp(() => db = FeralDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  test('schemaVersion is 4', () {
-    expect(db.schemaVersion, 4);
+  test('schemaVersion is 5', () {
+    expect(db.schemaVersion, 5);
   });
 
   test('the new content tables exist and are empty', () async {
+    expect(await db.select(db.actionBodies).get(), isEmpty);
     expect(await db.select(db.campaignArchetypes).get(), isEmpty);
     expect(await db.select(db.doctrineGroups).get(), isEmpty);
     expect(await db.select(db.doctrineEntries).get(), isEmpty);
