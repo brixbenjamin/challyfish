@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:feral/l10n/app_localizations.dart';
 import 'package:feral/src/app/providers.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/local/database.dart';
@@ -25,6 +24,8 @@ import '../support/fake_purchase_gateway.dart';
 import '../sync/sync_scheduler_test.dart' show FakeGate;
 import 'settings_screen_test.dart' show FakeScheduler;
 import 'sign_in_restore_test.dart' show RestoringSync;
+
+import '../support/pump.dart';
 
 /// The other end of ADR-0024.
 ///
@@ -131,11 +132,7 @@ void main() {
           reminderSchedulerProvider.overrideWithValue(FakeScheduler()),
           clockProvider.overrideWithValue(FixedClock(now)),
         ],
-        child: const MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: HomeRouter(),
-        ),
+        child: wrap(const HomeRouter()),
       ),
     );
     await pumpUntil(

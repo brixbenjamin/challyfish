@@ -28,6 +28,8 @@ import '../support/fake_purchase_gateway.dart';
 import '../sync/sync_scheduler_test.dart' show FakeGate;
 import 'settings_screen_test.dart' show FakeScheduler;
 
+import '../support/pump.dart';
+
 /// A pull that actually brings the signed-in account's record back.
 ///
 /// The bug this file exists for is a race, and a runner that writes nothing
@@ -95,7 +97,6 @@ void main() {
     schedulerStopped = true;
     scheduler.dispose();
   }
-
 
   Future<void> seedContent() async {
     await db
@@ -243,14 +244,13 @@ void main() {
           reminderSchedulerProvider.overrideWithValue(FakeScheduler()),
           clockProvider.overrideWithValue(FixedClock(now)),
         ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const HomeRouter(),
-        ),
+        child: wrap(const HomeRouter()),
       ),
     );
-    await pumpUntil(tester, () => find.byIcon(Icons.settings).evaluate().isNotEmpty);
+    await pumpUntil(
+      tester,
+      () => find.byIcon(Icons.settings).evaluate().isNotEmpty,
+    );
   }
 
   /// Settings, link, email, the taken address, the confirmation, the code.
@@ -359,7 +359,10 @@ void main() {
     await pumpApp(tester);
     runner.succeed = false;
     await signInWithATakenAddress(tester);
-    await pumpUntil(tester, () => find.byType(DoctrineIntroScreen).evaluate().isNotEmpty);
+    await pumpUntil(
+      tester,
+      () => find.byType(DoctrineIntroScreen).evaluate().isNotEmpty,
+    );
 
     // The session has already swapped and the local rows are already gone.
     // Onboarding would invite a second diagnostic; an empty dashboard would

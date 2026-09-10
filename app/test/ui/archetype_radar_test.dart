@@ -1,8 +1,12 @@
 import 'package:feral/l10n/app_localizations.dart';
 import 'package:feral/src/app/balance_state.dart';
+import 'package:feral/src/app/balance_summary.dart';
 import 'package:feral/src/domain/archetype.dart';
 import 'package:feral/src/ui/dashboard/archetype_radar.dart';
+import 'package:feral/src/ui/theme/archetype_palette.dart';
+import 'package:feral/src/ui/theme/tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/pump.dart';
@@ -126,5 +130,137 @@ void main() {
     }
     expect(find.byIcon(Icons.arrow_downward), findsNothing);
     expect(find.byIcon(Icons.trending_down), findsNothing);
+  });
+
+  /// The Text widget whose data is exactly [text], as laid out.
+  Text textWidget(WidgetTester tester, String text) =>
+      tester.widget<Text>(find.text(text));
+
+  /// The radar's own painter, never a Material internal one.
+  Finder figure() => find
+      .descendant(
+        of: find.byType(ArchetypeRadar),
+        matching: find.byType(CustomPaint),
+      )
+      .last;
+
+  testWidgets('an archetype name is set in that archetype role colour', (
+    tester,
+  ) async {
+    await pump(tester, state(balance: {'a-1': 2.0}));
+
+    const palette = ArchetypePalette.standard;
+    for (final archetype in archetypes) {
+      expect(
+        textWidget(tester, archetype.name).style?.color,
+        palette.forSort(archetype.sort),
+        reason: 'colour appears only where the drive is named',
+      );
+    }
+  });
+
+  testWidgets('the mark count stays in Muted-ink, never the archetype colour', (
+    tester,
+  ) async {
+    await pump(tester, state(balance: {'a-1': 3.0}, marks: {'a-1': 2}));
+
+    final count = textWidget(tester, l10n.markCount(2));
+    expect(count.style?.color, AppTokens.standard.mutedInk);
+    expect(
+      count.style?.color,
+      isNot(ArchetypePalette.standard.forSort(1)),
+      reason: 'the record is a panel reading, not a celebration',
+    );
+  });
+
+  testWidgets('a never-acted radar draws the rings and a centre nub, no shape', (
+    tester,
+  ) async {
+    await pump(tester, state());
+
+    expect(
+      figure(),
+      paintsExactlyCountTimes(#drawPath, 4),
+      reason: 'four reference rings and no balance polygon',
+    );
+    expect(figure(), paintsExactlyCountTimes(#drawCircle, 1));
+    expect(
+      figure(),
+      paints..circle(radius: 2.0, color: AppTokens.standard.mutedInk),
+    );
+  });
+
+  testWidgets('an axis with activity gets a dot in its role colour', (
+    tester,
+  ) async {
+    await pump(tester, state(balance: {'a-1': 4.0, 'a-3': 1.0}));
+
+    // Two vertex dots, each drawn as a fill plus its Panel-coloured ring.
+    expect(figure(), paintsExactlyCountTimes(#drawCircle, 4));
+    expect(
+      figure(),
+      paints
+        ..something((symbol, arguments) {
+          if (symbol != #drawCircle) return false;
+          // Packed ARGB, not Color ==: a Paint stores its colour as floats,
+          // and the round trip is not bit-identical to a const Color.
+          final paint = arguments.last as Paint;
+          return paint.color.toARGB32() ==
+              ArchetypePalette.standard.forSort(1).toARGB32();
+        }),
+    );
+  });
+
+  testWidgets('the axes sit at their fixed clock positions, not in sort order', (
+    tester,
+  ) async {
+    await pump(tester, state(balance: {'a-1': 2.0, 'a-2': 1.0}));
+
+    final centre = tester.getCenter(find.byType(ArchetypeRadar));
+    Offset at(String name) => tester.getCenter(find.text(name));
+
+    // Psycho top, Killer right, Creature bottom, Alchemist left. The two
+    // red-side hues are opposite each other, never side by side.
+    expect(at('Psycho').dy, lessThan(centre.dy));
+    expect(at('Creature').dy, greaterThan(centre.dy));
+    expect(at('Killer').dx, greaterThan(centre.dx));
+    expect(at('Alchemist').dx, lessThan(centre.dx));
+
+    expect(
+      at('Alchemist').dx,
+      lessThan(at('Creature').dx),
+      reason: 'sort order would have put Alchemist third, at the bottom',
+    );
+  });
+
+  testWidgets('the figure carries the formatter summary as its label', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+
+    final value = state(balance: {'a-1': 3.0, 'a-3': 1.0}, marks: {'a-1': 2});
+    await pump(tester, value);
+
+    expect(find.bySemanticsLabel(balanceSummary(value, l10n)), findsOneWidget);
+    handle.dispose();
+  });
+
+  testWidgets('the four labels are read in sort order, not clock order', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pump(tester, state(balance: {'a-1': 2.0}));
+
+    double orderOf(String name) {
+      final key = tester.getSemantics(find.text(name)).sortKey;
+      return (key! as OrdinalSortKey).order;
+    }
+
+    // Alchemist sits at 9 o'clock, after Creature at 6, but it is sort 3 and
+    // a screen reader hears it third (brief section 4.2).
+    expect(orderOf('Psycho'), lessThan(orderOf('Killer')));
+    expect(orderOf('Killer'), lessThan(orderOf('Alchemist')));
+    expect(orderOf('Alchemist'), lessThan(orderOf('Creature')));
+    handle.dispose();
   });
 }

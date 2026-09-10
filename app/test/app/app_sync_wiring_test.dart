@@ -1,5 +1,4 @@
 import 'package:drift/native.dart';
-import 'package:feral/l10n/app_localizations.dart';
 import 'package:feral/src/app/providers.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/local/database.dart';
@@ -15,6 +14,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/identity_repository_test.dart' show FakeAuthGateway;
 import '../support/fake_purchase_gateway.dart';
 import '../sync/sync_scheduler_test.dart' show FakeGate, FakeSync;
+
+import '../support/pump.dart';
 
 /// Content the app cannot reach. Launch must not depend on it, and neither
 /// must this test.
@@ -92,11 +93,7 @@ void main() {
           syncSchedulerProvider.overrideWithValue(scheduler),
           sharedPreferencesProvider.overrideWithValue(prefs),
         ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const HomeRouter(),
-        ),
+        child: wrap(const HomeRouter()),
       ),
     );
     await pumpUntil(tester, () => runner.userIds.isNotEmpty);

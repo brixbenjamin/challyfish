@@ -24,6 +24,8 @@ import '../support/fake_purchase_gateway.dart';
 import '../sync/sync_scheduler_test.dart' show FakeGate;
 import 'settings_screen_test.dart' show FakeScheduler;
 
+import '../support/pump.dart';
+
 /// Answers nothing. The purchase controller reconciles entitlements during
 /// delivery (ADR-0025), and without this it reaches for a live Supabase client.
 class SilentProgressApi implements ProgressApi {
@@ -215,11 +217,7 @@ void main() {
           reminderSchedulerProvider.overrideWithValue(FakeScheduler()),
           clockProvider.overrideWithValue(FixedClock(now)),
         ],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const HomeRouter(),
-        ),
+        child: wrap(const HomeRouter()),
       ),
     );
     await pumpUntil(tester, () => find.text('Thirty').evaluate().isNotEmpty);
