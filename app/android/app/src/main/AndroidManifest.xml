@@ -9,6 +9,7 @@
          justification at review, and a reminder a few minutes late is fine. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+ <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="app"
