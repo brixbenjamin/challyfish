@@ -760,6 +760,24 @@ abstract class AppLocalizations {
   /// **'One-time purchase. Yours after that.'**
   String get oneTimePurchaseNote;
 
+  /// Shown after a purchase succeeds while the pack's content is being fetched.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up your pack'**
+  String get deliveringPackTitle;
+
+  /// Body text under deliveringPackTitle. Must not suggest the payment failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your purchase went through. We\'re fetching the pack now — this usually takes a few seconds.'**
+  String get deliveringPackBody;
+
+  /// Shown when delivery does not complete. Must reassure that the purchase itself succeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your purchase went through, but the pack hasn\'t arrived yet. It\'ll finish next time you open the app, or you can try again now.'**
+  String get deliveryTimedOut;
+
   /// A real purchase awaiting parental or bank approval. Must prevent a second attempt.
   ///
   /// In en, this message translates to:

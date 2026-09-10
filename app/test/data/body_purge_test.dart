@@ -44,8 +44,8 @@ class FakeProgressApi implements ProgressApi {
   }
 }
 
-class _Harness {
-  _Harness(this.db, this.sync, this.api);
+class Harness {
+  Harness(this.db, this.sync, this.api);
 
   final FeralDatabase db;
   final SyncRepository sync;
@@ -54,7 +54,7 @@ class _Harness {
 
 /// A core and a paid pack, one campaign each, one action and one body each, an
 /// active run on the paid campaign with two reported day logs.
-Future<_Harness> seededHarness({
+Future<Harness> seededHarness({
   List<String> serverReturns = const [],
   bool apiThrows = false,
   bool paidRowIsLocal = false,
@@ -106,7 +106,7 @@ Future<_Harness> seededHarness({
   }
 
   final api = FakeProgressApi(packIds: serverReturns, throws: apiThrows);
-  return _Harness(
+  return Harness(
     db,
     SyncRepository(db: db, api: api, clock: FixedClock(at)),
     api,

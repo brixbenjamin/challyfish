@@ -408,6 +408,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get oneTimePurchaseNote => 'One-time purchase. Yours after that.';
 
   @override
+  String get deliveringPackTitle => 'Setting up your pack';
+
+  @override
+  String get deliveringPackBody =>
+      'Your purchase went through. We\'re fetching the pack now — this usually takes a few seconds.';
+
+  @override
+  String get deliveryTimedOut =>
+      'Your purchase went through, but the pack hasn\'t arrived yet. It\'ll finish next time you open the app, or you can try again now.';
+
+  @override
   String get purchasePendingNote =>
       'The store is still waiting on this purchase. It unlocks by itself once it goes through — you do not need to buy it again.';
 

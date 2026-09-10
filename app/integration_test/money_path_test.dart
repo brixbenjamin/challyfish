@@ -102,17 +102,6 @@ class Device {
 
   Future<void> syncNow() => sync.pull(userId);
 
-  /// A delete does not arrive through an `updated_at` watermark pull — there is
-  /// no row left to carry a newer timestamp. Clearing the watermark and the
-  /// local rows, then pulling, is the durable path for a revocation.
-  Future<void> resyncEntitlementsFromScratch() async {
-    await db.delete(db.entitlements).go();
-    await (db.delete(
-      db.syncState,
-    )..where((s) => s.syncTable.equals('entitlements'))).go();
-    await sync.pull(userId);
-  }
-
   Future<String> actionIdFor(String campaignId, int dayIndex) async {
     final rows = await client
         .from('actions')
@@ -325,21 +314,19 @@ void main() {
         .eq('user_id', userId)
         .eq('pack_id', paid.id);
 
-    // A revocation reaches a device on a full resync, not on an incremental
-    // pull: there is no row left to carry a newer updated_at. Worth naming
-    // rather than hiding. In practice the SDK's cached product ids also drop
-    // the product after a refund, so the pack relocks either way.
+    // This used to be the documented limit: a revocation reached a device only
+    // on a full resync, because a deleted row carries no newer updated_at and
+    // an incremental pull cannot see it. ADR-0025 needed revocation to be
+    // observable -- purge-on-evidence cannot be built on a pull that
+    // structurally never observes a removal -- so entitlements are now fetched
+    // as a complete set on every pull. One row per owned pack, and a user owns
+    // one. An ordinary sync is enough.
     await device.syncNow();
     expect(
       await device.entitlements.isUnlocked(userId: userId, pack: paid),
-      isTrue,
-      reason: 'the incremental pull cannot see a deletion — this is the limit',
-    );
-
-    await device.resyncEntitlementsFromScratch();
-    expect(
-      await device.entitlements.isUnlocked(userId: userId, pack: paid),
       isFalse,
+      reason: 'the complete-set fetch sees the deletion an incremental one '
+          'could not',
     );
   });
 }
