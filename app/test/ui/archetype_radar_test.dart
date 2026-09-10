@@ -368,4 +368,143 @@ void main() {
     expect(tester.hasRunningAnimations, isFalse);
     expect(find.text(l10n.markCount(1)), findsNWidgets(2));
   });
+
+  /// Pumps the radar under a text scale and an optional archetype name set,
+  /// in a fixed viewport so geometry assertions mean something.
+  Future<void> pumpScaled(
+    WidgetTester tester, {
+    double scale = 1,
+    List<Archetype> names = archetypes,
+  }) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      wrap(
+        Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(scale)),
+            child: Scaffold(
+              body: Center(
+                child: ArchetypeRadar(
+                  state: BalanceState(
+                    balance: const {'a-1': 3.0, 'a-3': 1.0},
+                    marks: const {'a-1': 2},
+                    archetypes: names,
+                    maxValue: 3,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  testWidgets('at 200% text the figure gives up radius and nothing clips', (
+    tester,
+  ) async {
+    await pumpScaled(tester);
+    final normal = tester.getSize(figure());
+
+    await pumpScaled(tester, scale: 2);
+    expect(tester.takeException(), isNull);
+
+    final scaled = tester.getSize(figure());
+
+    expect(
+      scaled.width,
+      lessThan(normal.width),
+      reason: 'the rings and the four labels win; the figure yields radius',
+    );
+
+    // The label blocks clear the ring rather than sitting on it.
+    final centre = tester.getCenter(find.byType(ArchetypeRadar));
+    expect(
+      tester.getBottomLeft(find.text('Psycho')).dy,
+      lessThan(centre.dy - scaled.width / 2),
+    );
+    expect(
+      tester.getTopLeft(find.text('Creature')).dy,
+      greaterThan(centre.dy + scaled.width / 2),
+    );
+  });
+
+  testWidgets('a long name wraps inside its block instead of pushing layout', (
+    tester,
+  ) async {
+    // Not const: indexing a const list is not a constant expression.
+    final long = <Archetype>[
+      const Archetype(
+        id: 'a-1',
+        key: 'first',
+        name: 'Extraordinarily Long Archetype Name',
+        blurb: 'b',
+        color: '#000000',
+        sort: 1,
+      ),
+      archetypes[1],
+      archetypes[2],
+      archetypes[3],
+    ];
+
+    await pumpScaled(tester, names: long);
+
+    expect(tester.takeException(), isNull);
+    final centre = tester.getCenter(find.byType(ArchetypeRadar));
+    expect(
+      tester.getCenter(find.text('Killer')).dx,
+      greaterThan(centre.dx),
+      reason: 'a long name on one axis does not move the others',
+    );
+  });
+
+  testWidgets('an unbroken token breaks rather than overflowing', (
+    tester,
+  ) async {
+    final unbroken = <Archetype>[
+      const Archetype(
+        id: 'a-1',
+        key: 'first',
+        name: 'Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        blurb: 'b',
+        color: '#000000',
+        sort: 1,
+      ),
+      archetypes[1],
+      archetypes[2],
+      archetypes[3],
+    ];
+
+    await pumpScaled(tester, names: unbroken);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a single-character name keeps its block positioned', (
+    tester,
+  ) async {
+    final short = <Archetype>[
+      const Archetype(
+        id: 'a-1',
+        key: 'first',
+        name: 'X',
+        blurb: 'b',
+        color: '#000000',
+        sort: 1,
+      ),
+      archetypes[1],
+      archetypes[2],
+      archetypes[3],
+    ];
+
+    await pumpScaled(tester, names: short);
+
+    final centre = tester.getCenter(find.byType(ArchetypeRadar));
+    expect(tester.getCenter(find.text('X')).dy, lessThan(centre.dy));
+    expect(tester.takeException(), isNull);
+  });
 }
