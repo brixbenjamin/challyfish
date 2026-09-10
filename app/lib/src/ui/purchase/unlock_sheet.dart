@@ -32,6 +32,7 @@ class UnlockSheet extends StatelessWidget {
   static const buyKey = Key('unlock-buy'); // niche:allow key
   static const restoreKey = Key('unlock-restore'); // niche:allow key
   static const priceKey = Key('unlock-price'); // niche:allow key
+  static const deliveringKey = Key('unlock-delivering'); // niche:allow key
   static const waitingKey = Key('unlock-waiting'); // niche:allow key
   static const problemKey = Key('unlock-problem'); // niche:allow key
   static const closeKey = Key('unlock-close'); // niche:allow key
@@ -48,7 +49,9 @@ class UnlockSheet extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onClose;
 
-  bool get _busy => state is PurchaseInProgress;
+  // Delivering is busy too: the money is spent and the fetch is running, so
+  // offering the button again would invite a second purchase.
+  bool get _busy => state is PurchaseInProgress || state is PurchaseDelivering;
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +99,23 @@ class UnlockSheet extends StatelessWidget {
             const SizedBox(height: 4),
             // ADR-0008's promise, made where the money is asked for.
             Text(context.l10n.oneTimePurchaseNote),
+
+            if (state case PurchaseDelivering())
+              Padding(
+                key: deliveringKey,
+                padding: const EdgeInsets.only(top: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.deliveringPackTitle,
+                      style: text.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(context.l10n.deliveringPackBody),
+                  ],
+                ),
+              ),
 
             if (state case PurchaseWaiting())
               Padding(

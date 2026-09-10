@@ -1,3 +1,7 @@
+import 'package:feral/src/data/remote/content_api.dart';
+import 'package:feral/src/data/remote/progress_api.dart';
+import 'package:feral/src/data/repositories/content_repository.dart';
+import 'package:feral/src/data/repositories/sync_repository.dart';
 import 'package:drift/native.dart';
 import 'package:feral/src/app/purchase_state.dart';
 import 'package:feral/src/core/clock.dart';
@@ -35,6 +39,26 @@ const unpriced = Pack(
   sort: 3,
 );
 
+class _SilentContentApi implements ContentApi {
+  @override
+  Future<List<Map<String, dynamic>>> fetchSince(
+    String table,
+    DateTime? since,
+  ) async => const [];
+}
+
+class _SilentProgressApi implements ProgressApi {
+  @override
+  Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {}
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchSince(
+    String table,
+    DateTime? since,
+    String userId,
+  ) async => const [];
+}
+
 void main() {
   late FeralDatabase db;
   late FakePurchaseGateway gateway;
@@ -54,6 +78,17 @@ void main() {
         clock: FixedClock(DateTime.utc(2026, 6, 1, 12)),
       ),
       gateway: gateway,
+      // Delivery collaborators. This file is about the five store outcomes, not
+      // about the fetch that follows a successful one: the content api answers
+      // nothing, so a purchase here runs the backoff out and reports
+      // deliveryTimedOut. purchase_delivery_test.dart covers the fetch itself.
+      content: ContentRepository(db: db, api: _SilentContentApi()),
+      sync: SyncRepository(
+        db: db,
+        api: _SilentProgressApi(),
+        clock: FixedClock(DateTime.utc(2026, 6, 1, 12)),
+      ),
+      clock: FixedClock(DateTime.utc(2026, 6, 1, 12)),
     );
   });
 
@@ -66,13 +101,21 @@ void main() {
     await gateway.configure('user-1');
     final state = await controller.buy(userId: 'user-1', pack: edge);
 
-    expect(state, isA<PurchaseComplete>());
-    expect((state as PurchaseComplete).packId, 'p-edge');
-
-    // The row exists before any webhook has been received.
+    // The unlock is still immediate: the row exists before any webhook has been
+    // received, and it is what keeps the pack open in the UI.
     final row = await db.select(db.entitlements).getSingle();
     expect(row.packId, 'p-edge');
     expect(row.local, isTrue);
+
+    // Delivery is what is not immediate. The server releases the copy only once
+    // the webhook has landed (ADR-0025), and this fixture's content api never
+    // answers, so the backoff runs out. The purchase is not lost -- the local
+    // grant above is proof -- and the reason says exactly that.
+    expect(state, isA<PurchaseProblem>());
+    expect(
+      (state as PurchaseProblem).reason,
+      PurchaseProblemReason.deliveryTimedOut,
+    );
   });
 
   test('a cancelled purchase returns to idle and says nothing', () async {
@@ -106,8 +149,14 @@ void main() {
 
     final state = await controller.buy(userId: 'user-1', pack: edge);
 
-    expect(state, isA<PurchaseComplete>());
+    // Restored, then delivered -- and delivery does not finish here for the
+    // same reason as above.
     expect(await db.select(db.entitlements).get(), hasLength(1));
+    expect(state, isA<PurchaseProblem>());
+    expect(
+      (state as PurchaseProblem).reason,
+      PurchaseProblemReason.deliveryTimedOut,
+    );
   });
 
   test('a failed purchase passes the store\'s own words through', () async {

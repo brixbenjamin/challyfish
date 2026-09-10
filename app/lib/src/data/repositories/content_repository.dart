@@ -260,6 +260,33 @@ class ContentRepository {
   /// Read-only view, for tests and diagnostics.
   Future<DateTime?> watermarkFor(String table) => db.watermarkFor(table);
 
+  /// Drops a table's high-water mark so the next pull re-asks for everything the
+  /// server is willing to give. Used when the answer to "who is asking" changes.
+  Future<void> clearWatermark(String table) => db.clearWatermark(table);
+
+  /// Whether day one of any campaign in [packId] has its body locally. The
+  /// delivery check, chosen over a row count because a partial pull that has not
+  /// reached day one is not a pack the user can start.
+  Future<bool> hasBodyForFirstDay(String packId) async {
+    final query =
+        db.selectOnly(db.actions).join([
+            innerJoin(
+              db.campaigns,
+              db.campaigns.id.equalsExp(db.actions.campaignId),
+            ),
+            innerJoin(
+              db.actionBodies,
+              db.actionBodies.actionId.equalsExp(db.actions.id),
+            ),
+          ])
+          ..addColumns([db.actions.id])
+          ..where(
+            db.campaigns.packId.equals(packId) & db.actions.dayIndex.equals(1),
+          )
+          ..limit(1);
+    return (await query.get()).isNotEmpty;
+  }
+
   Future<List<Campaign>> campaigns() async {
     final rows = await (db.select(
       db.campaigns,

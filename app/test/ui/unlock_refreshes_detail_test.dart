@@ -4,6 +4,7 @@ import 'package:feral/l10n/app_localizations.dart';
 import 'package:feral/src/app/providers.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/local/database.dart';
+import 'package:feral/src/data/remote/progress_api.dart';
 import 'package:feral/src/data/repositories/sync_repository.dart';
 import 'package:feral/src/domain/purchase.dart';
 import 'package:feral/src/domain/sync_status.dart';
@@ -22,6 +23,20 @@ import '../data/identity_repository_test.dart' show FakeAuthGateway;
 import '../support/fake_purchase_gateway.dart';
 import '../sync/sync_scheduler_test.dart' show FakeGate;
 import 'settings_screen_test.dart' show FakeScheduler;
+
+/// Answers nothing. The purchase controller reconciles entitlements during
+/// delivery (ADR-0025), and without this it reaches for a live Supabase client.
+class SilentProgressApi implements ProgressApi {
+  @override
+  Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {}
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchSince(
+    String table,
+    DateTime? since,
+    String userId,
+  ) async => const [];
+}
 
 /// A sync that does nothing, so the only thing that can unlock the pack in this
 /// file is the purchase itself.
@@ -98,6 +113,31 @@ void main() {
             updatedAt: now,
           ),
         );
+    // Day one and its copy. This file is about the screen behind the sheet
+    // refreshing after a purchase, not about delivery: with the body already
+    // present, delivery completes on its first check and the sheet closes the
+    // way it did before ADR-0025. purchase_delivery_test.dart owns the fetch.
+    await db
+        .into(db.actions)
+        .insert(
+          ActionsCompanion.insert(
+            id: 'action-edge-1',
+            campaignId: 'campaign-edge',
+            dayIndex: 1,
+            title: 'Day 1',
+            archetypeId: 'arch-a',
+            updatedAt: now,
+          ),
+        );
+    await db
+        .into(db.actionBodies)
+        .insert(
+          ActionBodiesCompanion.insert(
+            actionId: 'action-edge-1',
+            bodyMd: 'copy',
+            updatedAt: now,
+          ),
+        );
   }
 
   /// A user who has answered the diagnostic and has no run going: the state
@@ -160,6 +200,13 @@ void main() {
           databaseProvider.overrideWithValue(db),
           contentRepositoryProvider.overrideWithValue(
             ContentRepository(db: db, api: SilentContentApi()),
+          ),
+          syncRepositoryProvider.overrideWithValue(
+            SyncRepository(
+              db: db,
+              api: SilentProgressApi(),
+              clock: FixedClock(now),
+            ),
           ),
           authGatewayProvider.overrideWithValue(auth),
           purchaseGatewayProvider.overrideWithValue(store),

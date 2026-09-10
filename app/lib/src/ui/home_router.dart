@@ -851,7 +851,17 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
             final userId = ref.read(userIdProvider);
             final result = await ref
                 .read(purchaseControllerProvider)
-                .buy(userId: userId, pack: pack);
+                .buy(
+                  userId: userId,
+                  pack: pack,
+                  // Paid, now fetching. Shown rather than swallowed, because
+                  // the wait is real and a silent sheet looks stuck.
+                  onProgress: (progress) {
+                    if (sheetContext.mounted) {
+                      setSheetState(() => state = progress);
+                    }
+                  },
+                );
             ref.invalidate(unlockedPackIdsProvider);
             if (result is PurchaseComplete && sheetContext.mounted) {
               Navigator.of(sheetContext).pop();

@@ -546,6 +546,18 @@
   "@oneTimePurchaseNote": {
     "description": "ADR-0008's promise, made where the money is asked for. Note what is absent and must stay absent: no urgency, no discount, no 'most popular'."
   },
+  "deliveringPackTitle": "Setting up your pack",
+  "@deliveringPackTitle": {
+    "description": "Shown after a purchase succeeds while the pack's content is being fetched."
+  },
+  "deliveringPackBody": "Your purchase went through. We're fetching the pack now \u2014 this usually takes a few seconds.",
+  "@deliveringPackBody": {
+    "description": "Body text under deliveringPackTitle. Must not suggest the payment failed."
+  },
+  "deliveryTimedOut": "Your purchase went through, but the pack hasn't arrived yet. It'll finish next time you open the app, or you can try again now.",
+  "@deliveryTimedOut": {
+    "description": "Shown when delivery does not complete. Must reassure that the purchase itself succeeded."
+  },
   "purchasePendingNote": "The store is still waiting on this purchase. It unlocks by itself once it goes through — you do not need to buy it again.",
   "@purchasePendingNote": {
     "description": "A real purchase awaiting parental or bank approval. Must prevent a second attempt."

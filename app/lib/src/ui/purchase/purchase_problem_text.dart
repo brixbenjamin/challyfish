@@ -21,4 +21,5 @@ String purchaseProblemText(
     l10n.purchaseErrorRestoreOwned,
   PurchaseProblemReason.nothingToRestore => l10n.restoreNothingFound,
   PurchaseProblemReason.storeUnreachable => l10n.restoreUnreachable,
+  PurchaseProblemReason.deliveryTimedOut => l10n.deliveryTimedOut,
 };

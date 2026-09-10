@@ -221,5 +221,8 @@ final purchaseControllerProvider = Provider<PurchaseController>((ref) {
   return PurchaseController(
     entitlements: ref.watch(entitlementRepositoryProvider),
     gateway: ref.watch(purchaseGatewayProvider),
+    content: ref.watch(contentRepositoryProvider),
+    sync: ref.watch(syncRepositoryProvider),
+    clock: ref.watch(clockProvider),
   );
 });
