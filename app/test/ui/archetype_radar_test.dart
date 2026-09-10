@@ -263,4 +263,109 @@ void main() {
     expect(orderOf('Alchemist'), lessThan(orderOf('Creature')));
     handle.dispose();
   });
+
+  /// Pumps [first], then rebuilds with [second] at the same size, so the
+  /// widget sees a balance change through didUpdateWidget rather than a fresh
+  /// mount.
+  Future<void> pumpChange(
+    WidgetTester tester,
+    BalanceState first,
+    BalanceState second, {
+    bool disableAnimations = false,
+  }) async {
+    // copyWith off the ambient data, never a bare MediaQueryData: a fresh one
+    // inside MaterialApp would drop the view size and lay the radar out at
+    // zero.
+    Widget tree(BalanceState value) => wrap(
+      Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: disableAnimations),
+          child: Scaffold(body: Center(child: ArchetypeRadar(state: value))),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(tree(first));
+    await tester.pumpWidget(tree(second));
+  }
+
+  testWidgets('a balance change morphs over the radar motion duration', (
+    tester,
+  ) async {
+    await pumpChange(
+      tester,
+      state(balance: {'a-1': 4.0}),
+      state(balance: {'a-1': 4.0, 'a-4': 4.0}),
+    );
+
+    // Mid-flight: the shape is on its way, not yet arrived.
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      tester.hasRunningAnimations,
+      isTrue,
+      reason: 'the polygon morphs, it never cuts',
+    );
+
+    await tester.pump(const Duration(milliseconds: 101));
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(AppTokens.standard.radarMorph, const Duration(milliseconds: 200));
+  });
+
+  testWidgets('the radar never animates on first build', (tester) async {
+    await pump(tester, state(balance: {'a-1': 4.0, 'a-2': 2.0}));
+
+    expect(
+      tester.hasRunningAnimations,
+      isFalse,
+      reason: 'no entrance animation, ever',
+    );
+  });
+
+  testWidgets('a rebuild with the same balance does not animate', (
+    tester,
+  ) async {
+    await pumpChange(
+      tester,
+      state(balance: {'a-1': 4.0}),
+      state(balance: {'a-1': 4.0}),
+    );
+
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
+  testWidgets('the mark count swaps in only once the shape has arrived', (
+    tester,
+  ) async {
+    await pumpChange(
+      tester,
+      state(balance: {'a-1': 4.0}, marks: {'a-1': 1}),
+      state(balance: {'a-1': 4.0, 'a-4': 4.0}, marks: {'a-1': 1, 'a-4': 1}),
+    );
+
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      find.text(l10n.markCount(1)),
+      findsOneWidget,
+      reason: 'the new mark has not arrived yet, so it is not announced yet',
+    );
+
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(find.text(l10n.markCount(1)), findsNWidgets(2));
+  });
+
+  testWidgets('with animations disabled the radar snaps and the count swaps', (
+    tester,
+  ) async {
+    await pumpChange(
+      tester,
+      state(balance: {'a-1': 4.0}, marks: {'a-1': 1}),
+      state(balance: {'a-1': 4.0, 'a-4': 4.0}, marks: {'a-1': 1, 'a-4': 1}),
+      disableAnimations: true,
+    );
+
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(find.text(l10n.markCount(1)), findsNWidgets(2));
+  });
 }

@@ -52,7 +52,77 @@ const _slotOrder = <_Slot>[_Slot.top, _Slot.right, _Slot.bottom, _Slot.left];
 /// Angles matching _slotOrder, in radians.
 const _angles = <double>[-math.pi / 2, 0, math.pi / 2, math.pi];
 
-class _ArchetypeRadarState extends State<ArchetypeRadar> {
+class _ArchetypeRadarState extends State<ArchetypeRadar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  /// Clock-ordered fractions the morph runs between.
+  late List<double> _from;
+  late List<double> _to;
+
+  /// The record as currently displayed. It lags the widget during a morph so
+  /// a newly earned mark arrives with the shape it belongs to, rather than
+  /// announcing itself first.
+  late Map<String, int> _shownMarks;
+
+  @override
+  void initState() {
+    super.initState();
+    _to = _fractionsOf(widget.state);
+    _from = _to;
+    _shownMarks = Map<String, int>.of(widget.state.marks);
+    // Starts at 1: the first build paints the current shape directly. There
+    // is no entrance animation on this component and there never will be
+    // (ADR-0026: nothing orchestrates a page load).
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: 1,
+    )..addStatusListener(_onStatus);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _controller.duration = context.tokens.radarMorph;
+  }
+
+  @override
+  void didUpdateWidget(ArchetypeRadar old) {
+    super.didUpdateWidget(old);
+
+    final next = _fractionsOf(widget.state);
+    if (_sameDoubles(next, _to)) {
+      // Same distribution. A mark can still have landed on its own, and there
+      // is nothing to wait for, so it swaps now.
+      if (!_sameMarks(_shownMarks, widget.state.marks)) {
+        setState(() => _shownMarks = Map<String, int>.of(widget.state.marks));
+      }
+      return;
+    }
+
+    _from = _currentFractions();
+    _to = next;
+
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.value = 1;
+      setState(() => _shownMarks = Map<String, int>.of(widget.state.marks));
+    } else {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed || !mounted) return;
+    setState(() => _shownMarks = Map<String, int>.of(widget.state.marks));
+  }
+
   /// Normalised values in clock order, so index i is the axis at _angles[i].
   ///
   /// An axis whose archetype is not loaded zero-fills rather than throwing:
@@ -65,6 +135,14 @@ class _ArchetypeRadarState extends State<ArchetypeRadar> {
       else
         0,
   ];
+
+  /// Where the shape is right now: the eased point between _from and _to.
+  List<double> _currentFractions() {
+    final t = context.tokens.radarCurve.transform(_controller.value);
+    return <double>[
+      for (var i = 0; i < _to.length; i++) _from[i] + (_to[i] - _from[i]) * t,
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,19 +172,25 @@ class _ArchetypeRadarState extends State<ArchetypeRadar> {
           id: _Slot.figure,
           // One graphic, one sentence, and it is read first. The label is the
           // formatter's, never anything this widget worked out for itself.
+          // The label reads widget.state, not the lagged marks: a screen
+          // reader is told the truth immediately rather than waiting on a
+          // 200 ms flourish.
           child: Semantics(
             image: true,
             label: balanceSummary(widget.state, context.l10n),
             sortKey: const OrdinalSortKey(0),
-            child: CustomPaint(
-              painter: _RadarPainter(
-                fractions: _fractionsOf(widget.state),
-                dotColours: dotColours,
-                gridColour: tokens.hairline,
-                fillColour: tokens.ink.withValues(alpha: 0.10),
-                strokeColour: tokens.ink.withValues(alpha: 0.52),
-                nubColour: tokens.mutedInk,
-                panelColour: tokens.panel,
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) => CustomPaint(
+                painter: _RadarPainter(
+                  fractions: _currentFractions(),
+                  dotColours: dotColours,
+                  gridColour: tokens.hairline,
+                  fillColour: tokens.ink.withValues(alpha: 0.10),
+                  strokeColour: tokens.ink.withValues(alpha: 0.52),
+                  nubColour: tokens.mutedInk,
+                  panelColour: tokens.panel,
+                ),
               ),
             ),
           ),
@@ -118,7 +202,7 @@ class _ArchetypeRadarState extends State<ArchetypeRadar> {
               child: _VertexLabel(
                 name: archetypes[_clockOrder[i]].name,
                 nameColour: dotColours[i],
-                marks: widget.state.marksFor(archetypes[_clockOrder[i]].id),
+                marks: _shownMarks[archetypes[_clockOrder[i]].id] ?? 0,
                 mutedInk: tokens.mutedInk,
                 labelStyle: theme.textTheme.labelLarge,
                 slot: _slotOrder[i],
@@ -443,6 +527,14 @@ bool _sameDoubles(List<double> a, List<double> b) {
   if (a.length != b.length) return false;
   for (var i = 0; i < a.length; i++) {
     if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
+bool _sameMarks(Map<String, int> a, Map<String, int> b) {
+  if (a.length != b.length) return false;
+  for (final entry in a.entries) {
+    if (b[entry.key] != entry.value) return false;
   }
   return true;
 }
