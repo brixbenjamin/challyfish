@@ -107,7 +107,7 @@ void main() {
     await device.progress.report(
       run: run,
       dayIndex: dayIndex,
-      actionId: await device.actionIdFor(run.campaignId, dayIndex),
+      mandatoryActionId: await device.actionIdFor(run.campaignId, dayIndex),
       outcome: outcome,
       note: note,
     );

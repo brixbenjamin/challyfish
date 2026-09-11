@@ -359,8 +359,11 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       await progress.applyRollover(
         run: run,
         lengthDays: campaign.lengthDays,
-        actionIdForDay: (day) => actions
-            .firstWhere((a) => a.dayIndex == day, orElse: () => actions.first)
+        mandatoryActionIdForDay: (day) => actions
+            .firstWhere(
+              (a) => a.dayIndex == day && !a.isOptional,
+              orElse: () => actions.first,
+            )
             .id,
       );
     }
@@ -1052,7 +1055,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
             .report(
               run: run.run,
               dayIndex: run.currentDay,
-              actionId: action.id,
+              mandatoryActionId: action.id,
               outcome: outcome,
               note: note,
             );

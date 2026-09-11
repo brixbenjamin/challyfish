@@ -81,7 +81,7 @@ void main() {
     await repo.report(
       run: run,
       dayIndex: 1,
-      actionId: 'action-1',
+      mandatoryActionId: 'action-1',
       outcome: Outcome.done,
       note: 'said it',
     );
@@ -104,7 +104,7 @@ void main() {
     await repo.report(
       run: run,
       dayIndex: 1,
-      actionId: 'action-1',
+      mandatoryActionId: 'action-1',
       outcome: Outcome.done,
     );
 
@@ -144,7 +144,7 @@ void main() {
     await repo.report(
       run: run,
       dayIndex: 1,
-      actionId: 'action-1',
+      mandatoryActionId: 'action-1',
       outcome: Outcome.done,
     );
 
@@ -164,7 +164,7 @@ void main() {
       await startRepo.report(
         run: run,
         dayIndex: 1,
-        actionId: 'action-1',
+        mandatoryActionId: 'action-1',
         outcome: Outcome.done,
       );
 
@@ -175,7 +175,7 @@ void main() {
       await later.applyRollover(
         run: run,
         lengthDays: 7,
-        actionIdForDay: (d) => 'action-$d',
+        mandatoryActionIdForDay: (d) => 'action-$d',
       );
 
       final logs = await later.logsFor(run.id);
@@ -192,7 +192,7 @@ void main() {
       await later.applyRollover(
         run: run,
         lengthDays: 7,
-        actionIdForDay: (d) => 'action-$d',
+        mandatoryActionIdForDay: (d) => 'action-$d',
       );
       expect(
         await later.logsFor(run.id),
@@ -212,7 +212,7 @@ void main() {
     await startRepo.report(
       run: run,
       dayIndex: 1,
-      actionId: 'action-1',
+      mandatoryActionId: 'action-1',
       outcome: Outcome.skipped,
     );
 
@@ -220,10 +220,215 @@ void main() {
     await repoAt(day3).applyRollover(
       run: run,
       lengthDays: 7,
-      actionIdForDay: (d) => 'action-$d',
+      mandatoryActionIdForDay: (d) => 'action-$d',
     );
 
     final logs = await repoAt(day3).logsFor(run.id);
     expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.skipped);
+  });
+
+  group('ticks', () {
+    Future<CampaignRun> startRun(ProgressRepository repo) => repo.startRun(
+      userId: 'user-1',
+      campaignId: 'campaign-1',
+      isUnlocked: true,
+    );
+
+    test('ticking before committing creates the day row', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'action-1',
+        completed: true,
+      );
+
+      final logs = await repo.logsFor(run.id);
+      expect(logs, hasLength(1));
+      expect(logs.single.completedActionIds, {'action-1'});
+      expect(logs.single.committedAt, isNull);
+      expect(logs.single.outcome, isNull);
+    });
+
+    test('an optional tick does not rewrite the assigned action', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'optional-1',
+        completed: true,
+      );
+
+      final log = (await repo.logsFor(run.id)).single;
+      expect(
+        log.actionId,
+        'action-1',
+        reason: 'the day is still assigned its mandatory action',
+      );
+      expect(log.completedActionIds, {'optional-1'});
+    });
+
+    test('unticking flips the flag and never deletes the row', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'action-1',
+        completed: true,
+      );
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'action-1',
+        completed: false,
+      );
+
+      // The row must survive: nothing in this sync design carries tombstones,
+      // so a deleted tick would never reach a second device.
+      final rows = await db.select(db.dayLogActions).get();
+      expect(rows, hasLength(1));
+      expect(rows.single.completed, isFalse);
+      expect(rows.single.dirty, isTrue);
+
+      final logs = await repo.logsFor(run.id);
+      expect(logs.single.completedActionIds, isEmpty);
+    });
+
+    test('a fresh tick is dirty for later sync', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'action-1',
+        completed: true,
+      );
+
+      expect((await db.select(db.dayLogActions).getSingle()).dirty, isTrue);
+    });
+
+    test('several ticks on one day all come back on the log', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+
+      for (final id in ['action-1', 'optional-1', 'optional-2']) {
+        await repo.setActionCompleted(
+          run: run,
+          dayIndex: 1,
+          mandatoryActionId: 'action-1',
+          actionId: id,
+          completed: true,
+        );
+      }
+
+      final log = (await repo.logsFor(run.id)).single;
+      expect(log.completedActionIds, {'action-1', 'optional-1', 'optional-2'});
+      expect(
+        await db.select(db.dayLogs).get(),
+        hasLength(1),
+        reason: 'still one day log, however many actions it holds',
+      );
+    });
+
+    test('rollover writes the derived outcome for a day that was acted on',
+        () async {
+      // Day 1 was ticked but never reported, and the run has moved on.
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'optional-1',
+        completed: true,
+      );
+
+      final day3 = tz.TZDateTime(berlin, 2026, 6, 3, 9).toUtc();
+      await repoAt(day3).applyRollover(
+        run: run,
+        lengthDays: 30,
+        mandatoryActionIdForDay: (_) => 'action-1',
+      );
+
+      final logs = await repoAt(day3).logsFor(run.id);
+      final day1Log = logs.firstWhere((l) => l.dayIndex == 1);
+      expect(
+        day1Log.outcome,
+        Outcome.partial,
+        reason: 'writing missed over a day the user acted on is dishonest',
+      );
+    });
+
+    test('rollover writes done when the mandatory action was ticked', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'action-1',
+        completed: true,
+      );
+
+      final day3 = tz.TZDateTime(berlin, 2026, 6, 3, 9).toUtc();
+      await repoAt(day3).applyRollover(
+        run: run,
+        lengthDays: 30,
+        mandatoryActionIdForDay: (_) => 'action-1',
+      );
+
+      final logs = await repoAt(day3).logsFor(run.id);
+      expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.done);
+    });
+
+    test('rollover still writes missed for a day with no ticks', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+
+      final day3 = tz.TZDateTime(berlin, 2026, 6, 3, 9).toUtc();
+      await repoAt(day3).applyRollover(
+        run: run,
+        lengthDays: 30,
+        mandatoryActionIdForDay: (_) => 'action-1',
+      );
+
+      final logs = await repoAt(day3).logsFor(run.id);
+      expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.missed);
+    });
+
+    test('an unticked tick row does not rescue a day from missed', () async {
+      // The row exists but says the user did not do it. That is a miss.
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'action-1',
+        completed: false,
+      );
+
+      final day3 = tz.TZDateTime(berlin, 2026, 6, 3, 9).toUtc();
+      await repoAt(day3).applyRollover(
+        run: run,
+        lengthDays: 30,
+        mandatoryActionIdForDay: (_) => 'action-1',
+      );
+
+      final logs = await repoAt(day3).logsFor(run.id);
+      expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.missed);
+    });
   });
 }

@@ -59,7 +59,7 @@ void main() {
       await repo.report(
         run: run,
         dayIndex: 1,
-        actionId: 'action-1',
+        mandatoryActionId: 'action-1',
         outcome: Outcome.done,
       );
       await db.close();
@@ -77,7 +77,7 @@ void main() {
       await repo.applyRollover(
         run: restored,
         lengthDays: campaign.lengthDays,
-        actionIdForDay: (d) => 'action-$d',
+        mandatoryActionIdForDay: (d) => 'action-$d',
       );
 
       final logs = await repo.logsFor(restored.id);

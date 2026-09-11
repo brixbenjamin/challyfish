@@ -262,7 +262,7 @@ void main() {
       await device.progress.report(
         run: run,
         dayIndex: day,
-        actionId: action.id,
+        mandatoryActionId: action.id,
         outcome: Outcome.done,
       );
     }

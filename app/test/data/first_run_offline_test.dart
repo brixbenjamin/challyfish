@@ -110,7 +110,7 @@ void main() {
       await repo.report(
         run: run,
         dayIndex: day,
-        actionId: action.id,
+        mandatoryActionId: action.id,
         outcome: Outcome.done,
       );
     }

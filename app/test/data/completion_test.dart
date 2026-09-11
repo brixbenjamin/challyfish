@@ -45,7 +45,7 @@ void main() {
       await repoAt(dayN(day)).report(
         run: run,
         dayIndex: day,
-        actionId: 'a-$day',
+        mandatoryActionId: 'a-$day',
         outcome: day <= misses ? Outcome.skipped : Outcome.done,
       );
     }
@@ -91,7 +91,7 @@ void main() {
     await repo.report(
       run: run,
       dayIndex: 1,
-      actionId: 'a-1',
+      mandatoryActionId: 'a-1',
       outcome: Outcome.done,
     );
 
@@ -113,7 +113,7 @@ void main() {
       await repoAt(dayN(day)).report(
         run: run,
         dayIndex: day,
-        actionId: 'a-$day',
+        mandatoryActionId: 'a-$day',
         outcome: Outcome.done,
       );
     }

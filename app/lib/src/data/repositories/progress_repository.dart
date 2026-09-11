@@ -130,7 +130,7 @@ class ProgressRepository {
               ..where((l) => l.userId.equals(userId))
               ..orderBy([(l) => OrderingTerm(expression: l.dayIndex)]))
             .get();
-    return rows.map(_toLog).toList();
+    return _withTicks(rows);
   }
 
   Future<List<DayLog>> logsFor(String runId) async {
@@ -139,7 +139,31 @@ class ProgressRepository {
               ..where((l) => l.runId.equals(runId))
               ..orderBy([(l) => OrderingTerm(expression: l.dayIndex)]))
             .get();
-    return rows.map(_toLog).toList();
+    return _withTicks(rows);
+  }
+
+  /// One query for every tick of the given days, rather than one per day.
+  Future<List<DayLog>> _withTicks(List<DayLogRow> rows) async {
+    if (rows.isEmpty) return const [];
+
+    final runIds = {for (final r in rows) r.runId};
+    final ticks =
+        await (db.select(db.dayLogActions)..where(
+              (t) => t.runId.isIn(runIds) & t.completed.equals(true),
+            ))
+            .get();
+
+    final byDay = <String, Set<String>>{};
+    for (final tick in ticks) {
+      byDay
+          .putIfAbsent('${tick.runId}:${tick.dayIndex}', () => <String>{})
+          .add(tick.actionId);
+    }
+
+    return [
+      for (final row in rows)
+        _toLog(row, byDay['${row.runId}:${row.dayIndex}'] ?? const <String>{}),
+    ];
   }
 
   Future<void> commitToday({
@@ -153,32 +177,105 @@ class ProgressRepository {
     committedAt: Value(clock.nowUtc()),
   );
 
-  /// Records a user-reported outcome for a day.
+  /// Records that the user did, or did not, do one of a day's actions.
+  ///
+  /// Creates the day row if it is not there yet: ticking may precede
+  /// committing, and the day row is the tick's parent on the server, so it has
+  /// to exist before the tick can be pushed.
+  ///
+  /// Unticking flips `completed` rather than deleting the row. A delete would
+  /// never propagate — nothing in this sync design carries tombstones, so the
+  /// next pull would resurrect the tick on the other device.
+  Future<void> setActionCompleted({
+    required CampaignRun run,
+    required int dayIndex,
+
+    /// Carried separately from [actionId] because the day row must keep
+    /// recording the day's *mandatory* action. An optional tick must not
+    /// rewrite what the day was assigned.
+    required String mandatoryActionId,
+    required String actionId,
+    required bool completed,
+  }) async {
+    final now = clock.nowUtc();
+
+    await _upsertLog(run: run, dayIndex: dayIndex, actionId: mandatoryActionId);
+
+    final existing =
+        await (db.select(db.dayLogActions)..where(
+              (t) =>
+                  t.runId.equals(run.id) &
+                  t.dayIndex.equals(dayIndex) &
+                  t.actionId.equals(actionId),
+            ))
+            .getSingleOrNull();
+
+    if (existing == null) {
+      await db
+          .into(db.dayLogActions)
+          .insert(
+            DayLogActionsCompanion.insert(
+              id: _newId(),
+              userId: run.userId,
+              runId: run.id,
+              dayIndex: dayIndex,
+              actionId: actionId,
+              completed: Value(completed),
+              updatedAt: now,
+              // Explicit for the same reason the day log's flag is: the push
+              // worker drains purely on it, and a silently changed default
+              // must never make a first write invisible to sync.
+              dirty: const Value(true),
+            ),
+          );
+      return;
+    }
+
+    await (db.update(
+      db.dayLogActions,
+    )..where((t) => t.id.equals(existing.id))).write(
+      DayLogActionsCompanion(
+        completed: Value(completed),
+        updatedAt: Value(now),
+        dirty: const Value(true),
+      ),
+    );
+  }
+
+  /// Records the outcome derived from the day's ticks.
   ///
   /// `outcome` must be `done`, `partial`, or `skipped` — never `missed`.
   /// `missed` is written only by [applyRollover]; this method writes whatever
   /// it is given unchanged, so passing `Outcome.missed` here would be a
   /// call-site bug, not a caught one.
+  ///
+  /// Takes the day's mandatory action rather than an arbitrary one: the
+  /// outcome is derived by the engine before it gets here, and the day row
+  /// still records what it was assigned.
   Future<void> report({
     required CampaignRun run,
     required int dayIndex,
-    required String actionId,
+    required String mandatoryActionId,
     required Outcome outcome,
     String? note,
   }) => _upsertLog(
     run: run,
     dayIndex: dayIndex,
-    actionId: actionId,
+    actionId: mandatoryActionId,
     outcome: Value(outcome.key),
     note: Value(note),
   );
 
-  /// Writes `missed` for every elapsed day left unreported. Idempotent: safe to
-  /// call on every app open, and it never touches a day that has an outcome.
+  /// Resolves every elapsed day left unreported. Idempotent: safe to call on
+  /// every app open, and it never touches a day that has an outcome.
+  ///
+  /// A day with no ticks gets `missed`. A day the user demonstrably acted on
+  /// resolves to what those ticks derive instead — writing `missed` over it
+  /// would be a dishonest record, which ADR-0003 forbids.
   Future<void> applyRollover({
     required CampaignRun run,
     required int lengthDays,
-    required String Function(int dayIndex) actionIdForDay,
+    required String Function(int dayIndex) mandatoryActionIdForDay,
   }) async {
     final today = engine.currentDay(
       startedAt: run.startedAt,
@@ -187,17 +284,28 @@ class ProgressRepository {
       lengthDays: lengthDays,
     );
 
-    final pending = engine.daysNeedingMissed(
-      currentDay: today,
-      logs: await logsFor(run.id),
-    );
+    final logs = await logsFor(run.id);
+    final pending = engine.daysNeedingMissed(currentDay: today, logs: logs);
+    final ticksByDay = {
+      for (final log in logs) log.dayIndex: log.completedActionIds,
+    };
 
     for (final day in pending) {
+      final mandatory = mandatoryActionIdForDay(day);
+      final ticks = ticksByDay[day] ?? const <String>{};
+
+      final outcome = ticks.isEmpty
+          ? Outcome.missed
+          : engine.deriveOutcome(
+              mandatoryActionId: mandatory,
+              completedActionIds: ticks,
+            );
+
       await _upsertLog(
         run: run,
         dayIndex: day,
-        actionId: actionIdForDay(day),
-        outcome: Value(Outcome.missed.key),
+        actionId: mandatory,
+        outcome: Value(outcome.key),
       );
     }
   }
@@ -331,7 +439,7 @@ class ProgressRepository {
     grade: row.grade == null ? null : Grade.fromKey(row.grade!),
   );
 
-  DayLog _toLog(DayLogRow row) => DayLog(
+  DayLog _toLog(DayLogRow row, Set<String> completedActionIds) => DayLog(
     id: row.id,
     runId: row.runId,
     dayIndex: row.dayIndex,
@@ -339,5 +447,6 @@ class ProgressRepository {
     committedAt: row.committedAt == null ? null : _asUtc(row.committedAt!),
     outcome: row.outcome == null ? null : Outcome.fromKey(row.outcome!),
     note: row.note,
+    completedActionIds: completedActionIds,
   );
 }
