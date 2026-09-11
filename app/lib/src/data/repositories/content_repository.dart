@@ -107,15 +107,22 @@ class ContentRepository {
         archetypeId: row['archetype_id'] as String,
         whyDoctrineId: Value(row['why_doctrine_id'] as String?),
         effort: Value(row['effort'] as int? ?? 1),
+        isOptional: Value(row['is_optional'] as bool? ?? false),
+        sort: Value(row['sort'] as int? ?? 0),
         updatedAt: _at(row),
       );
       return db
           .into(db.actions)
           .insert(
             action,
+            // The natural key is the day *slot*, not the day: since ADR-0030 a
+            // day holds a mandatory action and n optional ones, and `sort`
+            // is what separates them. A conflict target that is not an actual
+            // unique index is rejected by sqlite outright.
             onConflict: _byIdOrNaturalKey(action, [
               db.actions.campaignId,
               db.actions.dayIndex,
+              db.actions.sort,
             ]),
           );
     }),

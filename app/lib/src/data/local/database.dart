@@ -26,6 +26,7 @@ part 'database.g.dart';
     Profiles,
     CampaignRuns,
     DayLogs,
+    DayLogActions,
     DiagnosticResults,
     Entitlements,
     // sync
@@ -36,7 +37,7 @@ class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,8 +79,58 @@ class FeralDatabase extends _$FeralDatabase {
         await m.createTable(actionBodies);
         await m.alterTable(TableMigration(actions));
       }
+      if (from < 6) {
+        // day_logs is read but never altered; the ticks are a new table beside
+        // it, so the rule protecting a user's own record still holds.
+        await m.createTable(dayLogActions);
+
+        // alterTable, not addColumn: `actions` gains two columns AND a new
+        // unique key, and drift bakes uniqueKeys into CREATE TABLE. addColumn
+        // cannot touch it, so an upgraded install would keep
+        // UNIQUE(campaign_id, day_index) and reject every optional action --
+        // the whole point of this version. Recreating the table is the only
+        // way to move that constraint, and is what the v5 step already does.
+        // Content is a cache with a server behind it, so a recreate is cheap.
+        await m.alterTable(TableMigration(actions));
+
+        await backfillDayLogActions();
+      }
     },
   );
+
+  /// Gives every already-reported day a tick for the action it was assigned.
+  ///
+  /// Without this, the balance — which reads ticks from here on — sees nothing
+  /// for any day recorded before the upgrade, and every existing radar
+  /// collapses to zero. Idempotent: the unique key makes a second run a no-op.
+  Future<void> backfillDayLogActions() async {
+    final logs = await (select(
+      dayLogs,
+    )..where((l) => l.outcome.isIn(const ['done', 'partial']))).get();
+
+    await batch((b) {
+      for (final log in logs) {
+        b.insert(
+          dayLogActions,
+          DayLogActionsCompanion.insert(
+            // Deterministic rather than random: two devices that both upgrade
+            // offline derive the same id for the same tick, so the first sync
+            // converges instead of racing to adopt one of two uuids.
+            id: '${log.runId}:${log.dayIndex}:${log.actionId}',
+            userId: log.userId,
+            runId: log.runId,
+            dayIndex: log.dayIndex,
+            actionId: log.actionId,
+            updatedAt: log.updatedAt,
+            // Backfilled rows push like any other local write: the server ran
+            // the same backfill, and the upsert converges on one row.
+            dirty: const Value(true),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+    });
+  }
 
   /// The newest `updated_at` this device has committed for [table], or null if
   /// it has never pulled that table.

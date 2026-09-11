@@ -47,6 +47,38 @@ class DayLogs extends Table {
   ];
 }
 
+/// Which actions the user ticked on a given day.
+///
+/// Identified by (runId, dayIndex, actionId) rather than by a day log's id:
+/// the sync merge adopts the server's uuid for a day log by deleting and
+/// reinserting that row, and a child keyed on the surrogate id would not
+/// survive it.
+///
+/// `completed` is a flag, never row presence. Nothing in this sync design
+/// carries tombstones, so a deleted tick would never reach a second device and
+/// the next pull would resurrect it.
+@DataClassName('DayLogActionRow')
+class DayLogActions extends Table {
+  TextColumn get id => text()();
+  TextColumn get userId => text()();
+  TextColumn get runId => text()();
+  IntColumn get dayIndex => integer()();
+  TextColumn get actionId => text()();
+  BoolColumn get completed => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get updatedAt => dateTime()();
+  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  /// Mirrors the Postgres unique constraint, and is the identity every sync
+  /// merge keys on.
+  @override
+  List<Set<Column<Object>>> get uniqueKeys => [
+    {runId, dayIndex, actionId},
+  ];
+}
+
 /// The outcome of one sitting of the diagnostic. Kept as a history rather than
 /// overwritten, so a retake does not destroy the original reading.
 ///

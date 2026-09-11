@@ -65,15 +65,31 @@ class Actions extends Table {
   /// Exactly one archetype per action (ADR-0004). Not nullable.
   TextColumn get archetypeId => text()();
   TextColumn get whyDoctrineId => text().nullable()();
+  /// The points value. Authored and displayed as a whole number; the balance
+  /// divides it by `pointsPerFullDay` before using it (ADR-0030, amending
+  /// ADR-0010's "effort is not used"). Keeps its storage name because renaming
+  /// would touch seeds, mappers and the domain type for no behavioural gain.
   IntColumn get effort => integer().withDefault(const Constant(1))();
+
+  /// False for the day's one mandatory action, true for every extra the user
+  /// may take on. Server-enforced: exactly one mandatory row per (campaign,
+  /// day). Not mirrored as a local constraint — content is a read-only cache
+  /// of a server that already guarantees it, and drift's table DSL cannot
+  /// express a partial unique index without custom SQL.
+  BoolColumn get isOptional => boolean().withDefault(const Constant(false))();
+
+  /// Display order within the day. The mandatory action sorts first.
+  IntColumn get sort => integer().withDefault(const Constant(0))();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
 
+  /// The day is no longer the unique slot — (day, sort) is, so a day can hold
+  /// a mandatory action and n optional ones (ADR-0030).
   @override
   List<Set<Column<Object>>> get uniqueKeys => [
-    {campaignId, dayIndex},
+    {campaignId, dayIndex, sort},
   ];
 }
 

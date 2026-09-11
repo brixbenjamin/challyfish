@@ -2118,6 +2118,31 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant(1),
   );
+  static const VerificationMeta _isOptionalMeta = const VerificationMeta(
+    'isOptional',
+  );
+  @override
+  late final GeneratedColumn<bool> isOptional = GeneratedColumn<bool>(
+    'is_optional',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_optional" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _sortMeta = const VerificationMeta('sort');
+  @override
+  late final GeneratedColumn<int> sort = GeneratedColumn<int>(
+    'sort',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -2138,6 +2163,8 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     archetypeId,
     whyDoctrineId,
     effort,
+    isOptional,
+    sort,
     updatedAt,
   ];
   @override
@@ -2207,6 +2234,18 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
         effort.isAcceptableOrUnknown(data['effort']!, _effortMeta),
       );
     }
+    if (data.containsKey('is_optional')) {
+      context.handle(
+        _isOptionalMeta,
+        isOptional.isAcceptableOrUnknown(data['is_optional']!, _isOptionalMeta),
+      );
+    }
+    if (data.containsKey('sort')) {
+      context.handle(
+        _sortMeta,
+        sort.isAcceptableOrUnknown(data['sort']!, _sortMeta),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -2222,7 +2261,7 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
   List<Set<GeneratedColumn>> get uniqueKeys => [
-    {campaignId, dayIndex},
+    {campaignId, dayIndex, sort},
   ];
   @override
   ActionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
@@ -2256,6 +2295,14 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
         DriftSqlType.int,
         data['${effectivePrefix}effort'],
       )!,
+      isOptional: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_optional'],
+      )!,
+      sort: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -2278,7 +2325,22 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   /// Exactly one archetype per action (ADR-0004). Not nullable.
   final String archetypeId;
   final String? whyDoctrineId;
+
+  /// The points value. Authored and displayed as a whole number; the balance
+  /// divides it by `pointsPerFullDay` before using it (ADR-0030, amending
+  /// ADR-0010's "effort is not used"). Keeps its storage name because renaming
+  /// would touch seeds, mappers and the domain type for no behavioural gain.
   final int effort;
+
+  /// False for the day's one mandatory action, true for every extra the user
+  /// may take on. Server-enforced: exactly one mandatory row per (campaign,
+  /// day). Not mirrored as a local constraint — content is a read-only cache
+  /// of a server that already guarantees it, and drift's table DSL cannot
+  /// express a partial unique index without custom SQL.
+  final bool isOptional;
+
+  /// Display order within the day. The mandatory action sorts first.
+  final int sort;
   final DateTime updatedAt;
   const ActionRow({
     required this.id,
@@ -2288,6 +2350,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     required this.archetypeId,
     this.whyDoctrineId,
     required this.effort,
+    required this.isOptional,
+    required this.sort,
     required this.updatedAt,
   });
   @override
@@ -2302,6 +2366,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       map['why_doctrine_id'] = Variable<String>(whyDoctrineId);
     }
     map['effort'] = Variable<int>(effort);
+    map['is_optional'] = Variable<bool>(isOptional);
+    map['sort'] = Variable<int>(sort);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -2317,6 +2383,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           ? const Value.absent()
           : Value(whyDoctrineId),
       effort: Value(effort),
+      isOptional: Value(isOptional),
+      sort: Value(sort),
       updatedAt: Value(updatedAt),
     );
   }
@@ -2334,6 +2402,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       archetypeId: serializer.fromJson<String>(json['archetypeId']),
       whyDoctrineId: serializer.fromJson<String?>(json['whyDoctrineId']),
       effort: serializer.fromJson<int>(json['effort']),
+      isOptional: serializer.fromJson<bool>(json['isOptional']),
+      sort: serializer.fromJson<int>(json['sort']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -2348,6 +2418,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       'archetypeId': serializer.toJson<String>(archetypeId),
       'whyDoctrineId': serializer.toJson<String?>(whyDoctrineId),
       'effort': serializer.toJson<int>(effort),
+      'isOptional': serializer.toJson<bool>(isOptional),
+      'sort': serializer.toJson<int>(sort),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -2360,6 +2432,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     String? archetypeId,
     Value<String?> whyDoctrineId = const Value.absent(),
     int? effort,
+    bool? isOptional,
+    int? sort,
     DateTime? updatedAt,
   }) => ActionRow(
     id: id ?? this.id,
@@ -2371,6 +2445,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
         ? whyDoctrineId.value
         : this.whyDoctrineId,
     effort: effort ?? this.effort,
+    isOptional: isOptional ?? this.isOptional,
+    sort: sort ?? this.sort,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   ActionRow copyWithCompanion(ActionsCompanion data) {
@@ -2388,6 +2464,10 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           ? data.whyDoctrineId.value
           : this.whyDoctrineId,
       effort: data.effort.present ? data.effort.value : this.effort,
+      isOptional: data.isOptional.present
+          ? data.isOptional.value
+          : this.isOptional,
+      sort: data.sort.present ? data.sort.value : this.sort,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -2402,6 +2482,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           ..write('archetypeId: $archetypeId, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
+          ..write('isOptional: $isOptional, ')
+          ..write('sort: $sort, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -2416,6 +2498,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     archetypeId,
     whyDoctrineId,
     effort,
+    isOptional,
+    sort,
     updatedAt,
   );
   @override
@@ -2429,6 +2513,8 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           other.archetypeId == this.archetypeId &&
           other.whyDoctrineId == this.whyDoctrineId &&
           other.effort == this.effort &&
+          other.isOptional == this.isOptional &&
+          other.sort == this.sort &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -2440,6 +2526,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   final Value<String> archetypeId;
   final Value<String?> whyDoctrineId;
   final Value<int> effort;
+  final Value<bool> isOptional;
+  final Value<int> sort;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const ActionsCompanion({
@@ -2450,6 +2538,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     this.archetypeId = const Value.absent(),
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
+    this.isOptional = const Value.absent(),
+    this.sort = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -2461,6 +2551,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     required String archetypeId,
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
+    this.isOptional = const Value.absent(),
+    this.sort = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -2477,6 +2569,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     Expression<String>? archetypeId,
     Expression<String>? whyDoctrineId,
     Expression<int>? effort,
+    Expression<bool>? isOptional,
+    Expression<int>? sort,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -2488,6 +2582,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
       if (archetypeId != null) 'archetype_id': archetypeId,
       if (whyDoctrineId != null) 'why_doctrine_id': whyDoctrineId,
       if (effort != null) 'effort': effort,
+      if (isOptional != null) 'is_optional': isOptional,
+      if (sort != null) 'sort': sort,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2501,6 +2597,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     Value<String>? archetypeId,
     Value<String?>? whyDoctrineId,
     Value<int>? effort,
+    Value<bool>? isOptional,
+    Value<int>? sort,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -2512,6 +2610,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
       archetypeId: archetypeId ?? this.archetypeId,
       whyDoctrineId: whyDoctrineId ?? this.whyDoctrineId,
       effort: effort ?? this.effort,
+      isOptional: isOptional ?? this.isOptional,
+      sort: sort ?? this.sort,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -2541,6 +2641,12 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     if (effort.present) {
       map['effort'] = Variable<int>(effort.value);
     }
+    if (isOptional.present) {
+      map['is_optional'] = Variable<bool>(isOptional.value);
+    }
+    if (sort.present) {
+      map['sort'] = Variable<int>(sort.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -2560,6 +2666,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
           ..write('archetypeId: $archetypeId, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
+          ..write('isOptional: $isOptional, ')
+          ..write('sort: $sort, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -5986,6 +6094,518 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
   }
 }
 
+class $DayLogActionsTable extends DayLogActions
+    with TableInfo<$DayLogActionsTable, DayLogActionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DayLogActionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _runIdMeta = const VerificationMeta('runId');
+  @override
+  late final GeneratedColumn<String> runId = GeneratedColumn<String>(
+    'run_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dayIndexMeta = const VerificationMeta(
+    'dayIndex',
+  );
+  @override
+  late final GeneratedColumn<int> dayIndex = GeneratedColumn<int>(
+    'day_index',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _actionIdMeta = const VerificationMeta(
+    'actionId',
+  );
+  @override
+  late final GeneratedColumn<String> actionId = GeneratedColumn<String>(
+    'action_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedMeta = const VerificationMeta(
+    'completed',
+  );
+  @override
+  late final GeneratedColumn<bool> completed = GeneratedColumn<bool>(
+    'completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("completed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
+  @override
+  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
+    'dirty',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("dirty" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    userId,
+    runId,
+    dayIndex,
+    actionId,
+    completed,
+    updatedAt,
+    dirty,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'day_log_actions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DayLogActionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('run_id')) {
+      context.handle(
+        _runIdMeta,
+        runId.isAcceptableOrUnknown(data['run_id']!, _runIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_runIdMeta);
+    }
+    if (data.containsKey('day_index')) {
+      context.handle(
+        _dayIndexMeta,
+        dayIndex.isAcceptableOrUnknown(data['day_index']!, _dayIndexMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayIndexMeta);
+    }
+    if (data.containsKey('action_id')) {
+      context.handle(
+        _actionIdMeta,
+        actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionIdMeta);
+    }
+    if (data.containsKey('completed')) {
+      context.handle(
+        _completedMeta,
+        completed.isAcceptableOrUnknown(data['completed']!, _completedMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('dirty')) {
+      context.handle(
+        _dirtyMeta,
+        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {runId, dayIndex, actionId},
+  ];
+  @override
+  DayLogActionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DayLogActionRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      runId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}run_id'],
+      )!,
+      dayIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}day_index'],
+      )!,
+      actionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_id'],
+      )!,
+      completed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}completed'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      dirty: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dirty'],
+      )!,
+    );
+  }
+
+  @override
+  $DayLogActionsTable createAlias(String alias) {
+    return $DayLogActionsTable(attachedDatabase, alias);
+  }
+}
+
+class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
+  final String id;
+  final String userId;
+  final String runId;
+  final int dayIndex;
+  final String actionId;
+  final bool completed;
+  final DateTime updatedAt;
+  final bool dirty;
+  const DayLogActionRow({
+    required this.id,
+    required this.userId,
+    required this.runId,
+    required this.dayIndex,
+    required this.actionId,
+    required this.completed,
+    required this.updatedAt,
+    required this.dirty,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['user_id'] = Variable<String>(userId);
+    map['run_id'] = Variable<String>(runId);
+    map['day_index'] = Variable<int>(dayIndex);
+    map['action_id'] = Variable<String>(actionId);
+    map['completed'] = Variable<bool>(completed);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['dirty'] = Variable<bool>(dirty);
+    return map;
+  }
+
+  DayLogActionsCompanion toCompanion(bool nullToAbsent) {
+    return DayLogActionsCompanion(
+      id: Value(id),
+      userId: Value(userId),
+      runId: Value(runId),
+      dayIndex: Value(dayIndex),
+      actionId: Value(actionId),
+      completed: Value(completed),
+      updatedAt: Value(updatedAt),
+      dirty: Value(dirty),
+    );
+  }
+
+  factory DayLogActionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DayLogActionRow(
+      id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String>(json['userId']),
+      runId: serializer.fromJson<String>(json['runId']),
+      dayIndex: serializer.fromJson<int>(json['dayIndex']),
+      actionId: serializer.fromJson<String>(json['actionId']),
+      completed: serializer.fromJson<bool>(json['completed']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      dirty: serializer.fromJson<bool>(json['dirty']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String>(userId),
+      'runId': serializer.toJson<String>(runId),
+      'dayIndex': serializer.toJson<int>(dayIndex),
+      'actionId': serializer.toJson<String>(actionId),
+      'completed': serializer.toJson<bool>(completed),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'dirty': serializer.toJson<bool>(dirty),
+    };
+  }
+
+  DayLogActionRow copyWith({
+    String? id,
+    String? userId,
+    String? runId,
+    int? dayIndex,
+    String? actionId,
+    bool? completed,
+    DateTime? updatedAt,
+    bool? dirty,
+  }) => DayLogActionRow(
+    id: id ?? this.id,
+    userId: userId ?? this.userId,
+    runId: runId ?? this.runId,
+    dayIndex: dayIndex ?? this.dayIndex,
+    actionId: actionId ?? this.actionId,
+    completed: completed ?? this.completed,
+    updatedAt: updatedAt ?? this.updatedAt,
+    dirty: dirty ?? this.dirty,
+  );
+  DayLogActionRow copyWithCompanion(DayLogActionsCompanion data) {
+    return DayLogActionRow(
+      id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      runId: data.runId.present ? data.runId.value : this.runId,
+      dayIndex: data.dayIndex.present ? data.dayIndex.value : this.dayIndex,
+      actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      completed: data.completed.present ? data.completed.value : this.completed,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      dirty: data.dirty.present ? data.dirty.value : this.dirty,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayLogActionRow(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('runId: $runId, ')
+          ..write('dayIndex: $dayIndex, ')
+          ..write('actionId: $actionId, ')
+          ..write('completed: $completed, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    runId,
+    dayIndex,
+    actionId,
+    completed,
+    updatedAt,
+    dirty,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DayLogActionRow &&
+          other.id == this.id &&
+          other.userId == this.userId &&
+          other.runId == this.runId &&
+          other.dayIndex == this.dayIndex &&
+          other.actionId == this.actionId &&
+          other.completed == this.completed &&
+          other.updatedAt == this.updatedAt &&
+          other.dirty == this.dirty);
+}
+
+class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
+  final Value<String> id;
+  final Value<String> userId;
+  final Value<String> runId;
+  final Value<int> dayIndex;
+  final Value<String> actionId;
+  final Value<bool> completed;
+  final Value<DateTime> updatedAt;
+  final Value<bool> dirty;
+  final Value<int> rowid;
+  const DayLogActionsCompanion({
+    this.id = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.runId = const Value.absent(),
+    this.dayIndex = const Value.absent(),
+    this.actionId = const Value.absent(),
+    this.completed = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.dirty = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DayLogActionsCompanion.insert({
+    required String id,
+    required String userId,
+    required String runId,
+    required int dayIndex,
+    required String actionId,
+    this.completed = const Value.absent(),
+    required DateTime updatedAt,
+    this.dirty = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       userId = Value(userId),
+       runId = Value(runId),
+       dayIndex = Value(dayIndex),
+       actionId = Value(actionId),
+       updatedAt = Value(updatedAt);
+  static Insertable<DayLogActionRow> custom({
+    Expression<String>? id,
+    Expression<String>? userId,
+    Expression<String>? runId,
+    Expression<int>? dayIndex,
+    Expression<String>? actionId,
+    Expression<bool>? completed,
+    Expression<DateTime>? updatedAt,
+    Expression<bool>? dirty,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
+      if (runId != null) 'run_id': runId,
+      if (dayIndex != null) 'day_index': dayIndex,
+      if (actionId != null) 'action_id': actionId,
+      if (completed != null) 'completed': completed,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (dirty != null) 'dirty': dirty,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DayLogActionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? userId,
+    Value<String>? runId,
+    Value<int>? dayIndex,
+    Value<String>? actionId,
+    Value<bool>? completed,
+    Value<DateTime>? updatedAt,
+    Value<bool>? dirty,
+    Value<int>? rowid,
+  }) {
+    return DayLogActionsCompanion(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      runId: runId ?? this.runId,
+      dayIndex: dayIndex ?? this.dayIndex,
+      actionId: actionId ?? this.actionId,
+      completed: completed ?? this.completed,
+      updatedAt: updatedAt ?? this.updatedAt,
+      dirty: dirty ?? this.dirty,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (runId.present) {
+      map['run_id'] = Variable<String>(runId.value);
+    }
+    if (dayIndex.present) {
+      map['day_index'] = Variable<int>(dayIndex.value);
+    }
+    if (actionId.present) {
+      map['action_id'] = Variable<String>(actionId.value);
+    }
+    if (completed.present) {
+      map['completed'] = Variable<bool>(completed.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (dirty.present) {
+      map['dirty'] = Variable<bool>(dirty.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayLogActionsCompanion(')
+          ..write('id: $id, ')
+          ..write('userId: $userId, ')
+          ..write('runId: $runId, ')
+          ..write('dayIndex: $dayIndex, ')
+          ..write('actionId: $actionId, ')
+          ..write('completed: $completed, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DiagnosticResultsTable extends DiagnosticResults
     with TableInfo<$DiagnosticResultsTable, DiagnosticResultRow> {
   @override
@@ -7236,6 +7856,7 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
   late final $ProfilesTable profiles = $ProfilesTable(this);
   late final $CampaignRunsTable campaignRuns = $CampaignRunsTable(this);
   late final $DayLogsTable dayLogs = $DayLogsTable(this);
+  late final $DayLogActionsTable dayLogActions = $DayLogActionsTable(this);
   late final $DiagnosticResultsTable diagnosticResults =
       $DiagnosticResultsTable(this);
   late final $EntitlementsTable entitlements = $EntitlementsTable(this);
@@ -7258,6 +7879,7 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     profiles,
     campaignRuns,
     dayLogs,
+    dayLogActions,
     diagnosticResults,
     entitlements,
     syncState,
@@ -8320,6 +8942,8 @@ typedef $$ActionsTableCreateCompanionBuilder =
       required String archetypeId,
       Value<String?> whyDoctrineId,
       Value<int> effort,
+      Value<bool> isOptional,
+      Value<int> sort,
       required DateTime updatedAt,
       Value<int> rowid,
     });
@@ -8332,6 +8956,8 @@ typedef $$ActionsTableUpdateCompanionBuilder =
       Value<String> archetypeId,
       Value<String?> whyDoctrineId,
       Value<int> effort,
+      Value<bool> isOptional,
+      Value<int> sort,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -8377,6 +9003,16 @@ class $$ActionsTableFilterComposer
 
   ColumnFilters<int> get effort => $composableBuilder(
     column: $table.effort,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isOptional => $composableBuilder(
+    column: $table.isOptional,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sort => $composableBuilder(
+    column: $table.sort,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8430,6 +9066,16 @@ class $$ActionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isOptional => $composableBuilder(
+    column: $table.isOptional,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sort => $composableBuilder(
+    column: $table.sort,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -8471,6 +9117,14 @@ class $$ActionsTableAnnotationComposer
 
   GeneratedColumn<int> get effort =>
       $composableBuilder(column: $table.effort, builder: (column) => column);
+
+  GeneratedColumn<bool> get isOptional => $composableBuilder(
+    column: $table.isOptional,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sort =>
+      $composableBuilder(column: $table.sort, builder: (column) => column);
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -8514,6 +9168,8 @@ class $$ActionsTableTableManager
                 Value<String> archetypeId = const Value.absent(),
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
+                Value<bool> isOptional = const Value.absent(),
+                Value<int> sort = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ActionsCompanion(
@@ -8524,6 +9180,8 @@ class $$ActionsTableTableManager
                 archetypeId: archetypeId,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
+                isOptional: isOptional,
+                sort: sort,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -8536,6 +9194,8 @@ class $$ActionsTableTableManager
                 required String archetypeId,
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
+                Value<bool> isOptional = const Value.absent(),
+                Value<int> sort = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => ActionsCompanion.insert(
@@ -8546,6 +9206,8 @@ class $$ActionsTableTableManager
                 archetypeId: archetypeId,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
+                isOptional: isOptional,
+                sort: sort,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -10418,6 +11080,269 @@ typedef $$DayLogsTableProcessedTableManager =
       DayLogRow,
       PrefetchHooks Function()
     >;
+typedef $$DayLogActionsTableCreateCompanionBuilder =
+    DayLogActionsCompanion Function({
+      required String id,
+      required String userId,
+      required String runId,
+      required int dayIndex,
+      required String actionId,
+      Value<bool> completed,
+      required DateTime updatedAt,
+      Value<bool> dirty,
+      Value<int> rowid,
+    });
+typedef $$DayLogActionsTableUpdateCompanionBuilder =
+    DayLogActionsCompanion Function({
+      Value<String> id,
+      Value<String> userId,
+      Value<String> runId,
+      Value<int> dayIndex,
+      Value<String> actionId,
+      Value<bool> completed,
+      Value<DateTime> updatedAt,
+      Value<bool> dirty,
+      Value<int> rowid,
+    });
+
+class $$DayLogActionsTableFilterComposer
+    extends Composer<_$FeralDatabase, $DayLogActionsTable> {
+  $$DayLogActionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get runId => $composableBuilder(
+    column: $table.runId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dayIndex => $composableBuilder(
+    column: $table.dayIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get completed => $composableBuilder(
+    column: $table.completed,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DayLogActionsTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DayLogActionsTable> {
+  $$DayLogActionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get runId => $composableBuilder(
+    column: $table.runId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dayIndex => $composableBuilder(
+    column: $table.dayIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get completed => $composableBuilder(
+    column: $table.completed,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DayLogActionsTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DayLogActionsTable> {
+  $$DayLogActionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get runId =>
+      $composableBuilder(column: $table.runId, builder: (column) => column);
+
+  GeneratedColumn<int> get dayIndex =>
+      $composableBuilder(column: $table.dayIndex, builder: (column) => column);
+
+  GeneratedColumn<String> get actionId =>
+      $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<bool> get completed =>
+      $composableBuilder(column: $table.completed, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get dirty =>
+      $composableBuilder(column: $table.dirty, builder: (column) => column);
+}
+
+class $$DayLogActionsTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DayLogActionsTable,
+          DayLogActionRow,
+          $$DayLogActionsTableFilterComposer,
+          $$DayLogActionsTableOrderingComposer,
+          $$DayLogActionsTableAnnotationComposer,
+          $$DayLogActionsTableCreateCompanionBuilder,
+          $$DayLogActionsTableUpdateCompanionBuilder,
+          (
+            DayLogActionRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $DayLogActionsTable,
+              DayLogActionRow
+            >,
+          ),
+          DayLogActionRow,
+          PrefetchHooks Function()
+        > {
+  $$DayLogActionsTableTableManager(
+    _$FeralDatabase db,
+    $DayLogActionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DayLogActionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DayLogActionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DayLogActionsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> runId = const Value.absent(),
+                Value<int> dayIndex = const Value.absent(),
+                Value<String> actionId = const Value.absent(),
+                Value<bool> completed = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> dirty = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DayLogActionsCompanion(
+                id: id,
+                userId: userId,
+                runId: runId,
+                dayIndex: dayIndex,
+                actionId: actionId,
+                completed: completed,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String userId,
+                required String runId,
+                required int dayIndex,
+                required String actionId,
+                Value<bool> completed = const Value.absent(),
+                required DateTime updatedAt,
+                Value<bool> dirty = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DayLogActionsCompanion.insert(
+                id: id,
+                userId: userId,
+                runId: runId,
+                dayIndex: dayIndex,
+                actionId: actionId,
+                completed: completed,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DayLogActionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DayLogActionsTable,
+      DayLogActionRow,
+      $$DayLogActionsTableFilterComposer,
+      $$DayLogActionsTableOrderingComposer,
+      $$DayLogActionsTableAnnotationComposer,
+      $$DayLogActionsTableCreateCompanionBuilder,
+      $$DayLogActionsTableUpdateCompanionBuilder,
+      (
+        DayLogActionRow,
+        BaseReferences<_$FeralDatabase, $DayLogActionsTable, DayLogActionRow>,
+      ),
+      DayLogActionRow,
+      PrefetchHooks Function()
+    >;
 typedef $$DiagnosticResultsTableCreateCompanionBuilder =
     DiagnosticResultsCompanion Function({
       required String id,
@@ -11107,6 +12032,8 @@ class $FeralDatabaseManager {
       $$CampaignRunsTableTableManager(_db, _db.campaignRuns);
   $$DayLogsTableTableManager get dayLogs =>
       $$DayLogsTableTableManager(_db, _db.dayLogs);
+  $$DayLogActionsTableTableManager get dayLogActions =>
+      $$DayLogActionsTableTableManager(_db, _db.dayLogActions);
   $$DiagnosticResultsTableTableManager get diagnosticResults =>
       $$DiagnosticResultsTableTableManager(_db, _db.diagnosticResults);
   $$EntitlementsTableTableManager get entitlements =>
