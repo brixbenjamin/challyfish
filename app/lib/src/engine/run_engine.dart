@@ -1,7 +1,9 @@
 import 'package:timezone/timezone.dart' as tz;
 
+import '../domain/campaign.dart';
 import '../domain/day_log.dart';
 import '../domain/grade.dart';
+import '../domain/outcome.dart';
 import 'grade_thresholds.dart';
 
 /// Every rule that decides where a user stands in a run.
@@ -82,5 +84,40 @@ class RunEngine {
       for (var day = 1; day < currentDay; day++)
         if (!reported.contains(day)) day,
     ];
+  }
+
+  /// The outcome a day resolves to, given what the user ticked (ADR-0030).
+  ///
+  /// `missed` is never returned here: it is written only by rollover, for a day
+  /// the user let pass without acting at all. The three outcomes below carry
+  /// exactly the meanings they carried when they were chosen from buttons,
+  /// which is what leaves [missCount], [missAllowance] and [grade] untouched.
+  Outcome deriveOutcome({
+    required String mandatoryActionId,
+    required Set<String> completedActionIds,
+  }) {
+    if (completedActionIds.contains(mandatoryActionId)) return Outcome.done;
+    if (completedActionIds.isEmpty) return Outcome.skipped;
+    return Outcome.partial;
+  }
+
+  /// Points earned for a set of ticks, as displayed: the plain integer sum of
+  /// each action's authored effort.
+  ///
+  /// Undivided. `BalanceWeights.pointsPerFullDay` scales the radar and nothing
+  /// else — a user-facing "0.75 points" is not a thing this product shows.
+  ///
+  /// A tick whose action is not cached contributes nothing rather than
+  /// throwing — content can lag progress after a partial sync.
+  int pointsFor({
+    required Iterable<String> completedActionIds,
+    required Map<String, ActionSpec> actionsById,
+  }) {
+    var total = 0;
+    for (final id in completedActionIds) {
+      final action = actionsById[id];
+      if (action != null) total += action.effort;
+    }
+    return total;
   }
 }

@@ -29,7 +29,8 @@ class Campaign {
   final int sort;
 }
 
-/// One day's assignment within a campaign. Carries exactly one archetype.
+/// One action within a campaign day. Carries exactly one archetype (ADR-0004).
+/// A day holds one mandatory action and zero or more optional ones (ADR-0030).
 class ActionSpec {
   const ActionSpec({
     required this.id,
@@ -40,6 +41,8 @@ class ActionSpec {
     required this.archetypeId,
     this.whyDoctrineId,
     this.effort = 1,
+    this.isOptional = false,
+    this.sort = 0,
   });
 
   final String id;
@@ -55,5 +58,14 @@ class ActionSpec {
   final String? bodyMd;
   final String archetypeId;
   final String? whyDoctrineId;
+
+  /// The action's points value, shown to the user as authored. The balance
+  /// divides it by `pointsPerFullDay`; nothing else does (ADR-0030).
   final int effort;
+
+  /// False for the day's one mandatory action — the one the grade depends on.
+  final bool isOptional;
+
+  /// Display order within the day. The mandatory action sorts first.
+  final int sort;
 }

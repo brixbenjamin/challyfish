@@ -33,4 +33,6 @@ ActionSpec toAction(ActionRow row, [ActionBodyRow? body]) => ActionSpec(
   archetypeId: row.archetypeId,
   whyDoctrineId: row.whyDoctrineId,
   effort: row.effort,
+  isOptional: row.isOptional,
+  sort: row.sort,
 );
