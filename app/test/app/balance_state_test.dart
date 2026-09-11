@@ -54,6 +54,10 @@ void main() {
     dayIndex: day,
     actionId: actionId,
     outcome: outcome,
+    completedActionIds:
+        outcome == Outcome.done || outcome == Outcome.partial
+        ? {actionId}
+        : const {},
   );
 
   final actions = {
@@ -143,7 +147,12 @@ void main() {
       final empty = build(runs: const [], logs: const []);
       expect(empty.maxValue, greaterThanOrEqualTo(1.0));
 
-      final busy = build(
+      // Three 1-point days no longer clear the floor, and that is the floor
+      // doing its job rather than a regression: pointsPerFullDay is 5, so
+      // three ticks are 0.6 of a full day's effort. The floor exists exactly
+      // so a thin record cannot draw a full axis, and ADR-0030 chose the
+      // divisor to keep it calibrated that way.
+      final thin = build(
         runs: [run('r1', 'c-1')],
         logs: [
           log('r1', 1, 'act-p', Outcome.done),
@@ -151,7 +160,19 @@ void main() {
           log('r1', 3, 'act-p', Outcome.done),
         ],
       );
+      expect(thin.maxValue, 1.0, reason: 'the floor still holds a thin record');
+
+      // A real run's worth of effort does clear it, and then maxValue tracks
+      // the largest axis rather than the floor.
+      final busy = build(
+        runs: [run('r1', 'c-1')],
+        logs: [
+          for (var day = 1; day <= 15; day++)
+            log('r1', day, 'act-p', Outcome.done),
+        ],
+      );
       expect(busy.maxValue, greaterThan(2.0));
+      expect(busy.maxValue, busy.valueFor('a-psycho'));
     },
   );
 
@@ -171,5 +192,48 @@ void main() {
 
     expect(state.valueFor('a-psycho'), greaterThan(0));
     expect(state.marks, isEmpty);
+  });
+
+  group('allTimePoints', () {
+    test('sums every point ever earned, undecayed', () {
+      final runs = [run('r-1', 'c-1')];
+      final logs = [
+        log('r-1', 1, 'act-p', Outcome.done),
+        log('r-1', 2, 'act-k', Outcome.done),
+      ];
+
+      // Every seeded action is effort 1 until Q18 is answered, so two ticked
+      // days are two points.
+      expect(build(runs: runs, logs: logs).allTimePoints, 2);
+    });
+
+    test('does not fall when the radar does', () {
+      // The whole reason ADR-0029 permitted this figure: it stays a true
+      // statement about what the user did however long they stay away. If
+      // this ever starts decaying it has become a streak with extra steps.
+      final runs = [run('r-1', 'c-1')];
+      final logs = [log('r-1', 1, 'act-p', Outcome.done)];
+
+      final fresh = build(runs: runs, logs: logs);
+      final stale = build(
+        runs: runs,
+        logs: logs,
+        now: tz.TZDateTime(berlin, 2027, 6, 2, 12).toUtc(),
+      );
+
+      expect(stale.valueFor('a-psycho'), lessThan(fresh.valueFor('a-psycho')));
+      expect(stale.allTimePoints, fresh.allTimePoints);
+      expect(stale.allTimePoints, 1);
+    });
+
+    test('a skipped day earns nothing', () {
+      expect(
+        build(
+          runs: [run('r-1', 'c-1')],
+          logs: [log('r-1', 1, 'act-p', Outcome.skipped)],
+        ).allTimePoints,
+        0,
+      );
+    });
   });
 }

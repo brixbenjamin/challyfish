@@ -17,13 +17,21 @@ ActionSpec action(String id, String archetypeId, {int effort = 1}) =>
       effort: effort,
     );
 
-DayLog log(int day, String actionId, Outcome? outcome) => DayLog(
-  id: 'log-$day',
-  runId: 'run-1',
-  dayIndex: day,
-  actionId: actionId,
-  outcome: outcome,
-);
+/// Ticks default from the outcome, because that is exactly what the migration
+/// backfill does to every day recorded before ADR-0030.
+DayLog log(int day, String actionId, Outcome? outcome, {Set<String>? ticks}) =>
+    DayLog(
+      id: 'log-$day',
+      runId: 'run-1',
+      dayIndex: day,
+      actionId: actionId,
+      outcome: outcome,
+      completedActionIds:
+          ticks ??
+          (outcome == Outcome.done || outcome == Outcome.partial
+              ? {actionId}
+              : const {}),
+    );
 
 void main() {
   tzdata.initializeTimeZones();
@@ -41,6 +49,7 @@ void main() {
     'a-axis-a': action('a-axis-a', 'axis-a'),
     'a-axis-b': action('a-axis-b', 'axis-b'),
     'a-heavy': action('a-heavy', 'axis-b', effort: 3),
+    'a-full': action('a-full', 'axis-a', effort: 5),
   };
 
   final runStart = tz.TZDateTime(berlin, 2026, 6, 1, 9).toUtc();
@@ -61,18 +70,18 @@ void main() {
 
   test('a day acted today counts its full weight', () {
     final result = balanceAt(0, [log(1, 'a-axis-a', Outcome.done)]);
-    expect(result['axis-a'], closeTo(1.0, 1e-9));
+    expect(result['axis-a'], closeTo(1 / 5, 1e-9));
   });
 
   test('a day exactly one half-life old counts half', () {
     // Day 1 of the run, evaluated 60 local days later.
     final result = balanceAt(60, [log(1, 'a-axis-a', Outcome.done)]);
-    expect(result['axis-a'], closeTo(0.5, 1e-9));
+    expect(result['axis-a'], closeTo(0.5 / 5, 1e-9));
   });
 
   test('two half-lives is a quarter', () {
     final result = balanceAt(120, [log(1, 'a-axis-a', Outcome.done)]);
-    expect(result['axis-a'], closeTo(0.25, 1e-9));
+    expect(result['axis-a'], closeTo(0.25 / 5, 1e-9));
   });
 
   test('partial counts the same as done', () {
@@ -90,10 +99,51 @@ void main() {
     expect(result['axis-a'], isNull);
   });
 
-  test('effort is not used', () {
+  test('a heavier action moves its axis further than a lighter one', () {
+    // ADR-0030 reversed ADR-0010's "effort is not used", which this file
+    // previously asserted. Effort is the points value now, and it weights the
+    // contribution.
     final heavy = balanceAt(0, [log(1, 'a-heavy', Outcome.done)]);
     final light = balanceAt(0, [log(1, 'a-axis-b', Outcome.done)]);
-    expect(heavy['axis-b'], closeTo(light['axis-b']!, 1e-9));
+    expect(heavy['axis-b']! / light['axis-b']!, closeTo(3.0, 1e-9));
+  });
+
+  test('a full day of effort contributes about one', () {
+    // pointsPerFullDay is 5, so a single 5-effort day lands at 1.0 and
+    // BalanceState.maxValue's floor still does its job on a near-empty record.
+    final balance = balanceAt(0, [
+      log(1, 'a-axis-a', Outcome.done, ticks: const {'a-full'}),
+    ]);
+    expect(balance['axis-a'], closeTo(1.0, 1e-9));
+  });
+
+  test('one day moves several axes', () {
+    // The property ADR-0030 was built for: the radar is fed by what the user
+    // did, not by what the day was labelled.
+    final balance = balanceAt(0, [
+      log(1, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
+    ]);
+    expect(balance['axis-a'], greaterThan(0));
+    expect(balance['axis-b'], greaterThan(0));
+  });
+
+  test('an unticked day contributes nothing', () {
+    final balance = balanceAt(0, [
+      log(1, 'a-axis-a', Outcome.skipped, ticks: const {}),
+    ]);
+    expect(balance, isEmpty);
+  });
+
+  test('the points scale is injectable, like the half-life', () {
+    final result = calculator.compute(
+      logs: [log(1, 'a-full', Outcome.done)],
+      actionsById: actions,
+      runStartedAt: starts,
+      zone: berlin,
+      now: nowPlus(0),
+      weights: const BalanceWeights(pointsPerFullDay: 10),
+    );
+    expect(result['axis-a'], closeTo(0.5, 1e-9));
   });
 
   test('recent action outweighs old action in the same archetype', () {
@@ -110,7 +160,7 @@ void main() {
     final fresh = balanceAt(0, logs)['axis-a']!;
     final stale = balanceAt(180, logs)['axis-a']!;
     expect(stale < fresh, isTrue);
-    expect(stale, lessThan(0.15));
+    expect(stale, lessThan(0.15 / 5));
   });
 
   test(
@@ -135,6 +185,7 @@ void main() {
           dayIndex: 1,
           actionId: 'a-axis-a',
           outcome: Outcome.done,
+          completedActionIds: const {'a-axis-a'},
         ),
       ],
       actionsById: actions,
@@ -159,7 +210,7 @@ void main() {
   test('a future-dated log is never amplified above full weight', () {
     // Clock skew or travel can put a log a day ahead. It must not count double.
     final result = balanceAt(0, [log(5, 'a-axis-a', Outcome.done)]);
-    expect(result['axis-a'], closeTo(1.0, 1e-9));
+    expect(result['axis-a'], closeTo(1 / 5, 1e-9));
   });
 
   test('no logs produce an empty balance, not a crash', () {
@@ -175,6 +226,6 @@ void main() {
       now: nowPlus(30),
       weights: const BalanceWeights(halfLifeDays: 30),
     );
-    expect(result['axis-a'], closeTo(0.5, 1e-9));
+    expect(result['axis-a'], closeTo(0.5 / 5, 1e-9));
   });
 }

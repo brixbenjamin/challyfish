@@ -50,6 +50,7 @@ BalanceState state({
   marks: marks,
   archetypes: archetypes,
   maxValue: 1,
+  allTimePoints: 0,
 );
 
 void main() {

@@ -58,6 +58,7 @@ BalanceState state({
       : balance.values
             .reduce((a, b) => a > b ? a : b)
             .clamp(1, double.infinity),
+  allTimePoints: 0,
 );
 
 Future<void> pump(WidgetTester tester, BalanceState value) => tester.pumpWidget(
@@ -395,6 +396,7 @@ void main() {
                     marks: const {'a-1': 2},
                     archetypes: names,
                     maxValue: 3,
+                    allTimePoints: 0,
                   ),
                 ),
               ),

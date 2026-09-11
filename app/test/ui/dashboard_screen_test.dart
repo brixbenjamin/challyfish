@@ -83,6 +83,7 @@ void main() {
     marks: {},
     archetypes: archetypes,
     maxValue: 1,
+    allTimePoints: 0,
   );
 
   Future<void> pumpWith(
