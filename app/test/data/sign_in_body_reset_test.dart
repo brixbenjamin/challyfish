@@ -60,4 +60,48 @@ void main() {
       reason: 'the next pull must be able to see rows older than the old mark',
     );
   });
+
+  test('signing in clears the previous account\'s ticks', () async {
+    // A tick left behind would feed the previous account's acts into this
+    // account's radar and points total. The wipe has to know about every user
+    // table, and this is the one ADR-0030 added.
+    final db = FeralDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    await db.into(db.campaignRuns).insert(
+      CampaignRunsCompanion.insert(
+        id: 'run-1',
+        userId: 'user-1',
+        campaignId: 'campaign-1',
+        status: 'active',
+        startedAt: DateTime.utc(2026, 6, 1),
+        updatedAt: DateTime.utc(2026, 6, 1),
+      ),
+    );
+    await db.into(db.dayLogs).insert(
+      DayLogsCompanion.insert(
+        id: 'log-1',
+        userId: 'user-1',
+        runId: 'run-1',
+        dayIndex: 1,
+        actionId: 'action-1',
+        updatedAt: DateTime.utc(2026, 6, 1),
+      ),
+    );
+    await db.into(db.dayLogActions).insert(
+      DayLogActionsCompanion.insert(
+        id: 'tick-1',
+        userId: 'user-1',
+        runId: 'run-1',
+        dayIndex: 1,
+        actionId: 'action-1',
+        updatedAt: DateTime.utc(2026, 6, 1),
+      ),
+    );
+
+    await replaceLocalUserState(db);
+
+    expect(await db.select(db.dayLogActions).get(), isEmpty);
+    expect(await db.select(db.dayLogs).get(), isEmpty);
+  });
 }

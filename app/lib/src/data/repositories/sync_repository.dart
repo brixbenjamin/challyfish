@@ -69,6 +69,7 @@ class SyncRepository implements SyncRunner {
     'profiles',
     'campaign_runs',
     'day_logs',
+    'day_log_actions',
     'diagnostic_results',
   ];
 
@@ -81,6 +82,7 @@ class SyncRepository implements SyncRunner {
     'profiles',
     'campaign_runs',
     'day_logs',
+    'day_log_actions',
     'diagnostic_results',
   ];
 
@@ -201,6 +203,29 @@ class SyncRepository implements SyncRunner {
             ),
         ];
 
+      case 'day_log_actions':
+        final rows = await (db.select(
+          db.dayLogActions,
+        )..where((t) => t.dirty.equals(true) & t.userId.equals(userId))).get();
+        return [
+          for (final r in rows)
+            DirtyRow(
+              key: r.id,
+              updatedAt: r.updatedAt,
+              payload: {
+                'id': r.id,
+                'user_id': r.userId,
+                'run_id': r.runId,
+                'day_index': r.dayIndex,
+                'action_id': r.actionId,
+                // A flag, never an absence. Unticking has to travel, and
+                // nothing in this design carries tombstones.
+                'completed': r.completed,
+                'updated_at': r.updatedAt.toUtc().toIso8601String(),
+              },
+            ),
+        ];
+
       case 'diagnostic_results':
         final rows = await (db.select(
           db.diagnosticResults,
@@ -252,6 +277,11 @@ class SyncRepository implements SyncRunner {
                 (l) => l.id.equals(row.key) & l.updatedAt.equals(row.updatedAt),
               ))
               .write(const DayLogsCompanion(dirty: Value(false)));
+        case 'day_log_actions':
+          await (db.update(db.dayLogActions)..where(
+                (t) => t.id.equals(row.key) & t.updatedAt.equals(row.updatedAt),
+              ))
+              .write(const DayLogActionsCompanion(dirty: Value(false)));
         case 'diagnostic_results':
           await (db.update(db.diagnosticResults)..where(
                 (d) => d.id.equals(row.key) & d.updatedAt.equals(row.updatedAt),
@@ -507,6 +537,53 @@ class SyncRepository implements SyncRunner {
                 committedAt: _optional(row['committed_at']),
                 outcome: row['outcome'] as String?,
                 note: row['note'] as String?,
+                updatedAt: _remoteUpdatedAt(row),
+                dirty: false,
+              ),
+            );
+
+      case 'day_log_actions':
+        // (run_id, day_index, action_id) is the identity, NOT id -- two
+        // offline devices generate different uuids for the same tick. This is
+        // also why the table hangs off (run_id, day_index) rather than off
+        // day_logs.id: the merge below deletes and reinserts a day log to
+        // adopt the server's uuid, and a child keyed on that id would go with
+        // it.
+        final runId = row['run_id'] as String;
+        final dayIndex = row['day_index'] as int;
+        final actionId = row['action_id'] as String;
+        final local =
+            await (db.select(db.dayLogActions)..where(
+                  (t) =>
+                      t.runId.equals(runId) &
+                      t.dayIndex.equals(dayIndex) &
+                      t.actionId.equals(actionId),
+                ))
+                .getSingleOrNull();
+        if (!_remoteWins(
+          local?.dirty,
+          local?.updatedAt,
+          _remoteUpdatedAt(row),
+        )) {
+          return;
+        }
+
+        // Adopt the server's id so both devices converge on one row.
+        if (local != null && local.id != row['id']) {
+          await (db.delete(
+            db.dayLogActions,
+          )..where((t) => t.id.equals(local.id))).go();
+        }
+        await db
+            .into(db.dayLogActions)
+            .insertOnConflictUpdate(
+              DayLogActionRow(
+                id: row['id'] as String,
+                userId: row['user_id'] as String,
+                runId: runId,
+                dayIndex: dayIndex,
+                actionId: actionId,
+                completed: (row['completed'] as bool?) ?? true,
                 updatedAt: _remoteUpdatedAt(row),
                 dirty: false,
               ),

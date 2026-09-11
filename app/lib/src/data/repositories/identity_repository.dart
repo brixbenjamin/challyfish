@@ -214,6 +214,11 @@ class IdentityRepository {
 /// database. [IdentityRepository] remains the only production caller.
 Future<void> replaceLocalUserState(FeralDatabase db) async {
   await db.transaction(() async {
+    // Before day_logs, mirroring the foreign-key direction on the server.
+    // Leaving these behind would feed the previous account's acts into this
+    // one's radar and points total -- the same class of bug the entitlements
+    // note below describes, and the reason that note exists.
+    await db.delete(db.dayLogActions).go();
     await db.delete(db.dayLogs).go();
     await db.delete(db.campaignRuns).go();
     await db.delete(db.diagnosticResults).go();
