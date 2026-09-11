@@ -1,14 +1,30 @@
 begin;
-select plan(13);
+select plan(14);
 
 -- Structural validation only. The safety floor in design spec section 9 cannot
 -- be checked by a machine and is an authoring obligation (Q11).
 
+-- Exactly one mandatory action per day, for every day of every campaign
+-- (ADR-0030). The count is of mandatory rows only: optionals are authored
+-- freely on top and must not make a well-formed campaign look malformed.
 select is_empty(
-  $$ select c.key from public.campaigns c
-     where (select count(*) from public.actions a where a.campaign_id = c.id)
-           <> c.length_days $$,
-  'every campaign has exactly length_days actions'
+  $$ select c.id from public.campaigns c
+     where (select count(*) from public.actions a
+            where a.campaign_id = c.id and not a.is_optional) <> c.length_days $$,
+  'every campaign has exactly one mandatory action per day'
+);
+
+-- An optional action on a day with no mandatory one is an orphan: the grade
+-- would have nothing to depend on and the day could never resolve to `done`.
+select is_empty(
+  $$ select a.id from public.actions a
+     where a.is_optional
+       and not exists (
+         select 1 from public.actions m
+         where m.campaign_id = a.campaign_id
+           and m.day_index = a.day_index
+           and not m.is_optional) $$,
+  'no optional action sits on a day without a mandatory one'
 );
 
 select is_empty(

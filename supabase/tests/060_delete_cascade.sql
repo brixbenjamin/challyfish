@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(8);
 
 -- Two users with a full set of rows each. Deleting one must take everything of
 -- theirs and nothing of the other's.
@@ -33,6 +33,12 @@ select
      where campaign_id = r.campaign_id and day_index = 1),
   'done'
 from public.campaign_runs r;
+
+-- A tick per user, hanging off the day log inserted above. This is the row the
+-- composite foreign key (run_id, day_index) -> day_logs has to carry away.
+insert into public.day_log_actions (id, user_id, run_id, day_index, action_id)
+select gen_random_uuid(), l.user_id, l.run_id, l.day_index, l.action_id
+from public.day_logs l;
 
 insert into public.diagnostic_results
   (id, user_id, taken_at, scores, weakest_archetype_id, recommended_campaign_id)
@@ -87,11 +93,29 @@ select is(
   'entitlements cascaded'
 );
 
+-- The tick reaches auth.users by two routes -- its own user_id FK and the
+-- composite key into day_logs -- and both have to be cascades. A restrict on
+-- either would make account deletion fail outright rather than leave a
+-- remnant, which is why this is asserted rather than assumed.
+select is(
+  (select count(*)::int from public.day_log_actions
+    where user_id = '11111111-1111-1111-1111-111111111111'),
+  0,
+  'day_log_actions cascaded — which acts were done is gone too'
+);
+
 select is(
   (select count(*)::int from public.day_logs
     where user_id = '22222222-2222-2222-2222-222222222222'),
   1,
   'the other user is untouched'
+);
+
+select is(
+  (select count(*)::int from public.day_log_actions
+    where user_id = '22222222-2222-2222-2222-222222222222'),
+  1,
+  'the other user keeps their ticks'
 );
 
 select * from finish();

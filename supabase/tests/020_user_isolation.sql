@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(12);
 
 -- Two users, created directly in auth.users as the postgres role.
 insert into auth.users (id, email)
@@ -34,15 +34,25 @@ values ('dddddddd-0000-0000-0000-000000000001',
         'bbbbbbbb-2222-2222-2222-222222222222', 1, 'Do the thing',
         'cccccccc-2222-2222-2222-222222222222');
 
--- User B's own rows in the three tables the spec names explicitly.
-insert into public.campaign_runs (user_id, campaign_id, status, started_at)
-values ('22222222-2222-2222-2222-222222222222',
+-- User B's own rows in the tables the spec names explicitly. The run id is
+-- spelled out rather than sub-selected because the write assertions below run
+-- as user A, who cannot see user B's run to look it up -- a null run_id would
+-- raise a not-null violation and the test would pass for the wrong reason.
+insert into public.campaign_runs (id, user_id, campaign_id, status, started_at)
+values ('33333333-3333-3333-3333-333333333333',
+        '22222222-2222-2222-2222-222222222222',
         'bbbbbbbb-2222-2222-2222-222222222222', 'active', now());
 
 insert into public.day_logs (user_id, run_id, day_index, action_id)
 values ('22222222-2222-2222-2222-222222222222',
-        (select id from public.campaign_runs
-           where user_id = '22222222-2222-2222-2222-222222222222'),
+        '33333333-3333-3333-3333-333333333333',
+        1, 'dddddddd-0000-0000-0000-000000000001');
+
+-- A tick of user B's, so the read assertion below is answering "RLS hid it"
+-- rather than "the table happened to be empty".
+insert into public.day_log_actions (user_id, run_id, day_index, action_id)
+values ('22222222-2222-2222-2222-222222222222',
+        '33333333-3333-3333-3333-333333333333',
         1, 'dddddddd-0000-0000-0000-000000000001');
 
 insert into public.entitlements (user_id, pack_id, source)
@@ -137,6 +147,28 @@ select throws_ok(
   '42501',
   null,
   'user A cannot insert an entitlement at all, even for themself'
+);
+
+-- day_log_actions is owner-scoped like every other user table (ADR-0030). The
+-- ticks say which specific acts a user performed, so this is the same privacy
+-- guarantee as day_logs and not a lesser one.
+select results_eq(
+  $$ select count(*)::int from public.day_log_actions
+     where user_id = '22222222-2222-2222-2222-222222222222' $$,
+  array[0],
+  'user A cannot read user B''s ticks'
+);
+
+-- Every foreign key here resolves, so a 42501 can only have come from the RLS
+-- with-check predicate rather than from a dangling reference.
+select throws_ok(
+  $$ insert into public.day_log_actions (user_id, run_id, day_index, action_id)
+     values ('22222222-2222-2222-2222-222222222222',
+             '33333333-3333-3333-3333-333333333333', 1,
+             'dddddddd-0000-0000-0000-000000000001') $$,
+  '42501',
+  null,
+  'user A cannot write a tick for another user'
 );
 
 select * from finish();
