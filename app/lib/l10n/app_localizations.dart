@@ -903,6 +903,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =0{No marks yet.} other{Marks: {details}.}}'**
   String radarMarks(int count, String details);
+
+  /// [niche] The single control that resolves the day. The outcome is derived from what was ticked, never chosen, so skipped has no button of its own (principle 10).
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportButton;
+
+  /// What an action is worth. A reading, never a score with a target beside it (ADR-0029). Pluralised so screen readers announce it as a count rather than a bare numeral.
+  ///
+  /// In en, this message translates to:
+  /// **'{points, plural, =1{1 point} other{{points} points}}'**
+  String actionPoints(int points);
+
+  /// Label for the day's earned points, shown beside the action list as a panel reading. Deliberately not 'Progress' or 'Score': it names a span of time, not an achievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dayPointsTotal;
+
+  /// Label for points earned so far in the current run. Never compared to a target or a previous run.
+  ///
+  /// In en, this message translates to:
+  /// **'This campaign'**
+  String get runPointsTotal;
+
+  /// [niche] Label for every point ever earned, shown beside the permanent archetype marks. Undecayed by design — it is the record that does not fall when the radar does (ADR-0010, ADR-0029).
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get allTimePointsTotal;
+
+  /// [niche] Marks an action as not required for the day to count as done. Must not read as lesser or as outstanding work — nothing rewards reaching for one beyond the act itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optionalAction;
+
+  /// [niche] Shown in the report sheet before confirming, so the user sees what is about to be recorded. The outcome is derived from the ticks, not chosen. Announced to screen readers before Report is activated.
+  ///
+  /// In en, this message translates to:
+  /// **'This records: {outcome}'**
+  String willRecord(String outcome);
+
+  /// Screen-reader description of the day's mandatory action row: what it is, that it is the one the grade depends on, its points, and whether it is ticked.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}. Required. Worth {points}. {state}'**
+  String actionSemanticMandatory(String title, String points, String state);
+
+  /// Screen-reader description of an optional action row. Mirrors the mandatory one so the only audible difference is the word that matters.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}. Optional. Worth {points}. {state}'**
+  String actionSemanticOptional(String title, String points, String state);
+
+  /// [niche] Screen-reader state of a ticked action. Ticked state is never encoded by colour alone, and this is the text half of that pairing.
+  ///
+  /// In en, this message translates to:
+  /// **'Done.'**
+  String get actionStateDone;
+
+  /// [niche] Screen-reader state of an unticked action. Flat and unpressured: an unticked row is not outstanding work.
+  ///
+  /// In en, this message translates to:
+  /// **'Not done.'**
+  String get actionStateNotDone;
 }
 
 class _AppLocalizationsDelegate

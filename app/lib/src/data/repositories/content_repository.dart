@@ -325,6 +325,38 @@ class ContentRepository {
   /// its body returns a spec with a null `bodyMd` — a locked pack, or one whose
   /// bodies have not arrived — and callers degrade to the same recoverable
   /// "content unavailable" state either way.
+  /// Every action on one campaign day: the mandatory one and any optionals,
+  /// ordered mandatory-first then by `sort` (ADR-0030).
+  ///
+  /// Empty when the day's content is not cached at all. A day whose optionals
+  /// are cached but whose mandatory action is not is a partial-sync state the
+  /// caller degrades on, not one this query papers over.
+  Future<List<ActionSpec>> actionsForDay(String campaignId, int dayIndex) async {
+    final query =
+        db.select(db.actions).join([
+            leftOuterJoin(
+              db.actionBodies,
+              db.actionBodies.actionId.equalsExp(db.actions.id),
+            ),
+          ])
+          ..where(
+            db.actions.campaignId.equals(campaignId) &
+                db.actions.dayIndex.equals(dayIndex),
+          )
+          ..orderBy([
+            OrderingTerm(expression: db.actions.isOptional),
+            OrderingTerm(expression: db.actions.sort),
+          ]);
+    final rows = await query.get();
+    return [
+      for (final row in rows)
+        toAction(
+          row.readTable(db.actions),
+          row.readTableOrNull(db.actionBodies),
+        ),
+    ];
+  }
+
   Future<ActionSpec?> actionFor(String campaignId, int dayIndex) async {
     final query =
         db.select(db.actions).join([
@@ -334,7 +366,11 @@ class ContentRepository {
           ),
         ])..where(
           db.actions.campaignId.equals(campaignId) &
-              db.actions.dayIndex.equals(dayIndex),
+              db.actions.dayIndex.equals(dayIndex) &
+              // The day's *mandatory* action. Without this the query would
+              // throw on any day that has optionals, since a day is no longer
+              // one row (ADR-0030).
+              db.actions.isOptional.equals(false),
         );
     final row = await query.getSingleOrNull();
     return row == null

@@ -550,7 +550,7 @@
   "@deliveringPackTitle": {
     "description": "Shown after a purchase succeeds while the pack's content is being fetched."
   },
-  "deliveringPackBody": "Your purchase went through. We're fetching the pack now \u2014 this usually takes a few seconds.",
+  "deliveringPackBody": "Your purchase went through. We're fetching the pack now — this usually takes a few seconds.",
   "@deliveringPackBody": {
     "description": "Body text under deliveringPackTitle. Must not suggest the payment failed."
   },
@@ -607,7 +607,7 @@
   "@tryAgainButton": {
     "description": "Retries the pull on the restoring state."
   },
-  "radarSummary": "Recent activity \u2014 {distribution}. {marks}",
+  "radarSummary": "Recent activity — {distribution}. {marks}",
   "@radarSummary": {
     "description": "[niche] The screen-reader description of the archetype radar. Names the distribution in coarse bands and then the permanent marks. The figure itself carries no text, so this sentence is the whole reading.",
     "placeholders": {
@@ -678,5 +678,81 @@
         "type": "String"
       }
     }
+  },
+  "reportButton": "Report",
+  "@reportButton": {
+    "description": "[niche] The single control that resolves the day. The outcome is derived from what was ticked, never chosen, so skipped has no button of its own (principle 10)."
+  },
+  "actionPoints": "{points, plural, =1{1 point} other{{points} points}}",
+  "@actionPoints": {
+    "description": "What an action is worth. A reading, never a score with a target beside it (ADR-0029). Pluralised so screen readers announce it as a count rather than a bare numeral.",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "dayPointsTotal": "Today",
+  "@dayPointsTotal": {
+    "description": "Label for the day's earned points, shown beside the action list as a panel reading. Deliberately not 'Progress' or 'Score': it names a span of time, not an achievement."
+  },
+  "runPointsTotal": "This campaign",
+  "@runPointsTotal": {
+    "description": "Label for points earned so far in the current run. Never compared to a target or a previous run."
+  },
+  "allTimePointsTotal": "All time",
+  "@allTimePointsTotal": {
+    "description": "[niche] Label for every point ever earned, shown beside the permanent archetype marks. Undecayed by design — it is the record that does not fall when the radar does (ADR-0010, ADR-0029)."
+  },
+  "optionalAction": "Optional",
+  "@optionalAction": {
+    "description": "[niche] Marks an action as not required for the day to count as done. Must not read as lesser or as outstanding work — nothing rewards reaching for one beyond the act itself."
+  },
+  "willRecord": "This records: {outcome}",
+  "@willRecord": {
+    "description": "[niche] Shown in the report sheet before confirming, so the user sees what is about to be recorded. The outcome is derived from the ticks, not chosen. Announced to screen readers before Report is activated.",
+    "placeholders": {
+      "outcome": {
+        "type": "String"
+      }
+    }
+  },
+  "actionSemanticMandatory": "{title}. Required. Worth {points}. {state}",
+  "@actionSemanticMandatory": {
+    "description": "Screen-reader description of the day's mandatory action row: what it is, that it is the one the grade depends on, its points, and whether it is ticked.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "actionSemanticOptional": "{title}. Optional. Worth {points}. {state}",
+  "@actionSemanticOptional": {
+    "description": "Screen-reader description of an optional action row. Mirrors the mandatory one so the only audible difference is the word that matters.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "points": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "actionStateDone": "Done.",
+  "@actionStateDone": {
+    "description": "[niche] Screen-reader state of a ticked action. Ticked state is never encoded by colour alone, and this is the text half of that pairing."
+  },
+  "actionStateNotDone": "Not done.",
+  "@actionStateNotDone": {
+    "description": "[niche] Screen-reader state of an unticked action. Flat and unpressured: an unticked row is not outstanding work."
   }
 }

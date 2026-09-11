@@ -18,7 +18,6 @@ import '../domain/diagnostic.dart';
 import '../domain/doctrine.dart';
 import '../domain/grade.dart';
 import '../domain/identity.dart';
-import '../domain/outcome.dart';
 import '../domain/sync_status.dart';
 import 'browse/campaign_detail_screen.dart';
 import 'browse/pack_list_screen.dart';
@@ -412,7 +411,10 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         run: run,
         campaign: campaign,
         logs: logs,
-        todayAction: await content.actionFor(campaign.id, day),
+        todayActions: await content.actionsForDay(campaign.id, day),
+        // Every action of the run, because the run total spans days whose
+        // actions are not on screen.
+        actionsById: {for (final a in actions) a.id: a},
         zone: zone,
         now: now,
       ),
@@ -1035,7 +1037,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       onOpenDoctrine: _openDoctrine,
       onOpenSettings: _openSettings,
       onCommit: () async {
-        final action = run.todayAction;
+        final action = run.mandatoryToday;
         if (action == null) return;
         await ref
             .read(progressRepositoryProvider)
@@ -1047,15 +1049,32 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         _syncSoon();
         await _reloadHome();
       },
-      onReport: (Outcome outcome, String? note) async {
-        final action = run.todayAction;
-        if (action == null) return;
+      onToggleAction: (String actionId, bool completed) async {
+        final mandatory = run.mandatoryToday;
+        if (mandatory == null) return;
+        await ref
+            .read(progressRepositoryProvider)
+            .setActionCompleted(
+              run: run.run,
+              dayIndex: run.currentDay,
+              mandatoryActionId: mandatory.id,
+              actionId: actionId,
+              completed: completed,
+            );
+        _syncSoon();
+        await _reloadHome();
+      },
+      onReport: (String? note) async {
+        final action = run.mandatoryToday;
+        final outcome = run.derivedOutcomeToday;
+        if (action == null || outcome == null) return;
         await ref
             .read(progressRepositoryProvider)
             .report(
               run: run.run,
               dayIndex: run.currentDay,
               mandatoryActionId: action.id,
+              // Derived by the engine from what was ticked, never chosen.
               outcome: outcome,
               note: note,
             );

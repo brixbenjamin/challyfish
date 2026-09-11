@@ -508,4 +508,51 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get reportButton => 'Report';
+
+  @override
+  String actionPoints(int points) {
+    String _temp0 = intl.Intl.pluralLogic(
+      points,
+      locale: localeName,
+      other: '$points points',
+      one: '1 point',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dayPointsTotal => 'Today';
+
+  @override
+  String get runPointsTotal => 'This campaign';
+
+  @override
+  String get allTimePointsTotal => 'All time';
+
+  @override
+  String get optionalAction => 'Optional';
+
+  @override
+  String willRecord(String outcome) {
+    return 'This records: $outcome';
+  }
+
+  @override
+  String actionSemanticMandatory(String title, String points, String state) {
+    return '$title. Required. Worth $points. $state';
+  }
+
+  @override
+  String actionSemanticOptional(String title, String points, String state) {
+    return '$title. Optional. Worth $points. $state';
+  }
+
+  @override
+  String get actionStateDone => 'Done.';
+
+  @override
+  String get actionStateNotDone => 'Not done.';
 }
