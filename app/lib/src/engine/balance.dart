@@ -77,8 +77,7 @@ class BalanceCalculator {
 
         // The action's own archetype, not the day's — which is what lets one
         // day move several axes (ADR-0030).
-        final contribution =
-            (action.effort / weights.pointsPerFullDay) * decay;
+        final contribution = (action.effort / weights.pointsPerFullDay) * decay;
 
         balance.update(
           action.archetypeId,

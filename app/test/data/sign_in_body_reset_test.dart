@@ -16,33 +16,83 @@ void main() {
     final db = FeralDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    await db.into(db.packs).insert(PacksCompanion.insert(
-          id: 'core', key: 'core', title: 'Core', description: 'd',
-          isCore: const Value(true), sort: 1,
-          updatedAt: DateTime.utc(2026, 9, 9),
-        ));
-    await db.into(db.packs).insert(PacksCompanion.insert(
-          id: 'paid', key: 'paid', title: 'Paid', description: 'd',
-          isCore: const Value(false), storeProductId: const Value('pack.paid'),
-          sort: 2, updatedAt: DateTime.utc(2026, 9, 9),
-        ));
-    await db.into(db.campaigns).insert(CampaignsCompanion.insert(
-          id: 'cCore', packId: 'core', key: 'k1', title: 'Free', introMd: 'i',
-          lengthDays: 1, sort: 1, updatedAt: DateTime.utc(2026, 9, 9),
-        ));
-    await db.into(db.campaigns).insert(CampaignsCompanion.insert(
-          id: 'cPaid', packId: 'paid', key: 'k2', title: 'Paid', introMd: 'i',
-          lengthDays: 1, sort: 2, updatedAt: DateTime.utc(2026, 9, 9),
-        ));
-    for (final (id, campaign) in [('aCore', 'cCore'), ('aPaid', 'cPaid')]) {
-      await db.into(db.actions).insert(ActionsCompanion.insert(
-            id: id, campaignId: campaign, dayIndex: 1, title: 't',
-            archetypeId: 'x1', updatedAt: DateTime.utc(2026, 9, 9),
-          ));
-      await db.into(db.actionBodies).insert(ActionBodiesCompanion.insert(
-            actionId: id, bodyMd: 'copy',
+    await db
+        .into(db.packs)
+        .insert(
+          PacksCompanion.insert(
+            id: 'core',
+            key: 'core',
+            title: 'Core',
+            description: 'd',
+            isCore: const Value(true),
+            sort: 1,
             updatedAt: DateTime.utc(2026, 9, 9),
-          ));
+          ),
+        );
+    await db
+        .into(db.packs)
+        .insert(
+          PacksCompanion.insert(
+            id: 'paid',
+            key: 'paid',
+            title: 'Paid',
+            description: 'd',
+            isCore: const Value(false),
+            storeProductId: const Value('pack.paid'),
+            sort: 2,
+            updatedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
+    await db
+        .into(db.campaigns)
+        .insert(
+          CampaignsCompanion.insert(
+            id: 'cCore',
+            packId: 'core',
+            key: 'k1',
+            title: 'Free',
+            introMd: 'i',
+            lengthDays: 1,
+            sort: 1,
+            updatedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
+    await db
+        .into(db.campaigns)
+        .insert(
+          CampaignsCompanion.insert(
+            id: 'cPaid',
+            packId: 'paid',
+            key: 'k2',
+            title: 'Paid',
+            introMd: 'i',
+            lengthDays: 1,
+            sort: 2,
+            updatedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
+    for (final (id, campaign) in [('aCore', 'cCore'), ('aPaid', 'cPaid')]) {
+      await db
+          .into(db.actions)
+          .insert(
+            ActionsCompanion.insert(
+              id: id,
+              campaignId: campaign,
+              dayIndex: 1,
+              title: 't',
+              archetypeId: 'x1',
+              updatedAt: DateTime.utc(2026, 9, 9),
+            ),
+          );
+      await db
+          .into(db.actionBodies)
+          .insert(
+            ActionBodiesCompanion.insert(
+              actionId: id,
+              bodyMd: 'copy',
+              updatedAt: DateTime.utc(2026, 9, 9),
+            ),
+          );
     }
     await db.setWatermark('action_bodies', DateTime.utc(2026, 9, 9));
 
@@ -68,36 +118,42 @@ void main() {
     final db = FeralDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
-    await db.into(db.campaignRuns).insert(
-      CampaignRunsCompanion.insert(
-        id: 'run-1',
-        userId: 'user-1',
-        campaignId: 'campaign-1',
-        status: 'active',
-        startedAt: DateTime.utc(2026, 6, 1),
-        updatedAt: DateTime.utc(2026, 6, 1),
-      ),
-    );
-    await db.into(db.dayLogs).insert(
-      DayLogsCompanion.insert(
-        id: 'log-1',
-        userId: 'user-1',
-        runId: 'run-1',
-        dayIndex: 1,
-        actionId: 'action-1',
-        updatedAt: DateTime.utc(2026, 6, 1),
-      ),
-    );
-    await db.into(db.dayLogActions).insert(
-      DayLogActionsCompanion.insert(
-        id: 'tick-1',
-        userId: 'user-1',
-        runId: 'run-1',
-        dayIndex: 1,
-        actionId: 'action-1',
-        updatedAt: DateTime.utc(2026, 6, 1),
-      ),
-    );
+    await db
+        .into(db.campaignRuns)
+        .insert(
+          CampaignRunsCompanion.insert(
+            id: 'run-1',
+            userId: 'user-1',
+            campaignId: 'campaign-1',
+            status: 'active',
+            startedAt: DateTime.utc(2026, 6, 1),
+            updatedAt: DateTime.utc(2026, 6, 1),
+          ),
+        );
+    await db
+        .into(db.dayLogs)
+        .insert(
+          DayLogsCompanion.insert(
+            id: 'log-1',
+            userId: 'user-1',
+            runId: 'run-1',
+            dayIndex: 1,
+            actionId: 'action-1',
+            updatedAt: DateTime.utc(2026, 6, 1),
+          ),
+        );
+    await db
+        .into(db.dayLogActions)
+        .insert(
+          DayLogActionsCompanion.insert(
+            id: 'tick-1',
+            userId: 'user-1',
+            runId: 'run-1',
+            dayIndex: 1,
+            actionId: 'action-1',
+            updatedAt: DateTime.utc(2026, 6, 1),
+          ),
+        );
 
     await replaceLocalUserState(db);
 

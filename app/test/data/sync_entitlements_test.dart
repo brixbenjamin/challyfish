@@ -128,25 +128,27 @@ void main() {
     },
   );
 
-  test('entitlements keep no watermark, because a refund has no timestamp',
-      () async {
-    // Deliberately not the incremental contract this test used to assert. A
-    // refund deletes the server row, and a deleted row carries no newer
-    // updated_at, so a watermark would make revocation unobservable forever
-    // (ADR-0025). The set is fetched whole every time instead: one row per
-    // owned pack, and a user owns one.
-    final api = FakeProgressApi({
-      'entitlements': [entitlementRow()],
-    });
-    await repoWith(api).pull('user-1');
+  test(
+    'entitlements keep no watermark, because a refund has no timestamp',
+    () async {
+      // Deliberately not the incremental contract this test used to assert. A
+      // refund deletes the server row, and a deleted row carries no newer
+      // updated_at, so a watermark would make revocation unobservable forever
+      // (ADR-0025). The set is fetched whole every time instead: one row per
+      // owned pack, and a user owns one.
+      final api = FakeProgressApi({
+        'entitlements': [entitlementRow()],
+      });
+      await repoWith(api).pull('user-1');
 
-    expect(await db.watermarkFor('entitlements'), isNull);
-    expect(
-      api.fetchedSince[api.fetched.indexOf('entitlements')],
-      isNull,
-      reason: 'a complete set is asked for unconditionally',
-    );
-  });
+      expect(await db.watermarkFor('entitlements'), isNull);
+      expect(
+        api.fetchedSince[api.fetched.indexOf('entitlements')],
+        isNull,
+        reason: 'a complete set is asked for unconditionally',
+      );
+    },
+  );
 
   test('entitlements are never pushed', () async {
     final api = FakeProgressApi(const {});

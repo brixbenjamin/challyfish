@@ -251,24 +251,26 @@ void main() {
       );
     });
 
-    testWidgets('the mandatory action outweighs the optionals typographically',
-        (tester) async {
-      await pump(tester, withOptionals());
+    testWidgets(
+      'the mandatory action outweighs the optionals typographically',
+      (tester) async {
+        await pump(tester, withOptionals());
 
-      final mandatory = tester.widget<Text>(
-        find.text('Do not explain yourself'),
-      );
-      final extra = tester.widget<Text>(find.text('An optional act'));
-      final context = tester.element(find.byType(DashboardScreen));
-      final theme = Theme.of(context).textTheme;
+        final mandatory = tester.widget<Text>(
+          find.text('Do not explain yourself'),
+        );
+        final extra = tester.widget<Text>(find.text('An optional act'));
+        final context = tester.element(find.byType(DashboardScreen));
+        final theme = Theme.of(context).textTheme;
 
-      expect(mandatory.style?.fontSize, theme.headlineSmall?.fontSize);
-      expect(
-        extra.style!.fontSize!,
-        lessThan(mandatory.style!.fontSize!),
-        reason: 'equal-weight rows are the failure mode (principle 6)',
-      );
-    });
+        expect(mandatory.style?.fontSize, theme.headlineSmall?.fontSize);
+        expect(
+          extra.style!.fontSize!,
+          lessThan(mandatory.style!.fontSize!),
+          reason: 'equal-weight rows are the failure mode (principle 6)',
+        );
+      },
+    );
 
     testWidgets('a day with no optionals still reads as a whole screen', (
       tester,
@@ -312,7 +314,9 @@ void main() {
       await pumpWith(
         tester,
         state(
-          logs: [today(ticks: const {'optional-3'})],
+          logs: [
+            today(ticks: const {'optional-3'}),
+          ],
           todayActions: const [action, optional],
         ),
         onToggleAction: (_, value) => completed = value,
@@ -363,7 +367,9 @@ void main() {
       await pump(
         tester,
         state(
-          logs: [today(ticks: const {'action-3', 'optional-3'})],
+          logs: [
+            today(ticks: const {'action-3', 'optional-3'}),
+          ],
           todayActions: const [action, optional],
         ),
       );
@@ -387,7 +393,9 @@ void main() {
       await pump(
         tester,
         state(
-          logs: [today(ticks: const {'action-3'})],
+          logs: [
+            today(ticks: const {'action-3'}),
+          ],
           todayActions: const [action, optional],
         ),
       );
@@ -431,18 +439,20 @@ void main() {
       expect(find.text(l10n.outcomeSkipped), findsNothing);
     });
 
-    testWidgets('commit is the one filled control before the day is committed',
-        (tester) async {
-      await pump(tester, withOptionals());
+    testWidgets(
+      'commit is the one filled control before the day is committed',
+      (tester) async {
+        await pump(tester, withOptionals());
 
-      expect(find.widgetWithText(FilledButton, 'Commit'), findsOneWidget);
-      expect(
-        find.widgetWithText(FilledButton, 'Report'),
-        findsNothing,
-        reason: 'Report is present but not yet the point',
-      );
-      expect(find.widgetWithText(OutlinedButton, 'Report'), findsOneWidget);
-    });
+        expect(find.widgetWithText(FilledButton, 'Commit'), findsOneWidget);
+        expect(
+          find.widgetWithText(FilledButton, 'Report'),
+          findsNothing,
+          reason: 'Report is present but not yet the point',
+        );
+        expect(find.widgetWithText(OutlinedButton, 'Report'), findsOneWidget);
+      },
+    );
 
     testWidgets('report becomes the filled control once committed', (
       tester,
@@ -473,7 +483,9 @@ void main() {
       await pumpWith(
         tester,
         state(
-          logs: [today(ticks: const {'optional-3'})],
+          logs: [
+            today(ticks: const {'optional-3'}),
+          ],
           todayActions: const [action, optional],
         ),
       );
@@ -535,9 +547,7 @@ void main() {
 
       await tester.tap(find.text('Report'));
       await tester.pumpAndSettle();
-      Navigator.of(
-        tester.element(find.byType(TextField)),
-      ).pop();
+      Navigator.of(tester.element(find.byType(TextField))).pop();
       await tester.pumpAndSettle();
 
       expect(called, isFalse);
@@ -550,7 +560,9 @@ void main() {
       await pumpWith(
         tester,
         state(
-          logs: [today(outcome: Outcome.done, ticks: const {'action-3'})],
+          logs: [
+            today(outcome: Outcome.done, ticks: const {'action-3'}),
+          ],
           todayActions: const [action, optional],
         ),
         onToggleAction: (_, _) => toggled = true,
@@ -605,7 +617,9 @@ void main() {
       await pumpWith(
         tester,
         state(
-          logs: [today(ticks: const {'optional-3'})],
+          logs: [
+            today(ticks: const {'optional-3'}),
+          ],
           todayActions: const [action, long],
         ),
         textScale: 2.0,

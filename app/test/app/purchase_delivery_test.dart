@@ -92,19 +92,46 @@ Future<PurchaseController> buildTestController({
 
   // The teaser is present and the copy is not: exactly what a locked pack looks
   // like on a device after ADR-0025.
-  await db.into(db.packs).insert(PacksCompanion.insert(
-        id: 'paid', key: 'paid', title: 'Paid', description: 'd',
-        isCore: const Value(false), storeProductId: const Value('pack.paid'),
-        sort: 2, updatedAt: at,
-      ));
-  await db.into(db.campaigns).insert(CampaignsCompanion.insert(
-        id: 'cPaid', packId: 'paid', key: 'k2', title: 'Paid', introMd: 'i',
-        lengthDays: 1, sort: 2, updatedAt: at,
-      ));
-  await db.into(db.actions).insert(ActionsCompanion.insert(
-        id: 'aPaid', campaignId: 'cPaid', dayIndex: 1, title: 't',
-        archetypeId: 'x1', updatedAt: at,
-      ));
+  await db
+      .into(db.packs)
+      .insert(
+        PacksCompanion.insert(
+          id: 'paid',
+          key: 'paid',
+          title: 'Paid',
+          description: 'd',
+          isCore: const Value(false),
+          storeProductId: const Value('pack.paid'),
+          sort: 2,
+          updatedAt: at,
+        ),
+      );
+  await db
+      .into(db.campaigns)
+      .insert(
+        CampaignsCompanion.insert(
+          id: 'cPaid',
+          packId: 'paid',
+          key: 'k2',
+          title: 'Paid',
+          introMd: 'i',
+          lengthDays: 1,
+          sort: 2,
+          updatedAt: at,
+        ),
+      );
+  await db
+      .into(db.actions)
+      .insert(
+        ActionsCompanion.insert(
+          id: 'aPaid',
+          campaignId: 'cPaid',
+          dayIndex: 1,
+          title: 't',
+          archetypeId: 'x1',
+          updatedAt: at,
+        ),
+      );
 
   final clock = InstantClock();
   final gateway = FakePurchaseGateway(
@@ -114,11 +141,7 @@ Future<PurchaseController> buildTestController({
   )..nextOutcome = outcome;
 
   return PurchaseController(
-    entitlements: EntitlementRepository(
-      db: db,
-      gateway: gateway,
-      clock: clock,
-    ),
+    entitlements: EntitlementRepository(db: db, gateway: gateway, clock: clock),
     gateway: gateway,
     content: ContentRepository(
       db: db,
@@ -145,22 +168,29 @@ void main() {
     final state = await controller.buy(userId: 'u1', pack: paidPackFixture);
 
     expect(state, isA<PurchaseComplete>());
-    expect(pulls, greaterThanOrEqualTo(3),
-        reason: 'it must keep asking until the body is actually there');
-  });
-
-  test('a body that never arrives ends in a retryable problem, not a blank pack',
-      () async {
-    final controller = await buildTestController(
-      bodyPresentAfterPulls: null, // never
+    expect(
+      pulls,
+      greaterThanOrEqualTo(3),
+      reason: 'it must keep asking until the body is actually there',
     );
-
-    final state = await controller.buy(userId: 'u1', pack: paidPackFixture);
-
-    expect(state, isA<PurchaseProblem>());
-    expect((state as PurchaseProblem).reason,
-        PurchaseProblemReason.deliveryTimedOut);
   });
+
+  test(
+    'a body that never arrives ends in a retryable problem, not a blank pack',
+    () async {
+      final controller = await buildTestController(
+        bodyPresentAfterPulls: null, // never
+      );
+
+      final state = await controller.buy(userId: 'u1', pack: paidPackFixture);
+
+      expect(state, isA<PurchaseProblem>());
+      expect(
+        (state as PurchaseProblem).reason,
+        PurchaseProblemReason.deliveryTimedOut,
+      );
+    },
+  );
 
   test('the delivering state is reported while the fetch runs', () async {
     // Otherwise the sheet shows nothing for the length of the fetch and looks

@@ -174,22 +174,23 @@ void main() {
     );
   });
 
-  testWidgets('a never-acted radar draws the rings and a centre nub, no shape', (
-    tester,
-  ) async {
-    await pump(tester, state());
+  testWidgets(
+    'a never-acted radar draws the rings and a centre nub, no shape',
+    (tester) async {
+      await pump(tester, state());
 
-    expect(
-      figure(),
-      paintsExactlyCountTimes(#drawPath, 4),
-      reason: 'four reference rings and no balance polygon',
-    );
-    expect(figure(), paintsExactlyCountTimes(#drawCircle, 1));
-    expect(
-      figure(),
-      paints..circle(radius: 2.0, color: AppTokens.standard.mutedInk),
-    );
-  });
+      expect(
+        figure(),
+        paintsExactlyCountTimes(#drawPath, 4),
+        reason: 'four reference rings and no balance polygon',
+      );
+      expect(figure(), paintsExactlyCountTimes(#drawCircle, 1));
+      expect(
+        figure(),
+        paints..circle(radius: 2.0, color: AppTokens.standard.mutedInk),
+      );
+    },
+  );
 
   testWidgets('an axis with activity gets a dot in its role colour', (
     tester,
@@ -200,39 +201,39 @@ void main() {
     expect(figure(), paintsExactlyCountTimes(#drawCircle, 4));
     expect(
       figure(),
-      paints
-        ..something((symbol, arguments) {
-          if (symbol != #drawCircle) return false;
-          // Packed ARGB, not Color ==: a Paint stores its colour as floats,
-          // and the round trip is not bit-identical to a const Color.
-          final paint = arguments.last as Paint;
-          return paint.color.toARGB32() ==
-              ArchetypePalette.standard.forSort(1).toARGB32();
-        }),
+      paints..something((symbol, arguments) {
+        if (symbol != #drawCircle) return false;
+        // Packed ARGB, not Color ==: a Paint stores its colour as floats,
+        // and the round trip is not bit-identical to a const Color.
+        final paint = arguments.last as Paint;
+        return paint.color.toARGB32() ==
+            ArchetypePalette.standard.forSort(1).toARGB32();
+      }),
     );
   });
 
-  testWidgets('the axes sit at their fixed clock positions, not in sort order', (
-    tester,
-  ) async {
-    await pump(tester, state(balance: {'a-1': 2.0, 'a-2': 1.0}));
+  testWidgets(
+    'the axes sit at their fixed clock positions, not in sort order',
+    (tester) async {
+      await pump(tester, state(balance: {'a-1': 2.0, 'a-2': 1.0}));
 
-    final centre = tester.getCenter(find.byType(ArchetypeRadar));
-    Offset at(String name) => tester.getCenter(find.text(name));
+      final centre = tester.getCenter(find.byType(ArchetypeRadar));
+      Offset at(String name) => tester.getCenter(find.text(name));
 
-    // Psycho top, Killer right, Creature bottom, Alchemist left. The two
-    // red-side hues are opposite each other, never side by side.
-    expect(at('Psycho').dy, lessThan(centre.dy));
-    expect(at('Creature').dy, greaterThan(centre.dy));
-    expect(at('Killer').dx, greaterThan(centre.dx));
-    expect(at('Alchemist').dx, lessThan(centre.dx));
+      // Psycho top, Killer right, Creature bottom, Alchemist left. The two
+      // red-side hues are opposite each other, never side by side.
+      expect(at('Psycho').dy, lessThan(centre.dy));
+      expect(at('Creature').dy, greaterThan(centre.dy));
+      expect(at('Killer').dx, greaterThan(centre.dx));
+      expect(at('Alchemist').dx, lessThan(centre.dx));
 
-    expect(
-      at('Alchemist').dx,
-      lessThan(at('Creature').dx),
-      reason: 'sort order would have put Alchemist third, at the bottom',
-    );
-  });
+      expect(
+        at('Alchemist').dx,
+        lessThan(at('Creature').dx),
+        reason: 'sort order would have put Alchemist third, at the bottom',
+      );
+    },
+  );
 
   testWidgets('the figure carries the formatter summary as its label', (
     tester,
@@ -283,7 +284,9 @@ void main() {
           data: MediaQuery.of(
             context,
           ).copyWith(disableAnimations: disableAnimations),
-          child: Scaffold(body: Center(child: ArchetypeRadar(state: value))),
+          child: Scaffold(
+            body: Center(child: ArchetypeRadar(state: value)),
+          ),
         ),
       ),
     );

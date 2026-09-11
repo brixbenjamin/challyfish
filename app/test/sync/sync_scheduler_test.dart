@@ -157,17 +157,20 @@ void main() {
     expect(sync.userIds, ['existing-user']);
   });
 
-  test('a restore the server refuses reports failure rather than success', () async {
-    sync.succeed = false;
+  test(
+    'a restore the server refuses reports failure rather than success',
+    () async {
+      sync.succeed = false;
 
-    expect(
-      await scheduler.restore('existing-user'),
-      isFalse,
-      reason:
-          'a restore that reports success it did not have sends the user on to '
-          'a screen chosen against an empty store, which is the whole bug',
-    );
-  });
+      expect(
+        await scheduler.restore('existing-user'),
+        isFalse,
+        reason:
+            'a restore that reports success it did not have sends the user on to '
+            'a screen chosen against an empty store, which is the whole bug',
+      );
+    },
+  );
 
   test('a restore with no connection reports failure', () async {
     gate.goOffline();
@@ -194,17 +197,20 @@ void main() {
     );
   });
 
-  test('a restore re-targets the scheduler at the account it restored', () async {
-    scheduler.start('anon-user');
-    await Future<void>.delayed(const Duration(milliseconds: 20));
-    await scheduler.restore('existing-user');
-    sync.userIds.clear();
+  test(
+    'a restore re-targets the scheduler at the account it restored',
+    () async {
+      scheduler.start('anon-user');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await scheduler.restore('existing-user');
+      sync.userIds.clear();
 
-    gate.goOnline();
-    await Future<void>.delayed(const Duration(milliseconds: 20));
+      gate.goOnline();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
 
-    expect(sync.userIds.toSet(), {'existing-user'});
-  });
+      expect(sync.userIds.toSet(), {'existing-user'});
+    },
+  );
 
   test('a failure retries and stays quiet at first', () async {
     sync.succeed = false;

@@ -79,10 +79,12 @@ void main() {
   }) => RunState.derive(
     run: run,
     campaign: campaign,
-    logs: [...otherLogs, log(3, null, ticks: ticks)],
+    logs: [
+      ...otherLogs,
+      log(3, null, ticks: ticks),
+    ],
     todayActions: todayActions,
-    actionsById:
-        actionsById ?? {for (final a in todayActions) a.id: a},
+    actionsById: actionsById ?? {for (final a in todayActions) a.id: a},
     zone: berlin,
     now: tz.TZDateTime(berlin, 2026, 6, 3, 10).toUtc(),
   );
@@ -213,7 +215,9 @@ void main() {
         todayActions: [action('m', effort: 2)],
         ticks: const {'m'},
         actionsById: {'m': action('m', effort: 2), 'action-1': earlier},
-        otherLogs: [log(1, Outcome.done, ticks: const {'action-1'})],
+        otherLogs: [
+          log(1, Outcome.done, ticks: const {'action-1'}),
+        ],
       );
 
       expect(state.runPoints, 6);

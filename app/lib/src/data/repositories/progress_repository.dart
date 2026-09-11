@@ -147,11 +147,9 @@ class ProgressRepository {
     if (rows.isEmpty) return const [];
 
     final runIds = {for (final r in rows) r.runId};
-    final ticks =
-        await (db.select(db.dayLogActions)..where(
-              (t) => t.runId.isIn(runIds) & t.completed.equals(true),
-            ))
-            .get();
+    final ticks = await (db.select(
+      db.dayLogActions,
+    )..where((t) => t.runId.isIn(runIds) & t.completed.equals(true))).get();
 
     final byDay = <String, Set<String>>{};
     for (final tick in ticks) {

@@ -59,7 +59,11 @@ void main() {
     });
 
     test('never returns missed, which only rollover writes', () {
-      for (final ticks in const [<String>{}, {'m'}, {'o1'}]) {
+      for (final ticks in const [
+        <String>{},
+        {'m'},
+        {'o1'},
+      ]) {
         expect(
           engine.deriveOutcome(
             mandatoryActionId: 'm',
@@ -95,10 +99,7 @@ void main() {
       );
       expect(
         engine
-            .deriveOutcome(
-              mandatoryActionId: 'm',
-              completedActionIds: const {},
-            )
+            .deriveOutcome(mandatoryActionId: 'm', completedActionIds: const {})
             .isMiss,
         isTrue,
       );
@@ -144,10 +145,7 @@ void main() {
       // pointsPerFullDay belongs to the balance alone. "0.75 points" is not a
       // thing this product ever shows.
       expect(
-        engine.pointsFor(
-          completedActionIds: const {'m'},
-          actionsById: actions,
-        ),
+        engine.pointsFor(completedActionIds: const {'m'}, actionsById: actions),
         isA<int>().having((p) => p, 'points', 2),
       );
     });

@@ -331,7 +331,10 @@ class ContentRepository {
   /// Empty when the day's content is not cached at all. A day whose optionals
   /// are cached but whose mandatory action is not is a partial-sync state the
   /// caller degrades on, not one this query papers over.
-  Future<List<ActionSpec>> actionsForDay(String campaignId, int dayIndex) async {
+  Future<List<ActionSpec>> actionsForDay(
+    String campaignId,
+    int dayIndex,
+  ) async {
     final query =
         db.select(db.actions).join([
             leftOuterJoin(

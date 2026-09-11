@@ -62,47 +62,124 @@ Future<Harness> seededHarness({
   final db = FeralDatabase(NativeDatabase.memory());
   final at = DateTime.utc(2026, 9, 9);
 
-  await db.into(db.packs).insert(PacksCompanion.insert(
-        id: 'core', key: 'core', title: 'Core', description: 'd',
-        isCore: const Value(true), sort: 1, updatedAt: at,
-      ));
-  await db.into(db.packs).insert(PacksCompanion.insert(
-        id: 'paid', key: 'paid', title: 'Paid', description: 'd',
-        isCore: const Value(false), storeProductId: const Value('pack.paid'),
-        sort: 2, updatedAt: at,
-      ));
-  await db.into(db.campaigns).insert(CampaignsCompanion.insert(
-        id: 'cCore', packId: 'core', key: 'k1', title: 'Free', introMd: 'i',
-        lengthDays: 2, sort: 1, updatedAt: at,
-      ));
-  await db.into(db.campaigns).insert(CampaignsCompanion.insert(
-        id: 'cPaid', packId: 'paid', key: 'k2', title: 'Paid', introMd: 'i',
-        lengthDays: 2, sort: 2, updatedAt: at,
-      ));
+  await db
+      .into(db.packs)
+      .insert(
+        PacksCompanion.insert(
+          id: 'core',
+          key: 'core',
+          title: 'Core',
+          description: 'd',
+          isCore: const Value(true),
+          sort: 1,
+          updatedAt: at,
+        ),
+      );
+  await db
+      .into(db.packs)
+      .insert(
+        PacksCompanion.insert(
+          id: 'paid',
+          key: 'paid',
+          title: 'Paid',
+          description: 'd',
+          isCore: const Value(false),
+          storeProductId: const Value('pack.paid'),
+          sort: 2,
+          updatedAt: at,
+        ),
+      );
+  await db
+      .into(db.campaigns)
+      .insert(
+        CampaignsCompanion.insert(
+          id: 'cCore',
+          packId: 'core',
+          key: 'k1',
+          title: 'Free',
+          introMd: 'i',
+          lengthDays: 2,
+          sort: 1,
+          updatedAt: at,
+        ),
+      );
+  await db
+      .into(db.campaigns)
+      .insert(
+        CampaignsCompanion.insert(
+          id: 'cPaid',
+          packId: 'paid',
+          key: 'k2',
+          title: 'Paid',
+          introMd: 'i',
+          lengthDays: 2,
+          sort: 2,
+          updatedAt: at,
+        ),
+      );
   for (final (id, campaign) in [('aCore', 'cCore'), ('aPaid', 'cPaid')]) {
-    await db.into(db.actions).insert(ActionsCompanion.insert(
-          id: id, campaignId: campaign, dayIndex: 1, title: 't',
-          archetypeId: 'x1', updatedAt: at,
-        ));
-    await db.into(db.actionBodies).insert(ActionBodiesCompanion.insert(
-          actionId: id, bodyMd: 'copy', updatedAt: at,
-        ));
+    await db
+        .into(db.actions)
+        .insert(
+          ActionsCompanion.insert(
+            id: id,
+            campaignId: campaign,
+            dayIndex: 1,
+            title: 't',
+            archetypeId: 'x1',
+            updatedAt: at,
+          ),
+        );
+    await db
+        .into(db.actionBodies)
+        .insert(
+          ActionBodiesCompanion.insert(
+            actionId: id,
+            bodyMd: 'copy',
+            updatedAt: at,
+          ),
+        );
   }
 
-  await db.into(db.entitlements).insert(EntitlementRow(
-        userId: 'u1', packId: 'paid', source: 'store',
-        acquiredAt: at, updatedAt: at, local: paidRowIsLocal,
-      ));
+  await db
+      .into(db.entitlements)
+      .insert(
+        EntitlementRow(
+          userId: 'u1',
+          packId: 'paid',
+          source: 'store',
+          acquiredAt: at,
+          updatedAt: at,
+          local: paidRowIsLocal,
+        ),
+      );
 
-  await db.into(db.campaignRuns).insert(CampaignRunsCompanion.insert(
-        id: 'run1', userId: 'u1', campaignId: 'cPaid',
-        status: RunStatus.active.key, startedAt: at, updatedAt: at,
-      ));
+  await db
+      .into(db.campaignRuns)
+      .insert(
+        CampaignRunsCompanion.insert(
+          id: 'run1',
+          userId: 'u1',
+          campaignId: 'cPaid',
+          status: RunStatus.active.key,
+          startedAt: at,
+          updatedAt: at,
+        ),
+      );
   for (var day = 1; day <= 2; day++) {
-    await db.into(db.dayLogs).insert(DayLogsCompanion.insert(
-          id: 'log$day', userId: 'u1', runId: 'run1', dayIndex: day,
-          actionId: 'aPaid', outcome: const Value('done'), updatedAt: at,
-        ));
+    await db
+        .into(db.dayLogs)
+        .insert(
+          DayLogsCompanion.insert(
+            id: 'log$day',
+            userId: 'u1',
+            runId: 'run1',
+            dayIndex: day,
+            actionId: 'aPaid',
+            outcome: const Value('done'),
+            updatedAt: at,
+          ),
+        );
   }
 
   final api = FakeProgressApi(packIds: serverReturns, throws: apiThrows);
@@ -114,29 +191,33 @@ Future<Harness> seededHarness({
 }
 
 void main() {
-  test('a server set without the pack purges its bodies and abandons the run',
-      () async {
-    final h = await seededHarness();      // core + paid pack, bodies for both,
-    addTearDown(h.db.close);              // an active run on the paid campaign
+  test(
+    'a server set without the pack purges its bodies and abandons the run',
+    () async {
+      final h = await seededHarness(); // core + paid pack, bodies for both,
+      addTearDown(h.db.close); // an active run on the paid campaign
 
-    await h.sync.reconcileEntitlements('u1'); // server returns [] — refunded
+      await h.sync.reconcileEntitlements('u1'); // server returns [] — refunded
 
-    final bodies = await h.db.select(h.db.actionBodies).get();
-    expect(
-      bodies.map((b) => b.actionId),
-      ['aCore'],
-      reason: 'the free pack is never purged',
-    );
+      final bodies = await h.db.select(h.db.actionBodies).get();
+      expect(bodies.map((b) => b.actionId), [
+        'aCore',
+      ], reason: 'the free pack is never purged');
 
-    final run = await (h.db.select(h.db.campaignRuns)
-          ..where((r) => r.id.equals('run1')))
-        .getSingle();
-    expect(run.status, RunStatus.abandoned.key);
-    expect(run.dirty, isTrue, reason: 'the abandonment must reach the server');
+      final run = await (h.db.select(
+        h.db.campaignRuns,
+      )..where((r) => r.id.equals('run1'))).getSingle();
+      expect(run.status, RunStatus.abandoned.key);
+      expect(
+        run.dirty,
+        isTrue,
+        reason: 'the abandonment must reach the server',
+      );
 
-    final logs = await h.db.select(h.db.dayLogs).get();
-    expect(logs, hasLength(2), reason: 'effort is never erased (ADR-0003)');
-  });
+      final logs = await h.db.select(h.db.dayLogs).get();
+      expect(logs, hasLength(2), reason: 'effort is never erased (ADR-0003)');
+    },
+  );
 
   test('a failed pull purges nothing', () async {
     final h = await seededHarness(apiThrows: true);

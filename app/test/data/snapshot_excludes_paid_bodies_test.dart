@@ -8,9 +8,9 @@ import 'package:test/test.dart';
 /// about: the file named core_content.json shipped the paid pack.
 void main() {
   test('the bundled snapshot carries no paid pack bodies', () async {
-    final raw = jsonDecode(
-      await File('assets/seed/core_content.json').readAsString(),
-    ) as Map<String, dynamic>;
+    final raw =
+        jsonDecode(await File('assets/seed/core_content.json').readAsString())
+            as Map<String, dynamic>;
 
     final packs = {
       for (final p in (raw['packs'] as List).cast<Map<String, dynamic>>())
@@ -26,7 +26,11 @@ void main() {
     };
 
     final bodies = (raw['action_bodies'] as List).cast<Map<String, dynamic>>();
-    expect(bodies, isNotEmpty, reason: 'the free pack must still ship its bodies');
+    expect(
+      bodies,
+      isNotEmpty,
+      reason: 'the free pack must still ship its bodies',
+    );
 
     final paid = bodies.where((b) {
       final campaign = actionCampaign[b['action_id'] as String];
@@ -41,9 +45,9 @@ void main() {
     // offline on a first launch. Without this, a "fix" that simply dropped every
     // paid action from the snapshot would pass the test above while quietly
     // breaking offline browse.
-    final raw = jsonDecode(
-      await File('assets/seed/core_content.json').readAsString(),
-    ) as Map<String, dynamic>;
+    final raw =
+        jsonDecode(await File('assets/seed/core_content.json').readAsString())
+            as Map<String, dynamic>;
 
     final actions = (raw['actions'] as List).cast<Map<String, dynamic>>();
     final bodies = (raw['action_bodies'] as List).cast<Map<String, dynamic>>();

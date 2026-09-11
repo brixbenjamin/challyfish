@@ -91,7 +91,17 @@ class FeralDatabase extends _$FeralDatabase {
         // the whole point of this version. Recreating the table is the only
         // way to move that constraint, and is what the v5 step already does.
         // Content is a cache with a server behind it, so a recreate is cheap.
-        await m.alterTable(TableMigration(actions));
+        //
+        // newColumns is not optional here: without it drift copies every
+        // column of the new schema out of the old table, and the old table
+        // has no is_optional to read. Both take their declared defaults, so
+        // every existing action becomes its day's mandatory action at sort 0.
+        await m.alterTable(
+          TableMigration(
+            actions,
+            newColumns: [actions.isOptional, actions.sort],
+          ),
+        );
 
         await backfillDayLogActions();
       }

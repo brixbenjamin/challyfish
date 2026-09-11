@@ -248,9 +248,9 @@ Future<void> replaceLocalUserState(FeralDatabase db) async {
         .map((r) => r.read(db.actions.id)!)
         .toList();
     if (ids.isNotEmpty) {
-      await (db.delete(db.actionBodies)
-            ..where((b) => b.actionId.isIn(ids)))
-          .go();
+      await (db.delete(
+        db.actionBodies,
+      )..where((b) => b.actionId.isIn(ids))).go();
     }
 
     // User-table watermarks, plus action_bodies. Every other content watermark

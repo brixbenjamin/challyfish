@@ -342,34 +342,36 @@ void main() {
       );
     });
 
-    test('rollover writes the derived outcome for a day that was acted on',
-        () async {
-      // Day 1 was ticked but never reported, and the run has moved on.
-      final repo = repoAt(day1);
-      final run = await startRun(repo);
-      await repo.setActionCompleted(
-        run: run,
-        dayIndex: 1,
-        mandatoryActionId: 'action-1',
-        actionId: 'optional-1',
-        completed: true,
-      );
+    test(
+      'rollover writes the derived outcome for a day that was acted on',
+      () async {
+        // Day 1 was ticked but never reported, and the run has moved on.
+        final repo = repoAt(day1);
+        final run = await startRun(repo);
+        await repo.setActionCompleted(
+          run: run,
+          dayIndex: 1,
+          mandatoryActionId: 'action-1',
+          actionId: 'optional-1',
+          completed: true,
+        );
 
-      final day3 = tz.TZDateTime(berlin, 2026, 6, 3, 9).toUtc();
-      await repoAt(day3).applyRollover(
-        run: run,
-        lengthDays: 30,
-        mandatoryActionIdForDay: (_) => 'action-1',
-      );
+        final day3 = tz.TZDateTime(berlin, 2026, 6, 3, 9).toUtc();
+        await repoAt(day3).applyRollover(
+          run: run,
+          lengthDays: 30,
+          mandatoryActionIdForDay: (_) => 'action-1',
+        );
 
-      final logs = await repoAt(day3).logsFor(run.id);
-      final day1Log = logs.firstWhere((l) => l.dayIndex == 1);
-      expect(
-        day1Log.outcome,
-        Outcome.partial,
-        reason: 'writing missed over a day the user acted on is dishonest',
-      );
-    });
+        final logs = await repoAt(day3).logsFor(run.id);
+        final day1Log = logs.firstWhere((l) => l.dayIndex == 1);
+        expect(
+          day1Log.outcome,
+          Outcome.partial,
+          reason: 'writing missed over a day the user acted on is dishonest',
+        );
+      },
+    );
 
     test('rollover writes done when the mandatory action was ticked', () async {
       final repo = repoAt(day1);

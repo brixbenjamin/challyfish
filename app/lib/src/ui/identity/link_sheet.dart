@@ -78,10 +78,7 @@ class LinkSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              _title(l10n),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text(_title(l10n), style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             // Says what is at stake once, plainly, and never again (ADR-0013).
             Text(_body(l10n), key: explanationKey),

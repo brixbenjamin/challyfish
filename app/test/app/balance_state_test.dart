@@ -54,8 +54,7 @@ void main() {
     dayIndex: day,
     actionId: actionId,
     outcome: outcome,
-    completedActionIds:
-        outcome == Outcome.done || outcome == Outcome.partial
+    completedActionIds: outcome == Outcome.done || outcome == Outcome.partial
         ? {actionId}
         : const {},
   );

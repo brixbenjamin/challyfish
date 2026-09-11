@@ -65,6 +65,7 @@ class Actions extends Table {
   /// Exactly one archetype per action (ADR-0004). Not nullable.
   TextColumn get archetypeId => text()();
   TextColumn get whyDoctrineId => text().nullable()();
+
   /// The points value. Authored and displayed as a whole number; the balance
   /// divides it by `pointsPerFullDay` before using it (ADR-0030, amending
   /// ADR-0010's "effort is not used"). Keeps its storage name because renaming

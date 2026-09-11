@@ -16,6 +16,7 @@ class DayLog {
   final String id;
   final String runId;
   final int dayIndex;
+
   /// The day's *mandatory* action. An optional tick never rewrites it.
   final String actionId;
 

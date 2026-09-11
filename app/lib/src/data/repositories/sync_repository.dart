@@ -362,11 +362,12 @@ class SyncRepository implements SyncRunner {
       // an optimistic guess about a purchase the webhook has not confirmed yet,
       // not a claim the server has contradicted, so it is left alone.
       await (db.delete(db.entitlements)..where(
-        (e) =>
-            e.userId.equals(userId) &
-            e.local.equals(false) &
-            e.packId.isNotIn(confirmed),
-      )).go();
+            (e) =>
+                e.userId.equals(userId) &
+                e.local.equals(false) &
+                e.packId.isNotIn(confirmed),
+          ))
+          .go();
     });
 
     await _purgeUnentitledBodies(userId, confirmed);
@@ -411,17 +412,18 @@ class SyncRepository implements SyncRunner {
 
       // Dirty, so the abandonment is pushed. The row and its day logs stay.
       await (db.update(db.campaignRuns)..where(
-        (r) =>
-            r.userId.equals(userId) &
-            r.campaignId.isIn(campaignIds) &
-            r.status.equals(RunStatus.active.key),
-      )).write(
-        CampaignRunsCompanion(
-          status: Value(RunStatus.abandoned.key),
-          updatedAt: Value(clock.nowUtc()),
-          dirty: const Value(true),
-        ),
-      );
+            (r) =>
+                r.userId.equals(userId) &
+                r.campaignId.isIn(campaignIds) &
+                r.status.equals(RunStatus.active.key),
+          ))
+          .write(
+            CampaignRunsCompanion(
+              status: Value(RunStatus.abandoned.key),
+              updatedAt: Value(clock.nowUtc()),
+              dirty: const Value(true),
+            ),
+          );
     });
   }
 

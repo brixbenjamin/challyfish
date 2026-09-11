@@ -944,7 +944,10 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(l10n.restoringRecordTitle, style: theme.textTheme.titleLarge),
+              Text(
+                l10n.restoringRecordTitle,
+                style: theme.textTheme.titleLarge,
+              ),
               const SizedBox(height: 12),
               Text(
                 _restoreFailed

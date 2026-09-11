@@ -33,10 +33,7 @@ void main() {
     var advanced = false;
     await tester.pumpWidget(
       wrap(
-        DoctrineIntroScreen(
-          onContinue: () => advanced = true,
-          onSignIn: () {},
-        ),
+        DoctrineIntroScreen(onContinue: () => advanced = true, onSignIn: () {}),
       ),
     );
     await tester.tap(find.text(l10n.continueButton));
