@@ -27,6 +27,7 @@ class SupabaseProgressApi implements ProgressApi {
     'profiles': 'user_id',
     'campaign_runs': 'id',
     'day_logs': 'run_id,day_index',
+    'day_log_actions': 'run_id,day_index,action_id',
     'diagnostic_results': 'id',
   };
 

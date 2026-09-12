@@ -55,10 +55,6 @@ class BalanceState {
       );
     }
 
-    final highest = balance.values.isEmpty
-        ? 0.0
-        : balance.values.reduce((a, b) => a > b ? a : b);
-
     return BalanceState(
       balance: balance,
       marks: markCalculator.earned(
@@ -66,9 +62,11 @@ class BalanceState {
         archetypeIdsByCampaign: archetypeIdsByCampaign,
       ),
       archetypes: archetypes,
-      // Floored at one so a nearly-empty radar does not draw a single day as a
-      // full axis, which would flatter the user with a shape they did not earn.
-      maxValue: highest < 1 ? 1 : highest,
+      // A fixed ceiling, not the current peer max — see BalanceWeights.
+      // fullAxisValue. Normalizing against whichever axis is currently
+      // highest would always draw that one axis at the rim by construction;
+      // this instead requires real sustained effort to reach full.
+      maxValue: weights.fullAxisValue,
       allTimePoints: allTimePoints,
     );
   }
@@ -81,6 +79,9 @@ class BalanceState {
   /// All four, in `sort` order. The radar has fixed axes.
   final List<Archetype> archetypes;
 
+  /// The fixed decayed balance a radar axis reads as full — see
+  /// `BalanceWeights.fullAxisValue`. Same for every state; it does not depend
+  /// on this record's own values.
   final double maxValue;
 
   /// Every point the user has ever earned, undecayed. Sits beside the
@@ -95,6 +96,9 @@ class BalanceState {
 
   int marksFor(String archetypeId) => marks[archetypeId] ?? 0;
 
-  /// 0 to 1, for drawing. Never used for comparison or storage.
-  double normalizedFor(String archetypeId) => valueFor(archetypeId) / maxValue;
+  /// 0 to 1, for drawing. Never used for comparison or storage. Clamped: the
+  /// day cap keeps this near-impossible to exceed, but a value at or beyond
+  /// `maxValue` must still draw as full rather than overflow the ring.
+  double normalizedFor(String archetypeId) =>
+      (valueFor(archetypeId) / maxValue).clamp(0.0, 1.0);
 }

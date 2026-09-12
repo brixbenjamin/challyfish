@@ -5,6 +5,7 @@ import 'package:feral/src/domain/day_log.dart';
 import 'package:feral/src/domain/grade.dart';
 import 'package:feral/src/domain/outcome.dart';
 import 'package:feral/src/domain/run.dart';
+import 'package:feral/src/engine/balance.dart';
 import 'package:test/test.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -61,6 +62,14 @@ void main() {
 
   final actions = {
     'act-p': const ActionSpec(
+      id: 'act-p',
+      campaignId: 'c-1',
+      dayIndex: 1,
+      title: 't',
+      bodyMd: 'b',
+      archetypeId: 'a-psycho',
+    ),
+    'act-p-high': const ActionSpec(
       id: 'act-p',
       campaignId: 'c-1',
       dayIndex: 1,
@@ -141,16 +150,13 @@ void main() {
   });
 
   test(
-    'maxValue is the largest axis, and at least one, so the radar is stable',
+    'maxValue is the fixed full-axis ceiling, independent of the record',
     () {
+      // Same ceiling whether the record is empty, thin, or busy — it comes
+      // from BalanceWeights.fullAxisValue, not from any archetype's own
+      // value. Peer-relative normalization is exactly the bug this replaced:
+      // it always pinned whichever axis was currently highest to the rim.
       final empty = build(runs: const [], logs: const []);
-      expect(empty.maxValue, greaterThanOrEqualTo(1.0));
-
-      // Three 1-point days no longer clear the floor, and that is the floor
-      // doing its job rather than a regression: pointsPerFullDay is 5, so
-      // three ticks are 0.6 of a full day's effort. The floor exists exactly
-      // so a thin record cannot draw a full axis, and ADR-0030 chose the
-      // divisor to keep it calibrated that way.
       final thin = build(
         runs: [run('r1', 'c-1')],
         logs: [
@@ -159,10 +165,6 @@ void main() {
           log('r1', 3, 'act-p', Outcome.done),
         ],
       );
-      expect(thin.maxValue, 1.0, reason: 'the floor still holds a thin record');
-
-      // A real run's worth of effort does clear it, and then maxValue tracks
-      // the largest axis rather than the floor.
       final busy = build(
         runs: [run('r1', 'c-1')],
         logs: [
@@ -170,8 +172,16 @@ void main() {
             log('r1', day, 'act-p', Outcome.done),
         ],
       );
-      expect(busy.maxValue, greaterThan(2.0));
-      expect(busy.maxValue, busy.valueFor('a-psycho'));
+
+      expect(empty.maxValue, BalanceWeights.standard.fullAxisValue);
+      expect(thin.maxValue, empty.maxValue);
+      expect(busy.maxValue, empty.maxValue);
+
+      // A real run's worth of effort still reads as a small fraction of that
+      // ceiling — not near the rim, because the ceiling represents hitting
+      // the day cap in this drive every day, indefinitely.
+      expect(busy.valueFor('a-psycho'), greaterThan(2.0));
+      expect(busy.normalizedFor('a-psycho'), lessThan(0.2));
     },
   );
 

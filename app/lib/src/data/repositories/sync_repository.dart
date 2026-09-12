@@ -213,7 +213,7 @@ class SyncRepository implements SyncRunner {
               key: r.id,
               updatedAt: r.updatedAt,
               payload: {
-                'id': r.id,
+                // 'id': r.id,
                 'user_id': r.userId,
                 'run_id': r.runId,
                 'day_index': r.dayIndex,

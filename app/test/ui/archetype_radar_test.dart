@@ -2,6 +2,7 @@ import 'package:feral/l10n/app_localizations.dart';
 import 'package:feral/src/app/balance_state.dart';
 import 'package:feral/src/app/balance_summary.dart';
 import 'package:feral/src/domain/archetype.dart';
+import 'package:feral/src/engine/balance.dart';
 import 'package:feral/src/ui/dashboard/archetype_radar.dart';
 import 'package:feral/src/ui/theme/archetype_palette.dart';
 import 'package:feral/src/ui/theme/tokens.dart';
@@ -53,11 +54,9 @@ BalanceState state({
   balance: balance,
   marks: marks,
   archetypes: archetypes,
-  maxValue: balance.values.isEmpty
-      ? 1
-      : balance.values
-            .reduce((a, b) => a > b ? a : b)
-            .clamp(1, double.infinity),
+  // The fixed ceiling production uses, not a peer max — matches
+  // BalanceState.load so widget geometry here is representative.
+  maxValue: BalanceWeights.standard.fullAxisValue,
   allTimePoints: 0,
 );
 

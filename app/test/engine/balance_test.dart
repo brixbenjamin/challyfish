@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:feral/src/domain/campaign.dart';
 import 'package:feral/src/domain/day_log.dart';
 import 'package:feral/src/domain/outcome.dart';
@@ -109,12 +111,35 @@ void main() {
   });
 
   test('a full day of effort contributes about one', () {
-    // pointsPerFullDay is 5, so a single 5-effort day lands at 1.0 and
-    // BalanceState.maxValue's floor still does its job on a near-empty record.
+    // pointsPerFullDay is 5, so a single 5-effort day lands at 1.0.
     final balance = balanceAt(0, [
       log(1, 'a-axis-a', Outcome.done, ticks: const {'a-full'}),
     ]);
     expect(balance['axis-a'], closeTo(1.0, 1e-9));
+  });
+
+  test('the day cap holds even when several ticks stack the same axis', () {
+    // 'a-full' (5) plus 'a-axis-a' (1) is 6 effort in axis-a on one day —
+    // more than pointsPerFullDay. The cap clamps it to the same contribution
+    // as a single 5-effort day, not 6/5.
+    final stacked = balanceAt(0, [
+      log(1, 'a-axis-a', Outcome.done, ticks: const {'a-full', 'a-axis-a'}),
+    ]);
+    final single = balanceAt(0, [
+      log(1, 'a-axis-a', Outcome.done, ticks: const {'a-full'}),
+    ]);
+    expect(stacked['axis-a'], closeTo(single['axis-a']!, 1e-9));
+    expect(stacked['axis-a'], closeTo(1.0, 1e-9));
+  });
+
+  test('the day cap is per archetype, not per day', () {
+    // 'a-full' (axis-a, 5) and 'a-heavy' (axis-b, 3) ticked the same day: each
+    // archetype gets its own cap, so axis-b is not throttled by axis-a's take.
+    final balance = balanceAt(0, [
+      log(1, 'a-axis-a', Outcome.done, ticks: const {'a-full', 'a-heavy'}),
+    ]);
+    expect(balance['axis-a'], closeTo(1.0, 1e-9));
+    expect(balance['axis-b'], closeTo(3 / 5, 1e-9));
   });
 
   test('one day moves several axes', () {
@@ -122,6 +147,18 @@ void main() {
     // did, not by what the day was labelled.
     final balance = balanceAt(0, [
       log(1, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
+    ]);
+    expect(balance['axis-a'], greaterThan(0));
+    expect(balance['axis-b'], greaterThan(0));
+  });
+  test('test proper calc', () {
+    final balance = balanceAt(33, [
+      log(1, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
+      log(2, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
+      log(3, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
+      log(3, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
+      log(4, 'a-axis-a', Outcome.missed, ticks: const {'a-axis-a'}),
+      log(32, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a'}),
     ]);
     expect(balance['axis-a'], greaterThan(0));
     expect(balance['axis-b'], greaterThan(0));
@@ -215,6 +252,24 @@ void main() {
 
   test('no logs produce an empty balance, not a crash', () {
     expect(balanceAt(0, const []), isEmpty);
+  });
+
+  test('fullAxisValue is the closed-form asymptote of the decay curve', () {
+    // sum(0.5^(k/halfLifeDays)) for k from 0 to infinity has closed form
+    // 1 / (1 - 0.5^(1/halfLifeDays)) — verify it against a large finite sum
+    // rather than trusting the same formula twice.
+    const weights = BalanceWeights(halfLifeDays: 60);
+    var approx = 0.0;
+    for (var k = 0; k < 100000; k++) {
+      approx += math.pow(0.5, k / 60);
+    }
+    expect(weights.fullAxisValue, closeTo(approx, 1e-6));
+  });
+
+  test('fullAxisValue rises with a longer half-life', () {
+    const shorter = BalanceWeights(halfLifeDays: 30);
+    const longer = BalanceWeights(halfLifeDays: 60);
+    expect(longer.fullAxisValue, greaterThan(shorter.fullAxisValue));
   });
 
   test('the half-life is injectable', () {
