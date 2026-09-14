@@ -11,7 +11,14 @@ import 'balance_scenario.dart';
 /// real taxonomy (ADR-0021). Colour is ignored — the radar reads its hues from
 /// ArchetypePalette by `sort` — so only `sort` and `name` matter here.
 const devArchetypes = <Archetype>[
-  Archetype(id: 'd-1', key: 'one', name: 'First', blurb: '', color: '', sort: 1),
+  Archetype(
+    id: 'd-1',
+    key: 'one',
+    name: 'First',
+    blurb: '',
+    color: '',
+    sort: 1,
+  ),
   Archetype(
     id: 'd-2',
     key: 'two',
@@ -105,8 +112,9 @@ class _BalancePlaygroundState extends State<BalancePlayground> {
                     onArchetypeChanged: (id) =>
                         setState(() => _selectedArchetypeId = id),
                     onEffortChanged: (value) => setState(() => _effort = value),
-                    onTick: () =>
-                        _update(_scenario.tick(_selectedArchetypeId, [_effort])),
+                    onTick: () => _update(
+                      _scenario.tick(_selectedArchetypeId, [_effort]),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _ClockControls(
@@ -121,7 +129,9 @@ class _BalancePlaygroundState extends State<BalancePlayground> {
                   const SizedBox(height: 16),
                   _PresetControls(
                     onPreset: (preset) => _update(
-                      preset.build(devArchetypes).withWeights(_scenario.weights),
+                      preset
+                          .build(devArchetypes)
+                          .withWeights(_scenario.weights),
                     ),
                     onReset: () => _update(_scenario.cleared()),
                   ),
@@ -190,11 +200,9 @@ class _Readout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mono = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(fontFeatures: const [
-      FontFeature.tabularFigures(),
-    ]);
+    final mono = Theme.of(context).textTheme.bodySmall?.copyWith(
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -354,7 +362,7 @@ class _ClockControls extends StatelessWidget {
 
   final ValueChanged<int> onAdvance;
 
-  static const _jumps = <int>[1, 7, 30, 60];
+  static const _jumps = <int>[1, 7, 22, 45];
 
   @override
   Widget build(BuildContext context) {
@@ -403,8 +411,10 @@ class _WeightControls extends StatelessWidget {
           value: weights.halfLifeDays.clamp(1, 365),
           onChanged: (value) => onHalfLife(value.roundToDouble()),
         ),
-        Text('pointsPerFullDay (also the day cap)  '
-            '${weights.pointsPerFullDay.round()}'),
+        Text(
+          'pointsPerFullDay (also the day cap)  '
+          '${weights.pointsPerFullDay.round()}',
+        ),
         Slider(
           key: const ValueKey('per-full-day'),
           min: 1,

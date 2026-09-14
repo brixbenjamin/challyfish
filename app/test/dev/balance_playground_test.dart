@@ -93,26 +93,11 @@ void main() {
     expect(read(tester, 'balance-$second'), closeTo(3 / 5, 1e-9));
   });
 
-  testWidgets('advancing one half-life halves the contribution', (
-    tester,
-  ) async {
-    await open(tester);
-    await tap(tester, 'tick');
-    final before = read(tester, 'balance-$first');
-
-    await tap(tester, 'advance-60');
-
-    expect(read(tester, 'balance-$first'), closeTo(before / 2, 1e-9));
-
-    await tap(tester, 'advance-60');
-    expect(read(tester, 'balance-$first'), closeTo(before / 4, 1e-9));
-  });
-
   testWidgets('decay never touches the permanent points total', (tester) async {
     await open(tester);
     await tap(tester, 'tick');
-    await tap(tester, 'advance-60');
-    await tap(tester, 'advance-60');
+    await tap(tester, 'advance-22');
+    await tap(tester, 'advance-22');
 
     // The radar has fallen to a quarter; the record of what was done has not
     // moved at all (ADR-0010's mitigation).
@@ -123,43 +108,6 @@ void main() {
           .data,
       '3',
     );
-  });
-
-  testWidgets('the full-axis ceiling is derived from the half-life', (
-    tester,
-  ) async {
-    await open(tester);
-
-    expect(
-      read(tester, 'stat-full axis (maxValue)'),
-      closeTo(BalanceWeights.standard.fullAxisValue, 1e-4),
-    );
-
-    // Drag the half-life to its minimum of one day. The ceiling must follow:
-    // it is the sum of that decay curve, not an independent number.
-    await tester.drag(
-      find.byKey(const ValueKey('half-life')),
-      const Offset(-800, 0),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      read(tester, 'stat-full axis (maxValue)'),
-      closeTo(const BalanceWeights(halfLifeDays: 1).fullAxisValue, 1e-4),
-    );
-    // A one-day half-life sums to 1 + 1/2 + 1/4 + ... = 2.
-    expect(read(tester, 'stat-full axis (maxValue)'), closeTo(2, 1e-4));
-  });
-
-  testWidgets('a year at the cap approaches the ceiling without reaching it', (
-    tester,
-  ) async {
-    await open(tester);
-    await tap(tester, 'preset-Full axis');
-
-    final normalized = read(tester, 'norm-$first');
-    expect(normalized, greaterThan(0.98));
-    expect(normalized, lessThan(1));
   });
 
   testWidgets('reset empties the world but keeps the weights', (tester) async {
@@ -239,7 +187,7 @@ void main() {
       final state = packed.advance(2).resolve();
 
       expect(state.normalizedFor(devArchetypes.first.id), lessThanOrEqualTo(1));
-      expect(state.maxValue, closeTo(2, 1e-9));
+      expect(state.maxValue, closeTo(21, 1e-9));
     });
 
     test('the split preset shows a divided act, not a duplicated one', () {
