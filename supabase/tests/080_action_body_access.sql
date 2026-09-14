@@ -15,11 +15,17 @@ values ('dddddddd-0000-0000-0000-000000000001',
         (select id from public.packs where not is_core order by sort limit 1),
         'fixture-paid-camp', 'Paid', 'i', 3, 902);
 
-insert into public.actions (id, campaign_id, day_index, title, archetype_id, effort)
+insert into public.actions (id, campaign_id, day_index, title, effort)
 values ('dddddddd-1111-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001',
-        1, 'Free day one', (select id from public.archetypes order by sort limit 1), 1),
+        1, 'Free day one', 1),
        ('dddddddd-1111-0000-0000-000000000002', 'dddddddd-0000-0000-0000-000000000002',
-        1, 'Paid day one', (select id from public.archetypes order by sort limit 1), 1);
+        1, 'Paid day one', 1);
+
+insert into public.action_archetypes (action_id, archetype_id, share)
+values ('dddddddd-1111-0000-0000-000000000001',
+        (select id from public.archetypes order by sort limit 1), 1),
+       ('dddddddd-1111-0000-0000-000000000002',
+        (select id from public.archetypes order by sort limit 1), 1);
 
 insert into public.action_bodies (action_id, body_md)
 values ('dddddddd-1111-0000-0000-000000000001', 'FREE BODY'),

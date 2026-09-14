@@ -29,10 +29,15 @@ values ('bbbbbbbb-2222-2222-2222-222222222222',
 
 -- No body: the copy lives in public.action_bodies now (ADR-0025), and nothing
 -- below reads it. day_logs references the action, not its body.
-insert into public.actions (id, campaign_id, day_index, title, archetype_id)
+insert into public.actions (id, campaign_id, day_index, title)
 values ('dddddddd-0000-0000-0000-000000000001',
-        'bbbbbbbb-2222-2222-2222-222222222222', 1, 'Do the thing',
-        'cccccccc-2222-2222-2222-222222222222');
+        'bbbbbbbb-2222-2222-2222-222222222222', 1, 'Do the thing');
+
+-- The archetype is a join row since 0007. One row at share 1 is the ordinary
+-- single-drive action, which is all this fixture needs.
+insert into public.action_archetypes (action_id, archetype_id, share)
+values ('dddddddd-0000-0000-0000-000000000001',
+        'cccccccc-2222-2222-2222-222222222222', 1);
 
 -- User B's own rows in the tables the spec names explicitly. The run id is
 -- spelled out rather than sub-selected because the write assertions below run

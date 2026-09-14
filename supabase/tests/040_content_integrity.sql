@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(17);
 
 -- Structural validation only. The safety floor in design spec section 9 cannot
 -- be checked by a machine and is an authoring obligation (Q11).
@@ -110,6 +110,36 @@ select is_empty(
       where store_product_id is not null
       group by store_product_id having count(*) > 1 $$,
   'no two packs share a store product id'
+);
+
+-- 0007: an action's archetypes are a join table, so the invariants the dropped
+-- not-null column carried for free are checked here as well as by the deferred
+-- constraint trigger. The trigger catches a write; this catches a library that
+-- was assembled correctly one row at a time and is still wrong as a whole.
+select is_empty(
+  $$ select a.id from public.actions a
+      left join public.action_archetypes aa on aa.action_id = a.id
+      where aa.action_id is null $$,
+  'every action carries at least one archetype'
+);
+
+-- Authoring discipline, not a schema limit. An action tagged with three or four
+-- of the four drives is undifferentiated effort: it moves every axis a little
+-- and tells the radar nothing. Relax this deliberately if content practice
+-- disagrees; do not relax it to make a seed pass.
+select is_empty(
+  $$ select aa.action_id from public.action_archetypes aa
+      group by aa.action_id having count(*) > 2 $$,
+  'no action is spread across more than two archetypes'
+);
+
+-- The split has to be exercised by real content, not only by unit tests: a
+-- library where every action is single-tagged would let the whole normalisation
+-- path rot unnoticed behind a seed that never uses it.
+select isnt_empty(
+  $$ select aa.action_id from public.action_archetypes aa
+      group by aa.action_id having count(*) > 1 $$,
+  'at least one seeded action divides its effort across two archetypes'
 );
 
 -- ADR-0025: the authored copy lives in its own table now.
