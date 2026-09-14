@@ -398,18 +398,26 @@ class SyncRepository implements SyncRunner {
             ),
             innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
           ])
-          ..addColumns([db.actions.id, db.campaigns.id])
+          ..addColumns([db.actions.id, db.days.id, db.campaigns.id])
           ..where(db.packs.isCore.equals(false) & db.packs.id.isNotIn(owned));
     final rows = await orphaned.get();
     if (rows.isEmpty) return;
 
     final actionIds = rows.map((r) => r.read(db.actions.id)!).toList();
+    final dayIds = rows.map((r) => r.read(db.days.id)!).toSet().toList();
     final campaignIds = rows.map((r) => r.read(db.campaigns.id)!).toSet();
 
     await db.transaction(() async {
       await (db.delete(
         db.actionBodies,
       )..where((b) => b.actionId.isIn(actionIds))).go();
+
+      // Gated by the same entitlement, and revoked by the same refund
+      // (ADR-0034). A day body left behind is copy the user has stopped paying
+      // for, still readable on the device.
+      await (db.delete(
+        db.dayBodies,
+      )..where((b) => b.dayId.isIn(dayIds))).go();
 
       // Dirty, so the abandonment is pushed. The row and its day logs stay.
       await (db.update(db.campaignRuns)..where(

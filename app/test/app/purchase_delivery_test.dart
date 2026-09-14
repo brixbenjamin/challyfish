@@ -43,9 +43,21 @@ class DelayedBodyContentApi implements ContentApi {
       pulls++;
       onPull?.call();
     }
-    if (table != 'action_bodies') return const [];
+    // Both body tables, since ADR-0034: a purchase is delivered only once day
+    // one is readable in full, so a fake that withheld one of them would report
+    // a delivery that never happened.
+    if (table != 'action_bodies' && table != 'day_bodies') return const [];
     if (bodyPresentAfterPulls == null || pulls < bodyPresentAfterPulls!) {
       return const [];
+    }
+    if (table == 'day_bodies') {
+      return [
+        {
+          'day_id': 'dPaid',
+          'body_md': 'what the day asks',
+          'updated_at': '2026-09-09T00:00:00Z',
+        },
+      ];
     }
     return [
       {

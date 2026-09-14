@@ -174,7 +174,12 @@ class PurchaseController {
     void Function(PurchaseUiState)? onProgress,
   ) async {
     onProgress?.call(PurchaseDelivering(pack.id));
+    // Both body tables, for one reason: the rows being waited for are older
+    // than this device's marks -- they existed all along and were merely
+    // invisible -- so an incremental pull would filter out exactly what was
+    // just paid for (ADR-0025, ADR-0034).
     await content.clearWatermark('action_bodies');
+    await content.clearWatermark('day_bodies');
 
     const backoff = [
       Duration(seconds: 1),

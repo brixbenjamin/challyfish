@@ -330,25 +330,33 @@ class ContentRepository {
   /// server is willing to give. Used when the answer to "who is asking" changes.
   Future<void> clearWatermark(String table) => db.clearWatermark(table);
 
-  /// Whether day one of any campaign in [packId] has its body locally. The
-  /// delivery check, chosen over a row count because a partial pull that has not
-  /// reached day one is not a pack the user can start.
+  /// Whether day one of any campaign in [packId] is fully readable locally:
+  /// its **day body** and its mandatory action's body.
+  ///
+  /// Both, because a day the user cannot read is not a day they can start — the
+  /// commit is taken after reading the framing copy (ADR-0034) — and a day whose
+  /// action body has not arrived is the case this check already existed for
+  /// (ADR-0025). The delivery check, chosen over a row count because a partial
+  /// pull that has not reached day one is not a pack the user can start.
   Future<bool> hasBodyForFirstDay(String packId) async {
     final query =
-        db.selectOnly(db.actions).join([
-            innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
+        db.selectOnly(db.days).join([
             innerJoin(
               db.campaigns,
               db.campaigns.id.equalsExp(db.days.campaignId),
             ),
+            innerJoin(db.dayBodies, db.dayBodies.dayId.equalsExp(db.days.id)),
+            innerJoin(db.actions, db.actions.dayId.equalsExp(db.days.id)),
             innerJoin(
               db.actionBodies,
               db.actionBodies.actionId.equalsExp(db.actions.id),
             ),
           ])
-          ..addColumns([db.actions.id])
+          ..addColumns([db.days.id])
           ..where(
-            db.campaigns.packId.equals(packId) & db.days.dayIndex.equals(1),
+            db.campaigns.packId.equals(packId) &
+                db.days.dayIndex.equals(1) &
+                db.actions.isOptional.equals(false),
           )
           ..limit(1);
     return (await query.get()).isNotEmpty;

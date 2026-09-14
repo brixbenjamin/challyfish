@@ -149,6 +149,15 @@ Future<Harness> seededHarness({
             updatedAt: at,
           ),
         );
+    await db
+        .into(db.dayBodies)
+        .insert(
+          DayBodiesCompanion.insert(
+            dayId: id == 'aCore' ? 'dCore' : 'dPaid',
+            bodyMd: 'framing',
+            updatedAt: at,
+          ),
+        );
   }
 
   await db
@@ -275,5 +284,21 @@ void main() {
     await h.sync.reconcileEntitlements('u1');
 
     expect(h.api.asked, [('entitlements', null)]);
+  });
+
+  test('a refund takes the paid day bodies with the action bodies', () async {
+    // The day body is gated by the same entitlement (ADR-0034). Leaving it on
+    // the device after the server has revoked the pack is the same leak the
+    // action-body purge exists to close.
+    final h = await seededHarness(serverReturns: const []);
+
+    await h.sync.reconcileEntitlements('user-1');
+
+    final bodies = await h.db.select(h.db.dayBodies).get();
+    expect(
+      bodies.map((b) => b.dayId),
+      ['dCore'],
+      reason: 'the free pack keeps its copy; the revoked pack does not',
+    );
   });
 }

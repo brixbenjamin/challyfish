@@ -149,6 +149,17 @@ void main() {
             updatedAt: now,
           ),
         );
+    // Delivery needs day one readable in full since ADR-0034: the framing copy
+    // as well as the action copy.
+    await db
+        .into(db.dayBodies)
+        .insert(
+          DayBodiesCompanion.insert(
+            dayId: 'day-edge-1',
+            bodyMd: 'framing',
+            updatedAt: now,
+          ),
+        );
   }
 
   /// A user who has answered the diagnostic and has no run going: the state

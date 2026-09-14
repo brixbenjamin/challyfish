@@ -229,12 +229,12 @@ Future<void> replaceLocalUserState(FeralDatabase db) async {
     await db.delete(db.entitlements).go();
 
     // Content is normally left alone across a sign-in, and for every other
-    // content table that is still right. action_bodies is the exception: it is
-    // the one table whose visible rows depend on *who is asking*, so rows the
-    // previous account could read are not rows this one may keep (ADR-0025).
-    // The core pack is kept because it is free to everyone, which also means a
-    // sign-in never leaves the app with nothing to show.
-    final paidActionIds =
+    // content table that is still right. The two body tables are the exception:
+    // they are the tables whose visible rows depend on *who is asking*, so rows
+    // the previous account could read are not rows this one may keep (ADR-0025,
+    // ADR-0034). The core pack is kept because it is free to everyone, which
+    // also means a sign-in never leaves the app with nothing to show.
+    final paidRows =
         db.selectOnly(db.actions).join([
             innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
             innerJoin(
@@ -243,22 +243,44 @@ Future<void> replaceLocalUserState(FeralDatabase db) async {
             ),
             innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
           ])
-          ..addColumns([db.actions.id])
+          ..addColumns([db.actions.id, db.days.id])
           ..where(db.packs.isCore.equals(false));
-    final ids = (await paidActionIds.get())
-        .map((r) => r.read(db.actions.id)!)
-        .toList();
-    if (ids.isNotEmpty) {
+    final rows = await paidRows.get();
+    final actionIds = rows.map((r) => r.read(db.actions.id)!).toList();
+    if (actionIds.isNotEmpty) {
       await (db.delete(
         db.actionBodies,
-      )..where((b) => b.actionId.isIn(ids))).go();
+      )..where((b) => b.actionId.isIn(actionIds))).go();
     }
 
-    // User-table watermarks, plus action_bodies. Every other content watermark
-    // is left alone -- resetting one would force a full library re-download for
-    // no reason -- but action_bodies' visible row set is per user while its mark
-    // is per device, so a stale mark would hide a newly-signed-in account's
-    // own pack behind an `updated_at >` filter it can never satisfy.
+    // Days are reached independently of actions: a paid day whose actions have
+    // not been pulled yet still has a body the previous account could read, and
+    // a join through `actions` would leave exactly that row behind.
+    final paidDayIds =
+        db.selectOnly(db.days).join([
+            innerJoin(
+              db.campaigns,
+              db.campaigns.id.equalsExp(db.days.campaignId),
+            ),
+            innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
+          ])
+          ..addColumns([db.days.id])
+          ..where(db.packs.isCore.equals(false));
+    final dayIds = (await paidDayIds.get())
+        .map((r) => r.read(db.days.id)!)
+        .toList();
+    if (dayIds.isNotEmpty) {
+      await (db.delete(
+        db.dayBodies,
+      )..where((b) => b.dayId.isIn(dayIds))).go();
+    }
+
+    // User-table watermarks, plus both body tables. Every other content
+    // watermark is left alone -- resetting one would force a full library
+    // re-download for no reason -- but a body table's visible row set is per
+    // user while its mark is per device, so a stale mark would hide a
+    // newly-signed-in account's own pack behind an `updated_at >` filter it can
+    // never satisfy.
     for (final table in [
       'profiles',
       'campaign_runs',
@@ -266,6 +288,7 @@ Future<void> replaceLocalUserState(FeralDatabase db) async {
       'diagnostic_results',
       'entitlements',
       'action_bodies',
+      'day_bodies',
     ]) {
       await (db.delete(
         db.syncState,
