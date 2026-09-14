@@ -9,7 +9,7 @@ ActionSpec action(String id, {int effort = 1, bool isOptional = false}) =>
       campaignId: 'campaign-1',
       dayIndex: 1,
       title: 'do the thing',
-      archetypeId: 'axis-a',
+      archetypeWeights: const {'axis-a': 1.0},
       effort: effort,
       isOptional: isOptional,
     );

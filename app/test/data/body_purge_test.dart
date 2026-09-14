@@ -126,7 +126,6 @@ Future<Harness> seededHarness({
             campaignId: campaign,
             dayIndex: 1,
             title: 't',
-            archetypeId: 'x1',
             updatedAt: at,
           ),
         );

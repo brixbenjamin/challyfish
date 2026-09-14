@@ -2086,17 +2086,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _archetypeIdMeta = const VerificationMeta(
-    'archetypeId',
-  );
-  @override
-  late final GeneratedColumn<String> archetypeId = GeneratedColumn<String>(
-    'archetype_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _whyDoctrineIdMeta = const VerificationMeta(
     'whyDoctrineId',
   );
@@ -2160,7 +2149,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     campaignId,
     dayIndex,
     title,
-    archetypeId,
     whyDoctrineId,
     effort,
     isOptional,
@@ -2207,17 +2195,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
       );
     } else if (isInserting) {
       context.missing(_titleMeta);
-    }
-    if (data.containsKey('archetype_id')) {
-      context.handle(
-        _archetypeIdMeta,
-        archetypeId.isAcceptableOrUnknown(
-          data['archetype_id']!,
-          _archetypeIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_archetypeIdMeta);
     }
     if (data.containsKey('why_doctrine_id')) {
       context.handle(
@@ -2283,10 +2260,6 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
         DriftSqlType.string,
         data['${effectivePrefix}title'],
       )!,
-      archetypeId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}archetype_id'],
-      )!,
       whyDoctrineId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}why_doctrine_id'],
@@ -2322,8 +2295,11 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   final int dayIndex;
   final String title;
 
-  /// Exactly one archetype per action (ADR-0004). Not nullable.
-  final String archetypeId;
+  /// The archetypes an action serves live in [ActionArchetypes], not here. The
+  /// column this replaced was `not null`, which guaranteed every action had one
+  /// archetype; a join table cannot express that, so the guarantee moved to a
+  /// deferred constraint trigger in Postgres. Locally there is nothing to
+  /// enforce — content is a read-only cache of a server that already checks it.
   final String? whyDoctrineId;
 
   /// The points value. Authored and displayed as a whole number; the balance
@@ -2347,7 +2323,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     required this.campaignId,
     required this.dayIndex,
     required this.title,
-    required this.archetypeId,
     this.whyDoctrineId,
     required this.effort,
     required this.isOptional,
@@ -2361,7 +2336,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     map['campaign_id'] = Variable<String>(campaignId);
     map['day_index'] = Variable<int>(dayIndex);
     map['title'] = Variable<String>(title);
-    map['archetype_id'] = Variable<String>(archetypeId);
     if (!nullToAbsent || whyDoctrineId != null) {
       map['why_doctrine_id'] = Variable<String>(whyDoctrineId);
     }
@@ -2378,7 +2352,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       campaignId: Value(campaignId),
       dayIndex: Value(dayIndex),
       title: Value(title),
-      archetypeId: Value(archetypeId),
       whyDoctrineId: whyDoctrineId == null && nullToAbsent
           ? const Value.absent()
           : Value(whyDoctrineId),
@@ -2399,7 +2372,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       campaignId: serializer.fromJson<String>(json['campaignId']),
       dayIndex: serializer.fromJson<int>(json['dayIndex']),
       title: serializer.fromJson<String>(json['title']),
-      archetypeId: serializer.fromJson<String>(json['archetypeId']),
       whyDoctrineId: serializer.fromJson<String?>(json['whyDoctrineId']),
       effort: serializer.fromJson<int>(json['effort']),
       isOptional: serializer.fromJson<bool>(json['isOptional']),
@@ -2415,7 +2387,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       'campaignId': serializer.toJson<String>(campaignId),
       'dayIndex': serializer.toJson<int>(dayIndex),
       'title': serializer.toJson<String>(title),
-      'archetypeId': serializer.toJson<String>(archetypeId),
       'whyDoctrineId': serializer.toJson<String?>(whyDoctrineId),
       'effort': serializer.toJson<int>(effort),
       'isOptional': serializer.toJson<bool>(isOptional),
@@ -2429,7 +2400,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     String? campaignId,
     int? dayIndex,
     String? title,
-    String? archetypeId,
     Value<String?> whyDoctrineId = const Value.absent(),
     int? effort,
     bool? isOptional,
@@ -2440,7 +2410,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     campaignId: campaignId ?? this.campaignId,
     dayIndex: dayIndex ?? this.dayIndex,
     title: title ?? this.title,
-    archetypeId: archetypeId ?? this.archetypeId,
     whyDoctrineId: whyDoctrineId.present
         ? whyDoctrineId.value
         : this.whyDoctrineId,
@@ -2457,9 +2426,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           : this.campaignId,
       dayIndex: data.dayIndex.present ? data.dayIndex.value : this.dayIndex,
       title: data.title.present ? data.title.value : this.title,
-      archetypeId: data.archetypeId.present
-          ? data.archetypeId.value
-          : this.archetypeId,
       whyDoctrineId: data.whyDoctrineId.present
           ? data.whyDoctrineId.value
           : this.whyDoctrineId,
@@ -2479,7 +2445,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           ..write('campaignId: $campaignId, ')
           ..write('dayIndex: $dayIndex, ')
           ..write('title: $title, ')
-          ..write('archetypeId: $archetypeId, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
           ..write('isOptional: $isOptional, ')
@@ -2495,7 +2460,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     campaignId,
     dayIndex,
     title,
-    archetypeId,
     whyDoctrineId,
     effort,
     isOptional,
@@ -2510,7 +2474,6 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
           other.campaignId == this.campaignId &&
           other.dayIndex == this.dayIndex &&
           other.title == this.title &&
-          other.archetypeId == this.archetypeId &&
           other.whyDoctrineId == this.whyDoctrineId &&
           other.effort == this.effort &&
           other.isOptional == this.isOptional &&
@@ -2523,7 +2486,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   final Value<String> campaignId;
   final Value<int> dayIndex;
   final Value<String> title;
-  final Value<String> archetypeId;
   final Value<String?> whyDoctrineId;
   final Value<int> effort;
   final Value<bool> isOptional;
@@ -2535,7 +2497,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     this.campaignId = const Value.absent(),
     this.dayIndex = const Value.absent(),
     this.title = const Value.absent(),
-    this.archetypeId = const Value.absent(),
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
     this.isOptional = const Value.absent(),
@@ -2548,7 +2509,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     required String campaignId,
     required int dayIndex,
     required String title,
-    required String archetypeId,
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
     this.isOptional = const Value.absent(),
@@ -2559,14 +2519,12 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
        campaignId = Value(campaignId),
        dayIndex = Value(dayIndex),
        title = Value(title),
-       archetypeId = Value(archetypeId),
        updatedAt = Value(updatedAt);
   static Insertable<ActionRow> custom({
     Expression<String>? id,
     Expression<String>? campaignId,
     Expression<int>? dayIndex,
     Expression<String>? title,
-    Expression<String>? archetypeId,
     Expression<String>? whyDoctrineId,
     Expression<int>? effort,
     Expression<bool>? isOptional,
@@ -2579,7 +2537,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
       if (campaignId != null) 'campaign_id': campaignId,
       if (dayIndex != null) 'day_index': dayIndex,
       if (title != null) 'title': title,
-      if (archetypeId != null) 'archetype_id': archetypeId,
       if (whyDoctrineId != null) 'why_doctrine_id': whyDoctrineId,
       if (effort != null) 'effort': effort,
       if (isOptional != null) 'is_optional': isOptional,
@@ -2594,7 +2551,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     Value<String>? campaignId,
     Value<int>? dayIndex,
     Value<String>? title,
-    Value<String>? archetypeId,
     Value<String?>? whyDoctrineId,
     Value<int>? effort,
     Value<bool>? isOptional,
@@ -2607,7 +2563,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
       campaignId: campaignId ?? this.campaignId,
       dayIndex: dayIndex ?? this.dayIndex,
       title: title ?? this.title,
-      archetypeId: archetypeId ?? this.archetypeId,
       whyDoctrineId: whyDoctrineId ?? this.whyDoctrineId,
       effort: effort ?? this.effort,
       isOptional: isOptional ?? this.isOptional,
@@ -2631,9 +2586,6 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
-    }
-    if (archetypeId.present) {
-      map['archetype_id'] = Variable<String>(archetypeId.value);
     }
     if (whyDoctrineId.present) {
       map['why_doctrine_id'] = Variable<String>(whyDoctrineId.value);
@@ -2663,11 +2615,332 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
           ..write('campaignId: $campaignId, ')
           ..write('dayIndex: $dayIndex, ')
           ..write('title: $title, ')
-          ..write('archetypeId: $archetypeId, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
           ..write('isOptional: $isOptional, ')
           ..write('sort: $sort, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ActionArchetypesTable extends ActionArchetypes
+    with TableInfo<$ActionArchetypesTable, ActionArchetypeRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActionArchetypesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _actionIdMeta = const VerificationMeta(
+    'actionId',
+  );
+  @override
+  late final GeneratedColumn<String> actionId = GeneratedColumn<String>(
+    'action_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archetypeIdMeta = const VerificationMeta(
+    'archetypeId',
+  );
+  @override
+  late final GeneratedColumn<String> archetypeId = GeneratedColumn<String>(
+    'archetype_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _shareMeta = const VerificationMeta('share');
+  @override
+  late final GeneratedColumn<int> share = GeneratedColumn<int>(
+    'share',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    actionId,
+    archetypeId,
+    share,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'action_archetypes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ActionArchetypeRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('action_id')) {
+      context.handle(
+        _actionIdMeta,
+        actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionIdMeta);
+    }
+    if (data.containsKey('archetype_id')) {
+      context.handle(
+        _archetypeIdMeta,
+        archetypeId.isAcceptableOrUnknown(
+          data['archetype_id']!,
+          _archetypeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_archetypeIdMeta);
+    }
+    if (data.containsKey('share')) {
+      context.handle(
+        _shareMeta,
+        share.isAcceptableOrUnknown(data['share']!, _shareMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {actionId, archetypeId};
+  @override
+  ActionArchetypeRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ActionArchetypeRow(
+      actionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_id'],
+      )!,
+      archetypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}archetype_id'],
+      )!,
+      share: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}share'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ActionArchetypesTable createAlias(String alias) {
+    return $ActionArchetypesTable(attachedDatabase, alias);
+  }
+}
+
+class ActionArchetypeRow extends DataClass
+    implements Insertable<ActionArchetypeRow> {
+  final String actionId;
+  final String archetypeId;
+  final int share;
+  final DateTime updatedAt;
+  const ActionArchetypeRow({
+    required this.actionId,
+    required this.archetypeId,
+    required this.share,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['action_id'] = Variable<String>(actionId);
+    map['archetype_id'] = Variable<String>(archetypeId);
+    map['share'] = Variable<int>(share);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ActionArchetypesCompanion toCompanion(bool nullToAbsent) {
+    return ActionArchetypesCompanion(
+      actionId: Value(actionId),
+      archetypeId: Value(archetypeId),
+      share: Value(share),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ActionArchetypeRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ActionArchetypeRow(
+      actionId: serializer.fromJson<String>(json['actionId']),
+      archetypeId: serializer.fromJson<String>(json['archetypeId']),
+      share: serializer.fromJson<int>(json['share']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'actionId': serializer.toJson<String>(actionId),
+      'archetypeId': serializer.toJson<String>(archetypeId),
+      'share': serializer.toJson<int>(share),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ActionArchetypeRow copyWith({
+    String? actionId,
+    String? archetypeId,
+    int? share,
+    DateTime? updatedAt,
+  }) => ActionArchetypeRow(
+    actionId: actionId ?? this.actionId,
+    archetypeId: archetypeId ?? this.archetypeId,
+    share: share ?? this.share,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ActionArchetypeRow copyWithCompanion(ActionArchetypesCompanion data) {
+    return ActionArchetypeRow(
+      actionId: data.actionId.present ? data.actionId.value : this.actionId,
+      archetypeId: data.archetypeId.present
+          ? data.archetypeId.value
+          : this.archetypeId,
+      share: data.share.present ? data.share.value : this.share,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActionArchetypeRow(')
+          ..write('actionId: $actionId, ')
+          ..write('archetypeId: $archetypeId, ')
+          ..write('share: $share, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(actionId, archetypeId, share, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ActionArchetypeRow &&
+          other.actionId == this.actionId &&
+          other.archetypeId == this.archetypeId &&
+          other.share == this.share &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ActionArchetypesCompanion extends UpdateCompanion<ActionArchetypeRow> {
+  final Value<String> actionId;
+  final Value<String> archetypeId;
+  final Value<int> share;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ActionArchetypesCompanion({
+    this.actionId = const Value.absent(),
+    this.archetypeId = const Value.absent(),
+    this.share = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ActionArchetypesCompanion.insert({
+    required String actionId,
+    required String archetypeId,
+    this.share = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : actionId = Value(actionId),
+       archetypeId = Value(archetypeId),
+       updatedAt = Value(updatedAt);
+  static Insertable<ActionArchetypeRow> custom({
+    Expression<String>? actionId,
+    Expression<String>? archetypeId,
+    Expression<int>? share,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (actionId != null) 'action_id': actionId,
+      if (archetypeId != null) 'archetype_id': archetypeId,
+      if (share != null) 'share': share,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ActionArchetypesCompanion copyWith({
+    Value<String>? actionId,
+    Value<String>? archetypeId,
+    Value<int>? share,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return ActionArchetypesCompanion(
+      actionId: actionId ?? this.actionId,
+      archetypeId: archetypeId ?? this.archetypeId,
+      share: share ?? this.share,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (actionId.present) {
+      map['action_id'] = Variable<String>(actionId.value);
+    }
+    if (archetypeId.present) {
+      map['archetype_id'] = Variable<String>(archetypeId.value);
+    }
+    if (share.present) {
+      map['share'] = Variable<int>(share.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActionArchetypesCompanion(')
+          ..write('actionId: $actionId, ')
+          ..write('archetypeId: $archetypeId, ')
+          ..write('share: $share, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -7844,6 +8117,9 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
   late final $CampaignArchetypesTable campaignArchetypes =
       $CampaignArchetypesTable(this);
   late final $ActionsTable actions = $ActionsTable(this);
+  late final $ActionArchetypesTable actionArchetypes = $ActionArchetypesTable(
+    this,
+  );
   late final $ActionBodiesTable actionBodies = $ActionBodiesTable(this);
   late final $DoctrineGroupsTable doctrineGroups = $DoctrineGroupsTable(this);
   late final $DoctrineEntriesTable doctrineEntries = $DoctrineEntriesTable(
@@ -7871,6 +8147,7 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     campaigns,
     campaignArchetypes,
     actions,
+    actionArchetypes,
     actionBodies,
     doctrineGroups,
     doctrineEntries,
@@ -8939,7 +9216,6 @@ typedef $$ActionsTableCreateCompanionBuilder =
       required String campaignId,
       required int dayIndex,
       required String title,
-      required String archetypeId,
       Value<String?> whyDoctrineId,
       Value<int> effort,
       Value<bool> isOptional,
@@ -8953,7 +9229,6 @@ typedef $$ActionsTableUpdateCompanionBuilder =
       Value<String> campaignId,
       Value<int> dayIndex,
       Value<String> title,
-      Value<String> archetypeId,
       Value<String?> whyDoctrineId,
       Value<int> effort,
       Value<bool> isOptional,
@@ -8988,11 +9263,6 @@ class $$ActionsTableFilterComposer
 
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get archetypeId => $composableBuilder(
-    column: $table.archetypeId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9051,11 +9321,6 @@ class $$ActionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get archetypeId => $composableBuilder(
-    column: $table.archetypeId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get whyDoctrineId => $composableBuilder(
     column: $table.whyDoctrineId,
     builder: (column) => ColumnOrderings(column),
@@ -9104,11 +9369,6 @@ class $$ActionsTableAnnotationComposer
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
-
-  GeneratedColumn<String> get archetypeId => $composableBuilder(
-    column: $table.archetypeId,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<String> get whyDoctrineId => $composableBuilder(
     column: $table.whyDoctrineId,
@@ -9165,7 +9425,6 @@ class $$ActionsTableTableManager
                 Value<String> campaignId = const Value.absent(),
                 Value<int> dayIndex = const Value.absent(),
                 Value<String> title = const Value.absent(),
-                Value<String> archetypeId = const Value.absent(),
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
                 Value<bool> isOptional = const Value.absent(),
@@ -9177,7 +9436,6 @@ class $$ActionsTableTableManager
                 campaignId: campaignId,
                 dayIndex: dayIndex,
                 title: title,
-                archetypeId: archetypeId,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
                 isOptional: isOptional,
@@ -9191,7 +9449,6 @@ class $$ActionsTableTableManager
                 required String campaignId,
                 required int dayIndex,
                 required String title,
-                required String archetypeId,
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
                 Value<bool> isOptional = const Value.absent(),
@@ -9203,7 +9460,6 @@ class $$ActionsTableTableManager
                 campaignId: campaignId,
                 dayIndex: dayIndex,
                 title: title,
-                archetypeId: archetypeId,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
                 isOptional: isOptional,
@@ -9231,6 +9487,199 @@ typedef $$ActionsTableProcessedTableManager =
       $$ActionsTableUpdateCompanionBuilder,
       (ActionRow, BaseReferences<_$FeralDatabase, $ActionsTable, ActionRow>),
       ActionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ActionArchetypesTableCreateCompanionBuilder =
+    ActionArchetypesCompanion Function({
+      required String actionId,
+      required String archetypeId,
+      Value<int> share,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$ActionArchetypesTableUpdateCompanionBuilder =
+    ActionArchetypesCompanion Function({
+      Value<String> actionId,
+      Value<String> archetypeId,
+      Value<int> share,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$ActionArchetypesTableFilterComposer
+    extends Composer<_$FeralDatabase, $ActionArchetypesTable> {
+  $$ActionArchetypesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get share => $composableBuilder(
+    column: $table.share,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ActionArchetypesTableOrderingComposer
+    extends Composer<_$FeralDatabase, $ActionArchetypesTable> {
+  $$ActionArchetypesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get actionId => $composableBuilder(
+    column: $table.actionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get share => $composableBuilder(
+    column: $table.share,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ActionArchetypesTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $ActionArchetypesTable> {
+  $$ActionArchetypesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get actionId =>
+      $composableBuilder(column: $table.actionId, builder: (column) => column);
+
+  GeneratedColumn<String> get archetypeId => $composableBuilder(
+    column: $table.archetypeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get share =>
+      $composableBuilder(column: $table.share, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ActionArchetypesTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $ActionArchetypesTable,
+          ActionArchetypeRow,
+          $$ActionArchetypesTableFilterComposer,
+          $$ActionArchetypesTableOrderingComposer,
+          $$ActionArchetypesTableAnnotationComposer,
+          $$ActionArchetypesTableCreateCompanionBuilder,
+          $$ActionArchetypesTableUpdateCompanionBuilder,
+          (
+            ActionArchetypeRow,
+            BaseReferences<
+              _$FeralDatabase,
+              $ActionArchetypesTable,
+              ActionArchetypeRow
+            >,
+          ),
+          ActionArchetypeRow,
+          PrefetchHooks Function()
+        > {
+  $$ActionArchetypesTableTableManager(
+    _$FeralDatabase db,
+    $ActionArchetypesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ActionArchetypesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ActionArchetypesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ActionArchetypesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> actionId = const Value.absent(),
+                Value<String> archetypeId = const Value.absent(),
+                Value<int> share = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ActionArchetypesCompanion(
+                actionId: actionId,
+                archetypeId: archetypeId,
+                share: share,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String actionId,
+                required String archetypeId,
+                Value<int> share = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => ActionArchetypesCompanion.insert(
+                actionId: actionId,
+                archetypeId: archetypeId,
+                share: share,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ActionArchetypesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $ActionArchetypesTable,
+      ActionArchetypeRow,
+      $$ActionArchetypesTableFilterComposer,
+      $$ActionArchetypesTableOrderingComposer,
+      $$ActionArchetypesTableAnnotationComposer,
+      $$ActionArchetypesTableCreateCompanionBuilder,
+      $$ActionArchetypesTableUpdateCompanionBuilder,
+      (
+        ActionArchetypeRow,
+        BaseReferences<
+          _$FeralDatabase,
+          $ActionArchetypesTable,
+          ActionArchetypeRow
+        >,
+      ),
+      ActionArchetypeRow,
       PrefetchHooks Function()
     >;
 typedef $$ActionBodiesTableCreateCompanionBuilder =
@@ -12016,6 +12465,8 @@ class $FeralDatabaseManager {
       $$CampaignArchetypesTableTableManager(_db, _db.campaignArchetypes);
   $$ActionsTableTableManager get actions =>
       $$ActionsTableTableManager(_db, _db.actions);
+  $$ActionArchetypesTableTableManager get actionArchetypes =>
+      $$ActionArchetypesTableTableManager(_db, _db.actionArchetypes);
   $$ActionBodiesTableTableManager get actionBodies =>
       $$ActionBodiesTableTableManager(_db, _db.actionBodies);
   $$DoctrineGroupsTableTableManager get doctrineGroups =>

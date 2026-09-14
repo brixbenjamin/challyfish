@@ -62,8 +62,11 @@ class Actions extends Table {
   IntColumn get dayIndex => integer()();
   TextColumn get title => text()();
 
-  /// Exactly one archetype per action (ADR-0004). Not nullable.
-  TextColumn get archetypeId => text()();
+  /// The archetypes an action serves live in [ActionArchetypes], not here. The
+  /// column this replaced was `not null`, which guaranteed every action had one
+  /// archetype; a join table cannot express that, so the guarantee moved to a
+  /// deferred constraint trigger in Postgres. Locally there is nothing to
+  /// enforce — content is a read-only cache of a server that already checks it.
   TextColumn get whyDoctrineId => text().nullable()();
 
   /// The points value. Authored and displayed as a whole number; the balance
@@ -106,6 +109,24 @@ class ActionBodies extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {actionId};
+}
+
+/// How one action's effort divides across the drives it serves.
+///
+/// [share] is a ratio numerator, not a multiplier: the weight is
+/// `share / sum(shares for the action)`, so an action contributes its own
+/// `effort` and no more however many rows it has here. Authoring writes small
+/// integers — 1 for a single drive, 1:1 for an even pair, 2:1 where there is a
+/// clear primary — and cannot inflate an action by choosing bigger ones.
+@DataClassName('ActionArchetypeRow')
+class ActionArchetypes extends Table {
+  TextColumn get actionId => text()();
+  TextColumn get archetypeId => text()();
+  IntColumn get share => integer().withDefault(const Constant(1))();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {actionId, archetypeId};
 }
 
 @DataClassName('CampaignArchetypeRow')

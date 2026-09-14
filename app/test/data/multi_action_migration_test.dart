@@ -112,7 +112,6 @@ void main() {
             campaignId: 'campaign-1',
             dayIndex: 1,
             title: 'The mandatory act',
-            archetypeId: 'arch-1',
             updatedAt: DateTime.utc(2026, 6, 1),
           ),
         );
@@ -124,7 +123,6 @@ void main() {
             campaignId: 'campaign-1',
             dayIndex: 1,
             title: 'An optional act',
-            archetypeId: 'arch-2',
             isOptional: const Value(true),
             sort: const Value(1),
             updatedAt: DateTime.utc(2026, 6, 1),
@@ -238,6 +236,30 @@ void main() {
     );
 
     test(
+      'the archetype survives the column being dropped for a join table',
+      () async {
+        // v5 to v7 in one open, which is the case that nearly went wrong: the
+        // v6 step recreates `actions` against the current schema and takes
+        // archetype_id with it, so the pairs have to be read before any step
+        // runs rather than inside the v7 block.
+        final migrated = FeralDatabase(NativeDatabase(await writeV5Database()));
+        addTearDown(migrated.close);
+
+        final shares = await migrated.select(migrated.actionArchetypes).get();
+        expect(shares, hasLength(1));
+        expect(shares.single.actionId, 'legacy-action');
+        expect(shares.single.archetypeId, 'arch-1');
+        expect(
+          shares.single.share,
+          1,
+          reason:
+              'one row at share 1 normalises to the weight 1.0 the '
+              'dropped column meant, so no upgraded radar moves',
+        );
+      },
+    );
+
+    test(
       'the day slot constraint moved, so an optional can be stored',
       () async {
         // The reason the v6 step recreates `actions` rather than adding two
@@ -255,7 +277,6 @@ void main() {
                 campaignId: 'campaign-1',
                 dayIndex: 1,
                 title: 'An optional act',
-                archetypeId: 'arch-2',
                 isOptional: const Value(true),
                 sort: const Value(1),
                 updatedAt: DateTime.utc(2026, 9, 11),

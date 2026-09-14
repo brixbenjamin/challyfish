@@ -148,6 +148,34 @@ void main() {
     expect(await content.archetypeIdsFor(campaign.id), isNotEmpty);
     expect(await content.archetypesById(), hasLength(4));
 
+    // Shares ship too. Without them a first launch with no signal would draw a
+    // flat radar from a full campaign — the failure a snapshot that silently
+    // stopped carrying a table would produce, and the reason this asserts on
+    // the bundled asset rather than on the generator's table list.
+    final seeded = await content.actionsFor(campaign.id);
+    expect(
+      seeded.every((a) => a.archetypeWeights.isNotEmpty),
+      isTrue,
+      reason: 'every seeded action carries at least one archetype',
+    );
+    expect(
+      seeded.every(
+        (a) =>
+            (a.archetypeWeights.values.fold(0.0, (sum, w) => sum + w) - 1)
+                .abs() <
+            1e-9,
+      ),
+      isTrue,
+      reason: 'weights are normalised, so no action outweighs its own effort',
+    );
+    expect(
+      seeded.where((a) => a.archetypeWeights.length > 1),
+      isNotEmpty,
+      reason:
+          'the split path is exercised by shipped content, not only by '
+          'unit tests',
+    );
+
     // The reading section ships too: a first launch with no signal that opens
     // Doctrine must not find it empty.
     final doctrine = await content.doctrineGroups();

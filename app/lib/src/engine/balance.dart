@@ -11,35 +11,15 @@ import '../domain/day_log.dart';
 /// `done` and `partial` are gone: the weight no longer comes from the day's
 /// outcome at all. It comes from the effort of each action the user ticked.
 class BalanceWeights {
-  const BalanceWeights({this.pointsPerFullDay = 5, this.halfLifeDays = 60});
+  const BalanceWeights({this.pointsPerFullDay = 5, this.halfLifeDays = 45});
 
-  /// Effort is divided by this before it enters the balance, so a typical full
-  /// day lands near 1.0. It also doubles as the **day cap**: a single day's
-  /// ticked effort in one archetype is clamped to `pointsPerFullDay` before
-  /// decay is applied, so no day — however many optionals stack into one
-  /// drive, however a pack authors `effort` — can draw more than one day's
-  /// worth of contribution. That cap is what keeps `fullAxisValue` meaningful
-  /// regardless of how much content exists. The user-facing points total is
-  /// the undivided integer; only the radar sees this scale. A judgement, like
-  /// halfLifeDays, and due a revisit once real content exists (Q18).
   final double pointsPerFullDay;
 
   /// Local days over which a contribution halves. A judgement, not a finding.
   final double halfLifeDays;
 
-  /// The decayed balance that reads as a fully-drawn radar axis.
-  ///
-  /// Not a new dial: it is the asymptote a single archetype approaches if the
-  /// day cap above is hit every day, forever, discounted by this same decay
-  /// curve — `sum(0.5^(k/halfLifeDays))` for k from 0 to infinity, which is a
-  /// convergent geometric series with closed form `1 / (1 - 0.5^(1/halfLifeDays))`.
-  /// Deriving it from the decay curve rather than guessing a number means it
-  /// can never be invalidated by adding more packs or campaigns — decay caps
-  /// the sum regardless of how much content exists — and it can't drift out
-  /// of calibration with `halfLifeDays` if that judgement is ever revisited.
-  /// The bar it sets is deliberately high: reaching it means hitting the cap
-  /// in one drive essentially every day, indefinitely.
-  double get fullAxisValue => 1 / (1 - math.pow(0.5, 1 / halfLifeDays));
+  /// The balance that reads as a fully-drawn radar axis.
+  double get fullAxisValue => 21;
 
   static const BalanceWeights standard = BalanceWeights();
 }
@@ -96,13 +76,22 @@ class BalanceCalculator {
         final action = actionsById[actionId];
         if (action == null) continue;
 
-        // The action's own archetype, not the day's — which is what lets one
-        // day move several axes (ADR-0030).
-        dayEffortByArchetype.update(
-          action.archetypeId,
-          (existing) => existing + action.effort,
-          ifAbsent: () => action.effort.toDouble(),
-        );
+        // The action's own archetypes, not the day's — which is what lets one
+        // day move several axes (ADR-0030) — and its effort is apportioned
+        // across them rather than paid to each in full. The weights sum to 1,
+        // so the effort this loop distributes is exactly the effort the user
+        // ticked: a two-drive action moves two axes by half as much each, not
+        // both axes by the whole amount. Paying in full would make tagging
+        // widely the cheapest way to fill the radar, and would break the
+        // derivation behind `fullAxisValue`.
+        for (final weight in action.archetypeWeights.entries) {
+          final share = action.effort * weight.value;
+          dayEffortByArchetype.update(
+            weight.key,
+            (existing) => existing + share,
+            ifAbsent: () => share,
+          );
+        }
       }
 
       // The day cap: at most one day's worth of effort counts toward any one

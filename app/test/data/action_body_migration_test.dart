@@ -15,7 +15,6 @@ void main() {
             campaignId: 'c1',
             dayIndex: 1,
             title: 'Day 1',
-            archetypeId: 'x1',
             updatedAt: DateTime.utc(2026, 9, 9),
           ),
         );
@@ -47,7 +46,6 @@ void main() {
             campaignId: 'c1',
             dayIndex: 2,
             title: 'Day 2',
-            archetypeId: 'x1',
             updatedAt: DateTime.utc(2026, 9, 9),
           ),
         );

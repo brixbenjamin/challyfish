@@ -21,16 +21,25 @@ Campaign toCampaign(CampaignRow row) => Campaign(
   sort: row.sort,
 );
 
-/// A null [body] is a real state, not a failure: a locked pack, or an owned pack
-/// whose bodies have not been pulled yet. Callers degrade to the existing
+/// [shares] are the action's authored integer shares, keyed by archetype id,
+/// normalised here into the weights the domain type carries. Empty is a real
+/// state — an action cached ahead of its archetype rows — and the domain type
+/// documents how it degrades.
+///
+/// A null [body] is a real state too, not a failure: a locked pack, or an owned
+/// pack whose bodies have not been pulled yet. Callers degrade to the existing
 /// "content unavailable" path (ADR-0025).
-ActionSpec toAction(ActionRow row, [ActionBodyRow? body]) => ActionSpec(
+ActionSpec toAction(
+  ActionRow row,
+  Map<String, int> shares, [
+  ActionBodyRow? body,
+]) => ActionSpec(
   id: row.id,
   campaignId: row.campaignId,
   dayIndex: row.dayIndex,
   title: row.title,
   bodyMd: body?.bodyMd,
-  archetypeId: row.archetypeId,
+  archetypeWeights: archetypeWeightsFromShares(shares),
   whyDoctrineId: row.whyDoctrineId,
   effort: row.effort,
   isOptional: row.isOptional,

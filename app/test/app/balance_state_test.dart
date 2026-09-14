@@ -67,7 +67,7 @@ void main() {
       dayIndex: 1,
       title: 't',
       bodyMd: 'b',
-      archetypeId: 'a-psycho',
+      archetypeWeights: {'a-psycho': 1.0},
     ),
     'act-p-high': const ActionSpec(
       id: 'act-p',
@@ -75,7 +75,7 @@ void main() {
       dayIndex: 1,
       title: 't',
       bodyMd: 'b',
-      archetypeId: 'a-psycho',
+      archetypeWeights: {'a-psycho': 1.0},
     ),
     'act-k': const ActionSpec(
       id: 'act-k',
@@ -83,7 +83,7 @@ void main() {
       dayIndex: 1,
       title: 't',
       bodyMd: 'b',
-      archetypeId: 'a-killer',
+      archetypeWeights: {'a-killer': 1.0},
     ),
   };
 

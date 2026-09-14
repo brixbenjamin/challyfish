@@ -118,7 +118,9 @@ void main() {
     // moved at all (ADR-0010's mitigation).
     expect(find.text('3'), findsWidgets);
     expect(
-      tester.widget<Text>(find.byKey(const ValueKey('stat-all-time points'))).data,
+      tester
+          .widget<Text>(find.byKey(const ValueKey('stat-all-time points')))
+          .data,
       '3',
     );
   });
@@ -135,7 +137,10 @@ void main() {
 
     // Drag the half-life to its minimum of one day. The ceiling must follow:
     // it is the sum of that decay curve, not an independent number.
-    await tester.drag(find.byKey(const ValueKey('half-life')), const Offset(-800, 0));
+    await tester.drag(
+      find.byKey(const ValueKey('half-life')),
+      const Offset(-800, 0),
+    );
     await tester.pumpAndSettle();
 
     expect(
@@ -172,9 +177,7 @@ void main() {
     );
   });
 
-  testWidgets('the figure stays put while the controls scroll', (
-    tester,
-  ) async {
+  testWidgets('the figure stays put while the controls scroll', (tester) async {
     // A phone-sized surface on purpose: the pinning only means anything when
     // the controls genuinely do not fit beside the figure.
     tester.view.physicalSize = const Size(400, 800);
@@ -200,9 +203,9 @@ void main() {
   /// because the cost of getting it wrong is debug controls in a release build.
   test('nothing the app can launch imports the playground', () {
     final offenders = <String>[];
-    for (final file in Directory('lib')
-        .listSync(recursive: true)
-        .whereType<File>()) {
+    for (final file in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
       if (!file.path.endsWith('.dart')) continue;
       if (file.path.startsWith('lib/src/dev/')) continue;
       if (file.path == 'lib/dev_main.dart') continue;
@@ -237,6 +240,22 @@ void main() {
 
       expect(state.normalizedFor(devArchetypes.first.id), lessThanOrEqualTo(1));
       expect(state.maxValue, closeTo(2, 1e-9));
+    });
+
+    test('the split preset shows a divided act, not a duplicated one', () {
+      // The preset's blurb is a claim about the engine; this is where it is
+      // checked. Two drives at 1:1 read half of the single 4-effort act
+      // beside them, and the three together still add up to two acts.
+      final state = BalancePreset.splitAction.build(devArchetypes).resolve();
+      final split = state.valueFor(devArchetypes[0].id);
+      final single = state.valueFor(devArchetypes[2].id);
+
+      expect(split, closeTo(single / 2, 1e-9));
+      expect(state.valueFor(devArchetypes[1].id), closeTo(split, 1e-9));
+      expect(
+        split + state.valueFor(devArchetypes[1].id) + single,
+        closeTo(single * 2, 1e-9),
+      );
     });
 
     test('every preset resolves through the real engine', () {

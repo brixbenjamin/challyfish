@@ -52,7 +52,7 @@ void main() {
     dayIndex: 3,
     title: 'Do not explain yourself',
     bodyMd: 'Say no once today, and stop talking after you have said it.',
-    archetypeId: 'arch-killer',
+    archetypeWeights: {'arch-killer': 1.0},
   );
 
   const optional = ActionSpec(
@@ -61,7 +61,7 @@ void main() {
     dayIndex: 3,
     title: 'An optional act',
     bodyMd: 'Something extra, if there is appetite for it.',
-    archetypeId: 'arch-killer',
+    archetypeWeights: {'arch-killer': 1.0},
     effort: 2,
     isOptional: true,
     sort: 1,
@@ -608,7 +608,7 @@ void main() {
         campaignId: 'campaign-1',
         dayIndex: 3,
         title: 'Ask the one person whose answer you are most afraid of hearing',
-        archetypeId: 'arch-killer',
+        archetypeWeights: {'arch-killer': 1.0},
         effort: 1000,
         isOptional: true,
         sort: 1,

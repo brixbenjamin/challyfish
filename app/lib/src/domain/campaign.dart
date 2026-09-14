@@ -29,8 +29,31 @@ class Campaign {
   final int sort;
 }
 
-/// One action within a campaign day. Carries exactly one archetype (ADR-0004).
-/// A day holds one mandatory action and zero or more optional ones (ADR-0030).
+/// Turns the integer shares content authoring writes into the weights an
+/// [ActionSpec] carries.
+///
+/// A share is a ratio numerator, not a multiplier: whatever the shares are, the
+/// result sums to 1, so an action contributes exactly its own `effort` however
+/// it is split. That is the property that makes splitting safe to add — see
+/// ActionSpec.archetypeWeights.
+///
+/// An empty or non-positive input yields an empty map rather than throwing.
+/// Content can lag progress after a partial sync, and an action whose archetype
+/// rows have not arrived must degrade the same way an uncached action does.
+Map<String, double> archetypeWeightsFromShares(Map<String, int> shares) {
+  var total = 0;
+  for (final share in shares.values) {
+    if (share > 0) total += share;
+  }
+  if (total == 0) return const {};
+  return {
+    for (final entry in shares.entries)
+      if (entry.value > 0) entry.key: entry.value / total,
+  };
+}
+
+/// One action within a campaign day. A day holds one mandatory action and zero
+/// or more optional ones (ADR-0030).
 class ActionSpec {
   const ActionSpec({
     required this.id,
@@ -38,7 +61,7 @@ class ActionSpec {
     required this.dayIndex,
     required this.title,
     this.bodyMd,
-    required this.archetypeId,
+    required this.archetypeWeights,
     this.whyDoctrineId,
     this.effort = 1,
     this.isOptional = false,
@@ -56,7 +79,20 @@ class ActionSpec {
   /// whose bodies have not been pulled yet (ADR-0025). Callers degrade to the
   /// existing "content unavailable" path rather than failing.
   final String? bodyMd;
-  final String archetypeId;
+
+  /// How this action's effort is apportioned across archetypes, as fractions
+  /// that sum to 1 — never the raw authoring shares. An action that serves two
+  /// drives splits its points between them rather than paying both in full,
+  /// which is what keeps a multi-tagged action from being worth more than a
+  /// single-tagged one of the same effort (amends ADR-0004's one tag per
+  /// action).
+  ///
+  /// Usually one entry at weight 1.0, which is arithmetically identical to the
+  /// single `archetypeId` this replaced. Empty is a real state, not a failure:
+  /// an action whose archetype rows have not been pulled yet contributes
+  /// nothing to the balance and its full effort to the points total, the same
+  /// way an uncached action does.
+  final Map<String, double> archetypeWeights;
   final String? whyDoctrineId;
 
   /// The action's points value, shown to the user as authored. The balance

@@ -127,7 +127,6 @@ void main() {
             campaignId: 'campaign-edge',
             dayIndex: 1,
             title: 'Day 1',
-            archetypeId: 'arch-a',
             updatedAt: now,
           ),
         );

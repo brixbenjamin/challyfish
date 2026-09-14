@@ -25,6 +25,7 @@ const tables = [
   'campaigns',
   'campaign_archetypes',
   'actions',
+  'action_archetypes',
   'action_bodies',
   'doctrine_groups',
   'doctrine_entries',

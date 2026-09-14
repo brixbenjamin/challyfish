@@ -20,21 +20,24 @@ class BalancePreset {
 
   static const capBuster = BalancePreset(
     label: 'Cap buster',
-    blurb: '10 effort ticked into one drive on one day. The day cap should '
+    blurb:
+        '10 effort ticked into one drive on one day. The day cap should '
         'hold it to exactly one day of contribution.',
     build: _capBuster,
   );
 
   static const fullAxis = BalancePreset(
     label: 'Full axis',
-    blurb: 'The cap hit in one drive every day for a year. Should sit just '
+    blurb:
+        'The cap hit in one drive every day for a year. Should sit just '
         'under the fixed ceiling without ever reaching it.',
     build: _fullAxis,
   );
 
   static const lopsided = BalancePreset(
     label: 'Lopsided',
-    blurb: 'A fortnight of heavy work in one drive and a single act in '
+    blurb:
+        'A fortnight of heavy work in one drive and a single act in '
         'another. The shape the radar was drawn for.',
     build: _lopsided,
   );
@@ -45,11 +48,27 @@ class BalancePreset {
     build: _even,
   );
 
-  static const all = <BalancePreset>[capBuster, fullAxis, lopsided, even];
+  static const splitAction = BalancePreset(
+    label: 'Split action',
+    blurb:
+        'One 4-effort act authored 1:1 across two drives, beside one '
+        '4-effort act in a third. The split pair should each read half of '
+        'the single, never the same.',
+    build: _splitAction,
+  );
+
+  static const all = <BalancePreset>[
+    capBuster,
+    fullAxis,
+    lopsided,
+    even,
+    splitAction,
+  ];
 }
 
-BalanceScenario _capBuster(List<Archetype> archetypes) =>
-    BalanceScenario(archetypes: archetypes).tick(archetypes.first.id, [2, 4, 4]);
+BalanceScenario _capBuster(List<Archetype> archetypes) => BalanceScenario(
+  archetypes: archetypes,
+).tick(archetypes.first.id, [2, 4, 4]);
 
 BalanceScenario _fullAxis(List<Archetype> archetypes) {
   const days = 365;
@@ -71,6 +90,11 @@ BalanceScenario _lopsided(List<Archetype> archetypes) {
   }
   return scenario.tick(archetypes[1].id, [1], dayIndex: 14);
 }
+
+BalanceScenario _splitAction(List<Archetype> archetypes) =>
+    BalanceScenario(archetypes: archetypes)
+        .tickSplit({archetypes[0].id: 1, archetypes[1].id: 1}, [4])
+        .tick(archetypes[2].id, [4]);
 
 BalanceScenario _even(List<Archetype> archetypes) {
   var scenario = BalanceScenario(archetypes: archetypes);

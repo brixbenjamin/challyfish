@@ -76,6 +76,15 @@ class BalanceScenario {
     String archetypeId,
     List<int> efforts, {
     int? dayIndex,
+  }) => tickSplit({archetypeId: 1}, efforts, dayIndex: dayIndex);
+
+  /// The same, for actions authored against more than one drive. [shares] are
+  /// the integer ratios content writes; each action still contributes only its
+  /// own effort, divided between them.
+  BalanceScenario tickSplit(
+    Map<String, int> shares,
+    List<int> efforts, {
+    int? dayIndex,
   }) {
     final index = dayIndex ?? todayIndex;
     final next = {
@@ -85,11 +94,7 @@ class BalanceScenario {
     final onDay = next.putIfAbsent(index, () => []);
     for (final effort in efforts) {
       onDay.add(
-        ScenarioTick(
-          actionId: 'act-${seq++}',
-          archetypeId: archetypeId,
-          effort: effort,
-        ),
+        ScenarioTick(actionId: 'act-${seq++}', shares: shares, effort: effort),
       );
     }
     return copyWith(days: next, nextActionSeq: seq);
@@ -126,7 +131,7 @@ class BalanceScenario {
           campaignId: 'camp',
           dayIndex: entry.key,
           title: tick.actionId,
-          archetypeId: tick.archetypeId,
+          archetypeWeights: archetypeWeightsFromShares(tick.shares),
           effort: tick.effort,
         );
       }
@@ -162,15 +167,19 @@ class BalanceScenario {
   }
 }
 
-/// One ticked action: which drive it belongs to and what it cost.
+/// One ticked action: which drives it serves, in what ratio, and what it cost.
 class ScenarioTick {
   const ScenarioTick({
     required this.actionId,
-    required this.archetypeId,
+    required this.shares,
     required this.effort,
   });
 
   final String actionId;
-  final String archetypeId;
+
+  /// Authored integer shares by archetype id, exactly as content writes them.
+  /// One entry is the ordinary case.
+  final Map<String, int> shares;
+
   final int effort;
 }

@@ -43,7 +43,7 @@ void main() {
     dayIndex: dayIndex,
     title: 'Do not explain yourself',
     bodyMd: 'body',
-    archetypeId: 'arch-killer',
+    archetypeWeights: const {'arch-killer': 1.0},
     effort: effort,
     isOptional: isOptional,
     sort: sort,

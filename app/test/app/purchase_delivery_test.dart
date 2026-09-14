@@ -128,7 +128,6 @@ Future<PurchaseController> buildTestController({
           campaignId: 'cPaid',
           dayIndex: 1,
           title: 't',
-          archetypeId: 'x1',
           updatedAt: at,
         ),
       );

@@ -17,6 +17,7 @@ part 'database.g.dart';
     Campaigns,
     CampaignArchetypes,
     Actions,
+    ActionArchetypes,
     ActionBodies,
     DoctrineGroups,
     DoctrineEntries,
@@ -37,12 +38,21 @@ class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
+      // Read before anything moves. `TableMigration` recreates a table against
+      // the *current* generated schema, which no longer declares
+      // actions.archetype_id — so the v6 step drops that column on its way
+      // past, and a v5-to-v7 jump would find nothing left to back up if this
+      // waited until the `from < 7` block below.
+      final legacyArchetypes = from < 7
+          ? await _legacyActionArchetypes()
+          : const <QueryRow>[];
+
       if (from < 2) {
         // Additive only. campaign_runs and day_logs are never touched:
         // losing a user's honest record to a schema bump is the worst
@@ -105,8 +115,68 @@ class FeralDatabase extends _$FeralDatabase {
 
         await backfillDayLogActions();
       }
+      if (from < 7) {
+        // An action's archetype moves out of a column and into a join table, so
+        // one action can serve two drives with its effort divided between them.
+        // Content-only, like v5 and v6: campaign_runs, day_logs and
+        // day_log_actions are not touched, so a user's own record is safe.
+        //
+        await m.createTable(actionArchetypes);
+        await backfillActionArchetypes(legacyArchetypes);
+
+        // alterTable, not a raw DROP COLUMN: drift bakes the column list into
+        // CREATE TABLE, and the recreate is what the v5 and v6 steps already
+        // do for the same table. A no-op when an earlier step has already
+        // recreated it, and the only thing that drops the column when this is
+        // a v6 install upgrading on its own.
+        await m.alterTable(TableMigration(actions));
+      }
     },
   );
+
+  /// The (action, archetype) pairs the outgoing `actions.archetype_id` column
+  /// holds, read as raw rows because the generated schema no longer describes
+  /// that column.
+  ///
+  /// Empty when the column is already gone — which is not a failure but the
+  /// ordinary shape of a multi-version upgrade, and of a retried one.
+  Future<List<QueryRow>> _legacyActionArchetypes() async {
+    final columns = await customSelect('pragma table_info(actions)').get();
+    final hasColumn = columns.any(
+      (column) => column.read<String>('name') == 'archetype_id',
+    );
+    if (!hasColumn) return const [];
+
+    return customSelect(
+      'select id, archetype_id, updated_at from actions',
+    ).get();
+  }
+
+  /// Gives every cached action the single archetype its dropped column named.
+  ///
+  /// Share 1 on a single row normalises to weight 1.0, which is arithmetically
+  /// what the column meant, so an upgraded install draws the same radar it drew
+  /// before. Any real split arrives with the next content pull: the new table
+  /// has no watermark, so its first pull asks for everything.
+  Future<void> backfillActionArchetypes(List<QueryRow> legacy) async {
+    if (legacy.isEmpty) return;
+
+    await batch((b) {
+      for (final row in legacy) {
+        b.insert(
+          actionArchetypes,
+          ActionArchetypesCompanion.insert(
+            actionId: row.read<String>('id'),
+            archetypeId: row.read<String>('archetype_id'),
+            updatedAt: row.read<DateTime>('updated_at'),
+          ),
+          // Idempotent, like the v6 backfill beside it: a retried upgrade must
+          // not fail on rows it already wrote.
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+    });
+  }
 
   /// Gives every already-reported day a tick for the action it was assigned.
   ///

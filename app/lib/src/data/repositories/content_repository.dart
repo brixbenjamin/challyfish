@@ -104,7 +104,6 @@ class ContentRepository {
         campaignId: row['campaign_id'] as String,
         dayIndex: row['day_index'] as int,
         title: row['title'] as String,
-        archetypeId: row['archetype_id'] as String,
         whyDoctrineId: Value(row['why_doctrine_id'] as String?),
         effort: Value(row['effort'] as int? ?? 1),
         isOptional: Value(row['is_optional'] as bool? ?? false),
@@ -126,6 +125,23 @@ class ContentRepository {
             ]),
           );
     }),
+    // After `actions`, because a share is meaningless without the action it
+    // divides. Keyed on (action_id, archetype_id), which is the primary key, so
+    // a re-pull is an update rather than a duplicate — there is no natural-key
+    // fallback to write because the key is natural already.
+    _ContentTable(
+      'action_archetypes',
+      (row) => db
+          .into(db.actionArchetypes)
+          .insertOnConflictUpdate(
+            ActionArchetypesCompanion.insert(
+              actionId: row['action_id'] as String,
+              archetypeId: row['archetype_id'] as String,
+              share: Value(row['share'] as int? ?? 1),
+              updatedAt: _at(row),
+            ),
+          ),
+    ),
     _ContentTable('action_bodies', (row) {
       // Keyed on action_id, which is the primary key, so a re-pull of the same
       // body is an update rather than a duplicate. There is no natural-key
@@ -311,14 +327,43 @@ class ContentRepository {
           ])
           ..where(db.actions.campaignId.equals(campaignId))
           ..orderBy([OrderingTerm(expression: db.actions.dayIndex)]);
-    final rows = await query.get();
+    return _toActions(await query.get());
+  }
+
+  /// Hydrates joined action rows, attaching each one's archetype shares.
+  ///
+  /// The shares come from a second query rather than a third join: an action
+  /// has many archetypes, so joining them would multiply the rows the body join
+  /// already produces and every caller would have to fold them back together.
+  Future<List<ActionSpec>> _toActions(List<TypedResult> rows) async {
+    final actions = [for (final row in rows) row.readTable(db.actions)];
+    final shares = await _sharesFor([for (final a in actions) a.id]);
     return [
-      for (final row in rows)
+      for (var i = 0; i < rows.length; i++)
         toAction(
-          row.readTable(db.actions),
-          row.readTableOrNull(db.actionBodies),
+          actions[i],
+          shares[actions[i].id] ?? const {},
+          rows[i].readTableOrNull(db.actionBodies),
         ),
     ];
+  }
+
+  /// Authored shares per action, keyed by archetype id. Actions with no rows
+  /// here are simply absent from the result; the mapper reads that as an empty
+  /// split, which is how a partial content sync degrades.
+  Future<Map<String, Map<String, int>>> _sharesFor(
+    List<String> actionIds,
+  ) async {
+    if (actionIds.isEmpty) return const {};
+    final rows = await (db.select(
+      db.actionArchetypes,
+    )..where((aa) => aa.actionId.isIn(actionIds))).get();
+
+    final shares = <String, Map<String, int>>{};
+    for (final row in rows) {
+      (shares[row.actionId] ??= <String, int>{})[row.archetypeId] = row.share;
+    }
+    return shares;
   }
 
   /// Null when the action itself is not cached. An action that is cached without
@@ -350,14 +395,7 @@ class ContentRepository {
             OrderingTerm(expression: db.actions.isOptional),
             OrderingTerm(expression: db.actions.sort),
           ]);
-    final rows = await query.get();
-    return [
-      for (final row in rows)
-        toAction(
-          row.readTable(db.actions),
-          row.readTableOrNull(db.actionBodies),
-        ),
-    ];
+    return _toActions(await query.get());
   }
 
   Future<ActionSpec?> actionFor(String campaignId, int dayIndex) async {
@@ -376,12 +414,8 @@ class ContentRepository {
               db.actions.isOptional.equals(false),
         );
     final row = await query.getSingleOrNull();
-    return row == null
-        ? null
-        : toAction(
-            row.readTable(db.actions),
-            row.readTableOrNull(db.actionBodies),
-          );
+    if (row == null) return null;
+    return (await _toActions([row])).single;
   }
 
   Future<List<Pack>> packs() async {

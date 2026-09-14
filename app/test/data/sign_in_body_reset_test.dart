@@ -80,7 +80,6 @@ void main() {
               campaignId: campaign,
               dayIndex: 1,
               title: 't',
-              archetypeId: 'x1',
               updatedAt: DateTime.utc(2026, 9, 9),
             ),
           );

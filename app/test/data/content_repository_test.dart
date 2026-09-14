@@ -42,9 +42,23 @@ Map<String, dynamic> actionRow(String id, int dayIndex, String updatedAt) => {
   'day_index': dayIndex,
   'title': 'Day $dayIndex',
   'body_md': 'body',
-  'archetype_id': 'arch-1',
   'why_doctrine_id': null,
   'effort': 1,
+  'updated_at': updatedAt,
+};
+
+/// One share row. The action's archetypes are a join table since the split
+/// landed, so a fixture action needs both halves to hydrate into a spec that
+/// moves the radar.
+Map<String, dynamic> actionArchetypeRow(
+  String actionId,
+  String archetypeId,
+  String updatedAt, {
+  int share = 1,
+}) => {
+  'action_id': actionId,
+  'archetype_id': archetypeId,
+  'share': share,
   'updated_at': updatedAt,
 };
 
@@ -110,14 +124,62 @@ void main() {
         actionRow('action-1', 1, '2026-06-01T09:00:00Z'),
         actionRow('action-2', 2, '2026-06-01T09:00:00Z'),
       ],
+      'action_archetypes': [
+        actionArchetypeRow('action-2', 'arch-1', '2026-06-01T09:00:00Z'),
+      ],
     });
     final repo = ContentRepository(db: db, api: api);
     await repo.pull();
 
     final action = await repo.actionFor('campaign-1', 2);
     expect(action?.id, 'action-2');
-    expect(action?.archetypeId, 'arch-1');
+    expect(action?.archetypeWeights, {'arch-1': 1.0});
   });
+
+  test(
+    'a split action hydrates as normalised weights, not raw shares',
+    () async {
+      final api = FakeContentApi({
+        'actions': [actionRow('action-1', 1, '2026-06-01T09:00:00Z')],
+        'action_archetypes': [
+          actionArchetypeRow(
+            'action-1',
+            'arch-1',
+            '2026-06-01T09:00:00Z',
+            share: 2,
+          ),
+          actionArchetypeRow(
+            'action-1',
+            'arch-2',
+            '2026-06-01T09:00:00Z',
+            share: 1,
+          ),
+        ],
+      });
+      final repo = ContentRepository(db: db, api: api);
+      await repo.pull();
+
+      final action = await repo.actionFor('campaign-1', 1);
+      expect(action?.archetypeWeights, {'arch-1': 2 / 3, 'arch-2': 1 / 3});
+    },
+  );
+
+  test(
+    'an action pulled without its shares hydrates with no archetypes',
+    () async {
+      // A partial content sync: the action arrived, its archetype rows did not.
+      // The dropped not-null column used to make this impossible; now it has to
+      // degrade rather than throw.
+      final api = FakeContentApi({
+        'actions': [actionRow('action-1', 1, '2026-06-01T09:00:00Z')],
+      });
+      final repo = ContentRepository(db: db, api: api);
+      await repo.pull();
+
+      final action = await repo.actionFor('campaign-1', 1);
+      expect(action?.archetypeWeights, isEmpty);
+    },
+  );
 
   test(
     'actionFor returns null rather than throwing when content is missing',
@@ -141,6 +203,7 @@ void main() {
       'campaigns',
       'campaign_archetypes',
       'actions',
+      'action_archetypes',
       'action_bodies',
       'doctrine_groups',
       'doctrine_entries',

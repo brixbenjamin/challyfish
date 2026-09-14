@@ -9,13 +9,18 @@ import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 ActionSpec action(String id, String archetypeId, {int effort = 1}) =>
+    split(id, {archetypeId: 1}, effort: effort);
+
+/// An action authored against more than one drive. [shares] are the integer
+/// ratio numerators content writes; the spec carries the normalised weights.
+ActionSpec split(String id, Map<String, int> shares, {int effort = 1}) =>
     ActionSpec(
       id: id,
       campaignId: 'campaign-1',
       dayIndex: 1,
       title: 'do the thing',
       bodyMd: 'body',
-      archetypeId: archetypeId,
+      archetypeWeights: archetypeWeightsFromShares(shares),
       effort: effort,
     );
 
@@ -52,6 +57,11 @@ void main() {
     'a-axis-b': action('a-axis-b', 'axis-b'),
     'a-heavy': action('a-heavy', 'axis-b', effort: 3),
     'a-full': action('a-full', 'axis-a', effort: 5),
+    // Split actions: one even, one with a clear primary, one with no archetype
+    // rows cached at all.
+    'a-even': split('a-even', {'axis-a': 1, 'axis-b': 1}, effort: 4),
+    'a-primary': split('a-primary', {'axis-a': 2, 'axis-b': 1}, effort: 3),
+    'a-untagged': split('a-untagged', const {}, effort: 3),
   };
 
   final runStart = tz.TZDateTime(berlin, 2026, 6, 1, 9).toUtc();
@@ -140,6 +150,77 @@ void main() {
     ]);
     expect(balance['axis-a'], closeTo(1.0, 1e-9));
     expect(balance['axis-b'], closeTo(3 / 5, 1e-9));
+  });
+
+  test('a split action divides its effort between its archetypes', () {
+    // 4 effort, split evenly: 2 to each axis, not 4 to each.
+    final balance = balanceAt(0, [
+      log(1, 'a-even', Outcome.done, ticks: const {'a-even'}),
+    ]);
+    expect(balance['axis-a'], closeTo(2 / 5, 1e-9));
+    expect(balance['axis-b'], closeTo(2 / 5, 1e-9));
+  });
+
+  test('shares are a ratio, not a multiplier', () {
+    // 3 effort at 2:1 is 2 and 1 — the same total as three unsplit points, and
+    // the same total as the 1:1 case would give. Doubling both shares would
+    // change nothing, which is the property that makes the split safe.
+    final balance = balanceAt(0, [
+      log(1, 'a-primary', Outcome.done, ticks: const {'a-primary'}),
+    ]);
+    expect(balance['axis-a'], closeTo(2 / 5, 1e-9));
+    expect(balance['axis-b'], closeTo(1 / 5, 1e-9));
+
+    final doubled = calculator.compute(
+      logs: [
+        log(1, 'a-primary', Outcome.done, ticks: const {'a-doubled'}),
+      ],
+      actionsById: {
+        'a-doubled': split('a-doubled', {'axis-a': 4, 'axis-b': 2}, effort: 3),
+      },
+      runStartedAt: starts,
+      zone: berlin,
+      now: nowPlus(0),
+    );
+    expect(doubled['axis-a'], closeTo(2 / 5, 1e-9));
+    expect(doubled['axis-b'], closeTo(1 / 5, 1e-9));
+  });
+
+  test('a split action is worth no more than an unsplit one', () {
+    // The whole reason effort is apportioned rather than replicated: tagging an
+    // action with a second drive must not make it a better way to fill the
+    // radar than tagging it with one.
+    final splitDay = balanceAt(0, [
+      log(1, 'a-even', Outcome.done, ticks: const {'a-even'}),
+    ]);
+    final total = splitDay.values.reduce((a, b) => a + b);
+    expect(total, closeTo(4 / 5, 1e-9));
+  });
+
+  test('the day cap still binds a split action stacked on a single one', () {
+    // 'a-full' puts 5 into axis-a on its own; 'a-even' adds another 2. The cap
+    // clamps axis-a to one full day, while axis-b keeps the 2 it was given.
+    final balance = balanceAt(0, [
+      log(1, 'a-full', Outcome.done, ticks: const {'a-full', 'a-even'}),
+    ]);
+    expect(balance['axis-a'], closeTo(1.0, 1e-9));
+    expect(balance['axis-b'], closeTo(2 / 5, 1e-9));
+  });
+
+  test('an action with no archetype rows cached is skipped, not fatal', () {
+    // The state the dropped not-null column used to make impossible: a partial
+    // content sync that landed the action but not its archetypes. It must
+    // degrade exactly like an uncached action, not crash the dashboard.
+    final balance = balanceAt(0, [
+      log(
+        1,
+        'a-untagged',
+        Outcome.done,
+        ticks: const {'a-untagged', 'a-axis-a'},
+      ),
+    ]);
+    expect(balance.keys, ['axis-a']);
+    expect(balance['axis-a'], closeTo(1 / 5, 1e-9));
   });
 
   test('one day moves several axes', () {
