@@ -20,9 +20,13 @@ void main() {
       for (final c in (raw['campaigns'] as List).cast<Map<String, dynamic>>())
         c['id'] as String: c['pack_id'] as String,
     };
+    final dayCampaign = {
+      for (final d in (raw['days'] as List).cast<Map<String, dynamic>>())
+        d['id'] as String: d['campaign_id'] as String,
+    };
     final actionCampaign = {
       for (final a in (raw['actions'] as List).cast<Map<String, dynamic>>())
-        a['id'] as String: a['campaign_id'] as String,
+        a['id'] as String: dayCampaign[a['day_id'] as String],
     };
 
     final bodies = (raw['action_bodies'] as List).cast<Map<String, dynamic>>();
@@ -60,9 +64,13 @@ void main() {
       for (final c in (raw['campaigns'] as List).cast<Map<String, dynamic>>())
         c['id'] as String: c['pack_id'] as String,
     };
+    final dayCampaign = {
+      for (final d in (raw['days'] as List).cast<Map<String, dynamic>>())
+        d['id'] as String: d['campaign_id'] as String,
+    };
 
     final paidActions = actions.where(
-      (a) => packs[campaignPack[a['campaign_id'] as String]] == false,
+      (a) => packs[campaignPack[dayCampaign[a['day_id'] as String]]] == false,
     );
     expect(
       paidActions,
@@ -73,6 +81,76 @@ void main() {
       bodies.length,
       lessThan(actions.length),
       reason: 'every action ships; only the free pack ships its copy',
+    );
+  });
+
+  test('the bundled snapshot carries no paid pack day bodies', () async {
+    // The same defect ADR-0025 was written about, one table over. day_bodies is
+    // the newer half of the boundary (ADR-0034) and has never been through a
+    // release, so it has no scar tissue of its own.
+    final raw =
+        jsonDecode(await File('assets/seed/core_content.json').readAsString())
+            as Map<String, dynamic>;
+
+    final packs = {
+      for (final p in (raw['packs'] as List).cast<Map<String, dynamic>>())
+        p['id'] as String: p['is_core'] as bool,
+    };
+    final campaignPack = {
+      for (final c in (raw['campaigns'] as List).cast<Map<String, dynamic>>())
+        c['id'] as String: c['pack_id'] as String,
+    };
+    final dayCampaign = {
+      for (final d in (raw['days'] as List).cast<Map<String, dynamic>>())
+        d['id'] as String: d['campaign_id'] as String,
+    };
+
+    final bodies = (raw['day_bodies'] as List).cast<Map<String, dynamic>>();
+    expect(
+      bodies,
+      isNotEmpty,
+      reason: 'the free pack must still ship its day bodies',
+    );
+
+    final paid = bodies.where(
+      (b) => packs[campaignPack[dayCampaign[b['day_id'] as String]]] == false,
+    );
+    expect(paid, isEmpty, reason: 'a paid day body reached the app bundle');
+  });
+
+  test('the snapshot still carries every day as teaser', () async {
+    // Day titles stay public (ADR-0034), and a locked campaign must be
+    // browsable down to its days offline. Without this, a "fix" that dropped
+    // every paid day from the snapshot would pass the test above while quietly
+    // breaking offline browse.
+    final raw =
+        jsonDecode(await File('assets/seed/core_content.json').readAsString())
+            as Map<String, dynamic>;
+
+    final days = (raw['days'] as List).cast<Map<String, dynamic>>();
+    final bodies = (raw['day_bodies'] as List).cast<Map<String, dynamic>>();
+
+    final packs = {
+      for (final p in (raw['packs'] as List).cast<Map<String, dynamic>>())
+        p['id'] as String: p['is_core'] as bool,
+    };
+    final campaignPack = {
+      for (final c in (raw['campaigns'] as List).cast<Map<String, dynamic>>())
+        c['id'] as String: c['pack_id'] as String,
+    };
+
+    final paidDays = days.where(
+      (d) => packs[campaignPack[d['campaign_id'] as String]] == false,
+    );
+    expect(
+      paidDays,
+      isNotEmpty,
+      reason: 'a locked pack must still be browsable offline',
+    );
+    expect(
+      bodies.length,
+      lessThan(days.length),
+      reason: 'every day ships; only the free pack ships its copy',
     );
   });
 }

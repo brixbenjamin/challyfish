@@ -391,9 +391,10 @@ class SyncRepository implements SyncRunner {
 
     final orphaned =
         db.selectOnly(db.actions).join([
+            innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
             innerJoin(
               db.campaigns,
-              db.campaigns.id.equalsExp(db.actions.campaignId),
+              db.campaigns.id.equalsExp(db.days.campaignId),
             ),
             innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
           ])

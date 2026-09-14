@@ -24,6 +24,8 @@ const tables = [
   'packs',
   'campaigns',
   'campaign_archetypes',
+  'days',
+  'day_bodies',
   'actions',
   'action_archetypes',
   'action_bodies',
@@ -46,7 +48,15 @@ const partialTables = <String, String>{
   'action_bodies': '''
     select row_to_json(t) from public.action_bodies t
       join public.actions a   on a.id = t.action_id
-      join public.campaigns c on c.id = a.campaign_id
+      join public.days d      on d.id = a.day_id
+      join public.campaigns c on c.id = d.campaign_id
+      join public.packs p     on p.id = c.pack_id
+     where p.is_core
+  ''',
+  'day_bodies': '''
+    select row_to_json(t) from public.day_bodies t
+      join public.days d      on d.id = t.day_id
+      join public.campaigns c on c.id = d.campaign_id
       join public.packs p     on p.id = c.pack_id
      where p.is_core
   ''',
@@ -79,19 +89,31 @@ Future<void> main() async {
   }
 
   // Not a comment, because the comment was already there and the filter was
-  // still forgotten. This checks the built snapshot rather than the query that
-  // built it, so it still holds if a future table starts carrying paid copy.
-  final paidIds = await connection.execute('''
+  // still forgotten. These check the built snapshot rather than the queries that
+  // built it, so they still hold if a future table starts carrying paid copy.
+  final paidActionIds = await connection.execute('''
     select a.id::text
       from public.actions a
-      join public.campaigns c on c.id = a.campaign_id
+      join public.days d      on d.id = a.day_id
+      join public.campaigns c on c.id = d.campaign_id
       join public.packs p     on p.id = c.pack_id
      where not p.is_core
   ''');
-  final paid = {for (final row in paidIds) row[0]! as String};
+  final paidDayIds = await connection.execute('''
+    select d.id::text
+      from public.days d
+      join public.campaigns c on c.id = d.campaign_id
+      join public.packs p     on p.id = c.pack_id
+     where not p.is_core
+  ''');
+  final paidActions = {for (final row in paidActionIds) row[0]! as String};
+  final paidDays = {for (final row in paidDayIds) row[0]! as String};
   final leaked = [
     for (final row in snapshot['action_bodies'] as List<Map<String, dynamic>>)
-      if (paid.contains(row['action_id'] as String)) row['action_id'] as String,
+      if (paidActions.contains(row['action_id'] as String))
+        row['action_id'] as String,
+    for (final row in snapshot['day_bodies'] as List<Map<String, dynamic>>)
+      if (paidDays.contains(row['day_id'] as String)) row['day_id'] as String,
   ];
   await connection.close();
 

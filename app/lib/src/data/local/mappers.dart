@@ -5,9 +5,9 @@ import 'database.dart';
 /// of the app reads. Kept separate from `ContentRepository` so the repository
 /// stays about the pull/read flow, not the shape translation.
 ///
-/// `CampaignRow` and `ActionRow` are the Drift row classes, named by the
-/// `@DataClassName` annotations on the content tables — distinct from the
-/// domain types `Campaign` and `ActionSpec` below.
+/// `CampaignRow`, `DayRow` and `ActionRow` are the Drift row classes, named by
+/// the `@DataClassName` annotations on the content tables — distinct from the
+/// domain types `Campaign`, `DaySpec` and `ActionSpec` below.
 Campaign toCampaign(CampaignRow row) => Campaign(
   id: row.id,
   packId: row.packId,
@@ -35,8 +35,7 @@ ActionSpec toAction(
   ActionBodyRow? body,
 ]) => ActionSpec(
   id: row.id,
-  campaignId: row.campaignId,
-  dayIndex: row.dayIndex,
+  dayId: row.dayId,
   title: row.title,
   bodyMd: body?.bodyMd,
   archetypeWeights: archetypeWeightsFromShares(shares),

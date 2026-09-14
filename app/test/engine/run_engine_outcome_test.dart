@@ -6,8 +6,7 @@ import 'package:test/test.dart';
 ActionSpec action(String id, {int effort = 1, bool isOptional = false}) =>
     ActionSpec(
       id: id,
-      campaignId: 'campaign-1',
-      dayIndex: 1,
+      dayId: 'day-1',
       title: 'do the thing',
       archetypeWeights: const {'axis-a': 1.0},
       effort: effort,

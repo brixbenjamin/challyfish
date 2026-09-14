@@ -150,12 +150,22 @@ void main() {
         );
     for (var day = 1; day <= 7; day++) {
       await db
+          .into(db.days)
+          .insert(
+            DaysCompanion.insert(
+              id: 'day-$day',
+              campaignId: 'campaign-1',
+              dayIndex: day,
+              title: 'Day $day',
+              updatedAt: now,
+            ),
+          );
+      await db
           .into(db.actions)
           .insert(
             ActionsCompanion.insert(
               id: 'action-$day',
-              campaignId: 'campaign-1',
-              dayIndex: day,
+              dayId: 'day-$day',
               title: 'Day $day',
               updatedAt: now,
             ),

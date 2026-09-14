@@ -16,6 +16,8 @@ part 'database.g.dart';
     Packs,
     Campaigns,
     CampaignArchetypes,
+    Days,
+    DayBodies,
     Actions,
     ActionArchetypes,
     ActionBodies,
@@ -38,7 +40,7 @@ class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -87,32 +89,19 @@ class FeralDatabase extends _$FeralDatabase {
         // at the moment it upgrades can reinstall. Once the app ships this is no
         // longer true, and a migration at that point must copy rather than drop.
         await m.createTable(actionBodies);
-        await m.alterTable(TableMigration(actions));
       }
       if (from < 6) {
         // day_logs is read but never altered; the ticks are a new table beside
         // it, so the rule protecting a user's own record still holds.
         await m.createTable(dayLogActions);
 
-        // alterTable, not addColumn: `actions` gains two columns AND a new
-        // unique key, and drift bakes uniqueKeys into CREATE TABLE. addColumn
-        // cannot touch it, so an upgraded install would keep
-        // UNIQUE(campaign_id, day_index) and reject every optional action --
-        // the whole point of this version. Recreating the table is the only
-        // way to move that constraint, and is what the v5 step already does.
-        // Content is a cache with a server behind it, so a recreate is cheap.
-        //
-        // newColumns is not optional here: without it drift copies every
-        // column of the new schema out of the old table, and the old table
-        // has no is_optional to read. Both take their declared defaults, so
-        // every existing action becomes its day's mandatory action at sort 0.
-        await m.alterTable(
-          TableMigration(
-            actions,
-            newColumns: [actions.isOptional, actions.sort],
-          ),
-        );
-
+        // `actions` is deliberately not recreated here any more. It used to
+        // be, to move the unique key off (campaign_id, day_index) -- but
+        // TableMigration copies the *current* schema's columns out of the old
+        // table, and since v8 that schema demands a day_id no pre-v8 table can
+        // supply. The v8 block below reaches every upgrade that would have run
+        // this one and rebuilds the table outright, so recreating it here is
+        // both redundant and, from a v5 or v6 file, fatal.
         await backfillDayLogActions();
       }
       if (from < 7) {
@@ -124,12 +113,55 @@ class FeralDatabase extends _$FeralDatabase {
         await m.createTable(actionArchetypes);
         await backfillActionArchetypes(legacyArchetypes);
 
-        // alterTable, not a raw DROP COLUMN: drift bakes the column list into
-        // CREATE TABLE, and the recreate is what the v5 and v6 steps already
-        // do for the same table. A no-op when an earlier step has already
-        // recreated it, and the only thing that drops the column when this is
-        // a v6 install upgrading on its own.
-        await m.alterTable(TableMigration(actions));
+        // The archetype_id column is not dropped by a recreate here, for the
+        // reason given in the v6 step: the v8 block rebuilds `actions` from
+        // nothing, which drops the column along with every other trace of the
+        // old shape.
+      }
+      if (from < 8) {
+        // The day becomes a row that owns its actions (ADR-0034). Content-only,
+        // like v5, v6 and v7: campaign_runs, day_logs and day_log_actions are
+        // not touched, so a user's own record is safe.
+        await m.createTable(days);
+        await m.createTable(dayBodies);
+
+        // Not alterTable, which is what every previous content step used.
+        // TableMigration copies the new schema's columns out of the old table,
+        // and `actions` gains a NOT NULL day_id the old table cannot supply:
+        // day ids live on the server and cannot be derived from a campaign id
+        // and an index. The rows are therefore dropped, which is legitimate
+        // for exactly one reason -- the content store is a pure read-only
+        // cache with a server behind it and no user data in it.
+        //
+        // action_archetypes and action_bodies go with them: both key on
+        // action_id, so every row left behind would be an orphan.
+        // Explicitly typed: the inferred least upper bound of the three
+        // generated table classes is `Table`, which carries neither
+        // `actualTableName` nor the type `createTable` expects.
+        for (final table in <TableInfo<Table, dynamic>>[
+          actions,
+          actionArchetypes,
+          actionBodies,
+        ]) {
+          await m.deleteTable(table.actualTableName);
+          await m.createTable(table);
+        }
+
+        // The half that is easy to forget and fatal to miss. The dropped rows
+        // were older than this device's marks, so an incremental pull would ask
+        // for nothing and the app would sit on an empty library until it was
+        // reinstalled. Cleared for the three rebuilt tables only: packs,
+        // campaigns, the doctrine and the diagnostic did not move, and
+        // re-downloading them would be a pointless round trip. `days` and
+        // `day_bodies` are new and have no mark at all, so their first pull is
+        // a full one by construction.
+        for (final table in const [
+          'actions',
+          'action_archetypes',
+          'action_bodies',
+        ]) {
+          await clearWatermark(table);
+        }
       }
     },
   );
@@ -232,8 +264,9 @@ class FeralDatabase extends _$FeralDatabase {
 
   /// Drops [table]'s high-water mark, so the next pull asks for everything the
   /// server is willing to give rather than only what changed. Used when the
-  /// visible row set moves without any row changing — which is true of exactly
-  /// one table, `action_bodies` (ADR-0025).
+  /// visible row set moves without any row changing — `action_bodies` and
+  /// `day_bodies`, whose visibility is per user (ADR-0025) — and by the v8
+  /// upgrade, whose cached rows are dropped outright.
   Future<void> clearWatermark(String table) =>
       (delete(syncState)..where((s) => s.syncTable.equals(table))).go();
 }

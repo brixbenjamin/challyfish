@@ -36,14 +36,36 @@ Map<String, dynamic> archetypeRow(String id, String key, String updatedAt) => {
   'updated_at': updatedAt,
 };
 
-Map<String, dynamic> actionRow(String id, int dayIndex, String updatedAt) => {
+Map<String, dynamic> dayRow(
+  String id,
+  String campaignId,
+  int dayIndex,
+  String updatedAt, {
+  String kind = 'standard',
+}) => {
   'id': id,
-  'campaign_id': 'campaign-1',
+  'campaign_id': campaignId,
   'day_index': dayIndex,
   'title': 'Day $dayIndex',
-  'body_md': 'body',
+  'kind': kind,
+  'primary_archetype_id': null,
+  'updated_at': updatedAt,
+};
+
+Map<String, dynamic> actionRow(
+  String id,
+  String dayId,
+  String updatedAt, {
+  bool isOptional = false,
+  int sort = 0,
+}) => {
+  'id': id,
+  'day_id': dayId,
+  'title': 'An act',
   'why_doctrine_id': null,
   'effort': 1,
+  'is_optional': isOptional,
+  'sort': sort,
   'updated_at': updatedAt,
 };
 
@@ -71,7 +93,8 @@ void main() {
   test('a first pull fetches everything and stores it', () async {
     final api = FakeContentApi({
       'archetypes': [archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z')],
-      'actions': [actionRow('action-1', 1, '2026-06-01T09:00:00Z')],
+      'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+      'actions': [actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z')],
     });
     final repo = ContentRepository(db: db, api: api);
 
@@ -120,9 +143,13 @@ void main() {
 
   test('actionFor returns the action for a given campaign day', () async {
     final api = FakeContentApi({
+      'days': [
+        dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z'),
+        dayRow('day-2', 'campaign-1', 2, '2026-06-01T09:00:00Z'),
+      ],
       'actions': [
-        actionRow('action-1', 1, '2026-06-01T09:00:00Z'),
-        actionRow('action-2', 2, '2026-06-01T09:00:00Z'),
+        actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z'),
+        actionRow('action-2', 'day-2', '2026-06-01T09:00:00Z'),
       ],
       'action_archetypes': [
         actionArchetypeRow('action-2', 'arch-1', '2026-06-01T09:00:00Z'),
@@ -140,7 +167,8 @@ void main() {
     'a split action hydrates as normalised weights, not raw shares',
     () async {
       final api = FakeContentApi({
-        'actions': [actionRow('action-1', 1, '2026-06-01T09:00:00Z')],
+        'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+        'actions': [actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z')],
         'action_archetypes': [
           actionArchetypeRow(
             'action-1',
@@ -171,7 +199,8 @@ void main() {
       // The dropped not-null column used to make this impossible; now it has to
       // degrade rather than throw.
       final api = FakeContentApi({
-        'actions': [actionRow('action-1', 1, '2026-06-01T09:00:00Z')],
+        'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+        'actions': [actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z')],
       });
       final repo = ContentRepository(db: db, api: api);
       await repo.pull();
@@ -202,6 +231,8 @@ void main() {
       'packs',
       'campaigns',
       'campaign_archetypes',
+      'days',
+      'day_bodies',
       'actions',
       'action_archetypes',
       'action_bodies',
@@ -323,13 +354,14 @@ void main() {
     () async {
       final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
       await seeded.applyRows({
-        'actions': [actionRow('bundled-id', 1, '2026-06-01T09:00:00Z')],
+        'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+        'actions': [actionRow('bundled-id', 'day-1', '2026-06-01T09:00:00Z')],
       });
 
       final repo = ContentRepository(
         db: db,
         api: FakeContentApi({
-          'actions': [actionRow('server-id', 1, '2026-06-02T09:00:00Z')],
+          'actions': [actionRow('server-id', 'day-1', '2026-06-02T09:00:00Z')],
         }),
       );
       await repo.pull();
@@ -349,18 +381,92 @@ void main() {
   test('an action that moves to another day keeps its identity', () async {
     final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
     await seeded.applyRows({
-      'actions': [actionRow('action-1', 1, '2026-06-01T09:00:00Z')],
+      'days': [
+        dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z'),
+        dayRow('day-2', 'campaign-1', 2, '2026-06-01T09:00:00Z'),
+      ],
+      'actions': [actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z')],
     });
 
     final repo = ContentRepository(
       db: db,
       api: FakeContentApi({
-        'actions': [actionRow('action-1', 2, '2026-06-02T09:00:00Z')],
+        'actions': [actionRow('action-1', 'day-2', '2026-06-02T09:00:00Z')],
       }),
     );
     await repo.pull();
 
     final rows = await db.select(db.actions).get();
-    expect(rows.map((r) => (r.id, r.dayIndex)), [('action-1', 2)]);
+    expect(rows.map((r) => (r.id, r.dayId)), [('action-1', 'day-2')]);
+  });
+
+  /// A day is the second table carrying both a uuid and a natural key, so it
+  /// inherits the failure `_byIdOrNaturalKey` was written for: an authoring edit
+  /// re-issues the id, the row arrives as an insert, UNIQUE(campaign_id,
+  /// day_index) refuses it, and the whole pull dies there -- taking `actions`
+  /// and everything after it with it, silently, for as long as the app is
+  /// installed.
+  test('a day re-issued under a new id replaces the row it identifies', () async {
+    final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
+    await seeded.applyRows({
+      'days': [dayRow('bundled-day', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+    });
+
+    final repo = ContentRepository(
+      db: db,
+      api: FakeContentApi({
+        'days': [dayRow('server-day', 'campaign-1', 1, '2026-06-02T09:00:00Z')],
+      }),
+    );
+    await repo.pull();
+
+    final rows = await db.select(db.days).get();
+    expect(
+      rows.map((r) => r.id),
+      ['server-day'],
+      reason: 'one day of one campaign is one row, whatever it is called',
+    );
+  });
+
+  /// The other direction, which the natural key alone would miss: the id is
+  /// stable and the day moved to another position in the campaign.
+  test('a day that moves position keeps its identity', () async {
+    final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
+    await seeded.applyRows({
+      'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+    });
+
+    final repo = ContentRepository(
+      db: db,
+      api: FakeContentApi({
+        'days': [dayRow('day-1', 'campaign-1', 2, '2026-06-02T09:00:00Z')],
+      }),
+    );
+    await repo.pull();
+
+    final rows = await db.select(db.days).get();
+    expect(rows.map((r) => (r.id, r.dayIndex)), [('day-1', 2)]);
+  });
+
+  /// Content can lag itself after a partial sync, and `days` is now the table
+  /// `actions` depends on. Drift declares no foreign keys locally, so this must
+  /// degrade to an absent day rather than an exception.
+  test('an action whose day has not synced reads as an absent day', () async {
+    final api = FakeContentApi({
+      'actions': [actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z')],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    expect(
+      await db.select(db.actions).get(),
+      hasLength(1),
+      reason: 'drift declares no foreign keys locally, so the row inserts',
+    );
+    expect(
+      await repo.actionsFor('campaign-1'),
+      isEmpty,
+      reason: 'it simply fails to join, and the day reads as absent',
+    );
   });
 }

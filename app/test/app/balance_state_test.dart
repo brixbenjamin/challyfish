@@ -63,24 +63,21 @@ void main() {
   final actions = {
     'act-p': const ActionSpec(
       id: 'act-p',
-      campaignId: 'c-1',
-      dayIndex: 1,
+      dayId: 'day-c1-1',
       title: 't',
       bodyMd: 'b',
       archetypeWeights: {'a-psycho': 1.0},
     ),
     'act-p-high': const ActionSpec(
       id: 'act-p',
-      campaignId: 'c-1',
-      dayIndex: 1,
+      dayId: 'day-c1-1',
       title: 't',
       bodyMd: 'b',
       archetypeWeights: {'a-psycho': 1.0},
     ),
     'act-k': const ActionSpec(
       id: 'act-k',
-      campaignId: 'c-2',
-      dayIndex: 1,
+      dayId: 'day-c2-1',
       title: 't',
       bodyMd: 'b',
       archetypeWeights: {'a-killer': 1.0},

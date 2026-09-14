@@ -39,8 +39,7 @@ void main() {
     int sort = 0,
   }) => ActionSpec(
     id: id,
-    campaignId: 'campaign-1',
-    dayIndex: dayIndex,
+    dayId: 'day-$dayIndex',
     title: 'Do not explain yourself',
     bodyMd: 'body',
     archetypeWeights: const {'arch-killer': 1.0},

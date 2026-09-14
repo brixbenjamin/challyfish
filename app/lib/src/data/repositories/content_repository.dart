@@ -98,11 +98,53 @@ class ContentRepository {
             ),
           ),
     ),
-    _ContentTable('actions', (row) {
-      final action = ActionsCompanion.insert(
+    // Before `actions`, and that ordering is load-bearing rather than
+    // incidental now: an action's day_id points here (ADR-0034). Drift declares
+    // no foreign keys locally, so an action that arrives first merely fails to
+    // join and the day reads as absent -- a partial-sync state the caller
+    // already degrades on, not a crash.
+    _ContentTable('days', (row) {
+      final day = DaysCompanion.insert(
         id: row['id'] as String,
         campaignId: row['campaign_id'] as String,
         dayIndex: row['day_index'] as int,
+        title: row['title'] as String,
+        kind: Value(row['kind'] as String? ?? 'standard'),
+        primaryArchetypeId: Value(row['primary_archetype_id'] as String?),
+        updatedAt: _at(row),
+      );
+      return db
+          .into(db.days)
+          .insert(
+            day,
+            // A re-issued id from an authoring edit must be an update, not a
+            // fatal insert -- the same defect `_byIdOrNaturalKey` exists for.
+            onConflict: _byIdOrNaturalKey(day, [
+              db.days.campaignId,
+              db.days.dayIndex,
+            ]),
+          );
+    }),
+    // After `days`, because a body is meaningless without the day it frames.
+    // Keyed on day_id, which is the primary key, so a re-pull is an update
+    // rather than a duplicate. There is no natural-key fallback here because
+    // there is no natural key: the day's id is it.
+    _ContentTable(
+      'day_bodies',
+      (row) => db
+          .into(db.dayBodies)
+          .insertOnConflictUpdate(
+            DayBodiesCompanion.insert(
+              dayId: row['day_id'] as String,
+              bodyMd: row['body_md'] as String,
+              updatedAt: _at(row),
+            ),
+          ),
+    ),
+    _ContentTable('actions', (row) {
+      final action = ActionsCompanion.insert(
+        id: row['id'] as String,
+        dayId: row['day_id'] as String,
         title: row['title'] as String,
         whyDoctrineId: Value(row['why_doctrine_id'] as String?),
         effort: Value(row['effort'] as int? ?? 1),
@@ -114,13 +156,13 @@ class ContentRepository {
           .into(db.actions)
           .insert(
             action,
-            // The natural key is the day *slot*, not the day: since ADR-0030 a
-            // day holds a mandatory action and n optional ones, and `sort`
-            // is what separates them. A conflict target that is not an actual
-            // unique index is rejected by sqlite outright.
+            // The natural key is the day *slot* -- since ADR-0030 a day holds a
+            // mandatory action and n optional ones and `sort` separates them,
+            // and since ADR-0034 the day is a real foreign key rather than two
+            // columns. A conflict target that is not an actual unique index is
+            // rejected by sqlite outright.
             onConflict: _byIdOrNaturalKey(action, [
-              db.actions.campaignId,
-              db.actions.dayIndex,
+              db.actions.dayId,
               db.actions.sort,
             ]),
           );
@@ -293,9 +335,10 @@ class ContentRepository {
   Future<bool> hasBodyForFirstDay(String packId) async {
     final query =
         db.selectOnly(db.actions).join([
+            innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
             innerJoin(
               db.campaigns,
-              db.campaigns.id.equalsExp(db.actions.campaignId),
+              db.campaigns.id.equalsExp(db.days.campaignId),
             ),
             innerJoin(
               db.actionBodies,
@@ -304,7 +347,7 @@ class ContentRepository {
           ])
           ..addColumns([db.actions.id])
           ..where(
-            db.campaigns.packId.equals(packId) & db.actions.dayIndex.equals(1),
+            db.campaigns.packId.equals(packId) & db.days.dayIndex.equals(1),
           )
           ..limit(1);
     return (await query.get()).isNotEmpty;
@@ -320,13 +363,17 @@ class ContentRepository {
   Future<List<ActionSpec>> actionsFor(String campaignId) async {
     final query =
         db.select(db.actions).join([
+            innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
             leftOuterJoin(
               db.actionBodies,
               db.actionBodies.actionId.equalsExp(db.actions.id),
             ),
           ])
-          ..where(db.actions.campaignId.equals(campaignId))
-          ..orderBy([OrderingTerm(expression: db.actions.dayIndex)]);
+          ..where(db.days.campaignId.equals(campaignId))
+          ..orderBy([
+            OrderingTerm(expression: db.days.dayIndex),
+            OrderingTerm(expression: db.actions.sort),
+          ]);
     return _toActions(await query.get());
   }
 
@@ -382,14 +429,15 @@ class ContentRepository {
   ) async {
     final query =
         db.select(db.actions).join([
+            innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
             leftOuterJoin(
               db.actionBodies,
               db.actionBodies.actionId.equalsExp(db.actions.id),
             ),
           ])
           ..where(
-            db.actions.campaignId.equals(campaignId) &
-                db.actions.dayIndex.equals(dayIndex),
+            db.days.campaignId.equals(campaignId) &
+                db.days.dayIndex.equals(dayIndex),
           )
           ..orderBy([
             OrderingTerm(expression: db.actions.isOptional),
@@ -401,13 +449,14 @@ class ContentRepository {
   Future<ActionSpec?> actionFor(String campaignId, int dayIndex) async {
     final query =
         db.select(db.actions).join([
+          innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
           leftOuterJoin(
             db.actionBodies,
             db.actionBodies.actionId.equalsExp(db.actions.id),
           ),
         ])..where(
-          db.actions.campaignId.equals(campaignId) &
-              db.actions.dayIndex.equals(dayIndex) &
+          db.days.campaignId.equals(campaignId) &
+              db.days.dayIndex.equals(dayIndex) &
               // The day's *mandatory* action. Without this the query would
               // throw on any day that has optionals, since a day is no longer
               // one row (ADR-0030).

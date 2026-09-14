@@ -121,12 +121,22 @@ Future<PurchaseController> buildTestController({
         ),
       );
   await db
+      .into(db.days)
+      .insert(
+        DaysCompanion.insert(
+          id: 'dPaid',
+          campaignId: 'cPaid',
+          dayIndex: 1,
+          title: 'Day one',
+          updatedAt: at,
+        ),
+      );
+  await db
       .into(db.actions)
       .insert(
         ActionsCompanion.insert(
           id: 'aPaid',
-          campaignId: 'cPaid',
-          dayIndex: 1,
+          dayId: 'dPaid',
           title: 't',
           updatedAt: at,
         ),

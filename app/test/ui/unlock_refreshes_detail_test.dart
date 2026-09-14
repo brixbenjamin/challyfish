@@ -120,12 +120,22 @@ void main() {
     // present, delivery completes on its first check and the sheet closes the
     // way it did before ADR-0025. purchase_delivery_test.dart owns the fetch.
     await db
+        .into(db.days)
+        .insert(
+          DaysCompanion.insert(
+            id: 'day-edge-1',
+            campaignId: 'campaign-edge',
+            dayIndex: 1,
+            title: 'Day 1',
+            updatedAt: now,
+          ),
+        );
+    await db
         .into(db.actions)
         .insert(
           ActionsCompanion.insert(
             id: 'action-edge-1',
-            campaignId: 'campaign-edge',
-            dayIndex: 1,
+            dayId: 'day-edge-1',
             title: 'Day 1',
             updatedAt: now,
           ),

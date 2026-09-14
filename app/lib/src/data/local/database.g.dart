@@ -2041,11 +2041,11 @@ class CampaignArchetypesCompanion
   }
 }
 
-class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
+class $DaysTable extends Days with TableInfo<$DaysTable, DayRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ActionsTable(this.attachedDatabase, [this._alias]);
+  $DaysTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
@@ -2075,6 +2075,743 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     aliasedName,
     false,
     type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('standard'),
+  );
+  static const VerificationMeta _primaryArchetypeIdMeta =
+      const VerificationMeta('primaryArchetypeId');
+  @override
+  late final GeneratedColumn<String> primaryArchetypeId =
+      GeneratedColumn<String>(
+        'primary_archetype_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    campaignId,
+    dayIndex,
+    title,
+    kind,
+    primaryArchetypeId,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'days';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DayRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('campaign_id')) {
+      context.handle(
+        _campaignIdMeta,
+        campaignId.isAcceptableOrUnknown(data['campaign_id']!, _campaignIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_campaignIdMeta);
+    }
+    if (data.containsKey('day_index')) {
+      context.handle(
+        _dayIndexMeta,
+        dayIndex.isAcceptableOrUnknown(data['day_index']!, _dayIndexMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayIndexMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    }
+    if (data.containsKey('primary_archetype_id')) {
+      context.handle(
+        _primaryArchetypeIdMeta,
+        primaryArchetypeId.isAcceptableOrUnknown(
+          data['primary_archetype_id']!,
+          _primaryArchetypeIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {campaignId, dayIndex},
+  ];
+  @override
+  DayRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DayRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      campaignId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}campaign_id'],
+      )!,
+      dayIndex: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}day_index'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      primaryArchetypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}primary_archetype_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DaysTable createAlias(String alias) {
+    return $DaysTable(attachedDatabase, alias);
+  }
+}
+
+class DayRow extends DataClass implements Insertable<DayRow> {
+  final String id;
+  final String campaignId;
+
+  /// 1-based. Contiguous from 1 to the campaign's lengthDays — enforced in
+  /// Postgres by a pgTAP assertion over rows that now exist, and not mirrored
+  /// here, because content is a read-only cache of a server that checks it.
+  final int dayIndex;
+  final String title;
+
+  /// `standard` or `rest`, stored as the server's own string. Text rather than
+  /// a boolean because the taxonomy has a second member lurking — the bridge
+  /// day — and parallel flags would permit a day that is both. Unknown values
+  /// are not a failure: the domain reads an unrecognised kind as `standard`,
+  /// so content authored against a newer app degrades rather than throws.
+  final String kind;
+
+  /// The one drive the day's surface wears, under the One Drive Per Loop Rule.
+  /// Null falls back to the mandatory action's dominant drive, which is what
+  /// the surface does today.
+  final String? primaryArchetypeId;
+  final DateTime updatedAt;
+  const DayRow({
+    required this.id,
+    required this.campaignId,
+    required this.dayIndex,
+    required this.title,
+    required this.kind,
+    this.primaryArchetypeId,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['campaign_id'] = Variable<String>(campaignId);
+    map['day_index'] = Variable<int>(dayIndex);
+    map['title'] = Variable<String>(title);
+    map['kind'] = Variable<String>(kind);
+    if (!nullToAbsent || primaryArchetypeId != null) {
+      map['primary_archetype_id'] = Variable<String>(primaryArchetypeId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DaysCompanion toCompanion(bool nullToAbsent) {
+    return DaysCompanion(
+      id: Value(id),
+      campaignId: Value(campaignId),
+      dayIndex: Value(dayIndex),
+      title: Value(title),
+      kind: Value(kind),
+      primaryArchetypeId: primaryArchetypeId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(primaryArchetypeId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DayRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DayRow(
+      id: serializer.fromJson<String>(json['id']),
+      campaignId: serializer.fromJson<String>(json['campaignId']),
+      dayIndex: serializer.fromJson<int>(json['dayIndex']),
+      title: serializer.fromJson<String>(json['title']),
+      kind: serializer.fromJson<String>(json['kind']),
+      primaryArchetypeId: serializer.fromJson<String?>(
+        json['primaryArchetypeId'],
+      ),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'campaignId': serializer.toJson<String>(campaignId),
+      'dayIndex': serializer.toJson<int>(dayIndex),
+      'title': serializer.toJson<String>(title),
+      'kind': serializer.toJson<String>(kind),
+      'primaryArchetypeId': serializer.toJson<String?>(primaryArchetypeId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DayRow copyWith({
+    String? id,
+    String? campaignId,
+    int? dayIndex,
+    String? title,
+    String? kind,
+    Value<String?> primaryArchetypeId = const Value.absent(),
+    DateTime? updatedAt,
+  }) => DayRow(
+    id: id ?? this.id,
+    campaignId: campaignId ?? this.campaignId,
+    dayIndex: dayIndex ?? this.dayIndex,
+    title: title ?? this.title,
+    kind: kind ?? this.kind,
+    primaryArchetypeId: primaryArchetypeId.present
+        ? primaryArchetypeId.value
+        : this.primaryArchetypeId,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  DayRow copyWithCompanion(DaysCompanion data) {
+    return DayRow(
+      id: data.id.present ? data.id.value : this.id,
+      campaignId: data.campaignId.present
+          ? data.campaignId.value
+          : this.campaignId,
+      dayIndex: data.dayIndex.present ? data.dayIndex.value : this.dayIndex,
+      title: data.title.present ? data.title.value : this.title,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      primaryArchetypeId: data.primaryArchetypeId.present
+          ? data.primaryArchetypeId.value
+          : this.primaryArchetypeId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayRow(')
+          ..write('id: $id, ')
+          ..write('campaignId: $campaignId, ')
+          ..write('dayIndex: $dayIndex, ')
+          ..write('title: $title, ')
+          ..write('kind: $kind, ')
+          ..write('primaryArchetypeId: $primaryArchetypeId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    campaignId,
+    dayIndex,
+    title,
+    kind,
+    primaryArchetypeId,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DayRow &&
+          other.id == this.id &&
+          other.campaignId == this.campaignId &&
+          other.dayIndex == this.dayIndex &&
+          other.title == this.title &&
+          other.kind == this.kind &&
+          other.primaryArchetypeId == this.primaryArchetypeId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DaysCompanion extends UpdateCompanion<DayRow> {
+  final Value<String> id;
+  final Value<String> campaignId;
+  final Value<int> dayIndex;
+  final Value<String> title;
+  final Value<String> kind;
+  final Value<String?> primaryArchetypeId;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DaysCompanion({
+    this.id = const Value.absent(),
+    this.campaignId = const Value.absent(),
+    this.dayIndex = const Value.absent(),
+    this.title = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.primaryArchetypeId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DaysCompanion.insert({
+    required String id,
+    required String campaignId,
+    required int dayIndex,
+    required String title,
+    this.kind = const Value.absent(),
+    this.primaryArchetypeId = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       campaignId = Value(campaignId),
+       dayIndex = Value(dayIndex),
+       title = Value(title),
+       updatedAt = Value(updatedAt);
+  static Insertable<DayRow> custom({
+    Expression<String>? id,
+    Expression<String>? campaignId,
+    Expression<int>? dayIndex,
+    Expression<String>? title,
+    Expression<String>? kind,
+    Expression<String>? primaryArchetypeId,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (campaignId != null) 'campaign_id': campaignId,
+      if (dayIndex != null) 'day_index': dayIndex,
+      if (title != null) 'title': title,
+      if (kind != null) 'kind': kind,
+      if (primaryArchetypeId != null)
+        'primary_archetype_id': primaryArchetypeId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DaysCompanion copyWith({
+    Value<String>? id,
+    Value<String>? campaignId,
+    Value<int>? dayIndex,
+    Value<String>? title,
+    Value<String>? kind,
+    Value<String?>? primaryArchetypeId,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DaysCompanion(
+      id: id ?? this.id,
+      campaignId: campaignId ?? this.campaignId,
+      dayIndex: dayIndex ?? this.dayIndex,
+      title: title ?? this.title,
+      kind: kind ?? this.kind,
+      primaryArchetypeId: primaryArchetypeId ?? this.primaryArchetypeId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (campaignId.present) {
+      map['campaign_id'] = Variable<String>(campaignId.value);
+    }
+    if (dayIndex.present) {
+      map['day_index'] = Variable<int>(dayIndex.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (primaryArchetypeId.present) {
+      map['primary_archetype_id'] = Variable<String>(primaryArchetypeId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DaysCompanion(')
+          ..write('id: $id, ')
+          ..write('campaignId: $campaignId, ')
+          ..write('dayIndex: $dayIndex, ')
+          ..write('title: $title, ')
+          ..write('kind: $kind, ')
+          ..write('primaryArchetypeId: $primaryArchetypeId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $DayBodiesTable extends DayBodies
+    with TableInfo<$DayBodiesTable, DayBodyRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DayBodiesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _dayIdMeta = const VerificationMeta('dayId');
+  @override
+  late final GeneratedColumn<String> dayId = GeneratedColumn<String>(
+    'day_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMdMeta = const VerificationMeta('bodyMd');
+  @override
+  late final GeneratedColumn<String> bodyMd = GeneratedColumn<String>(
+    'body_md',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [dayId, bodyMd, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'day_bodies';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DayBodyRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('day_id')) {
+      context.handle(
+        _dayIdMeta,
+        dayId.isAcceptableOrUnknown(data['day_id']!, _dayIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayIdMeta);
+    }
+    if (data.containsKey('body_md')) {
+      context.handle(
+        _bodyMdMeta,
+        bodyMd.isAcceptableOrUnknown(data['body_md']!, _bodyMdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {dayId};
+  @override
+  DayBodyRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DayBodyRow(
+      dayId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day_id'],
+      )!,
+      bodyMd: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body_md'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DayBodiesTable createAlias(String alias) {
+    return $DayBodiesTable(attachedDatabase, alias);
+  }
+}
+
+class DayBodyRow extends DataClass implements Insertable<DayBodyRow> {
+  final String dayId;
+  final String bodyMd;
+  final DateTime updatedAt;
+  const DayBodyRow({
+    required this.dayId,
+    required this.bodyMd,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['day_id'] = Variable<String>(dayId);
+    map['body_md'] = Variable<String>(bodyMd);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DayBodiesCompanion toCompanion(bool nullToAbsent) {
+    return DayBodiesCompanion(
+      dayId: Value(dayId),
+      bodyMd: Value(bodyMd),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DayBodyRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DayBodyRow(
+      dayId: serializer.fromJson<String>(json['dayId']),
+      bodyMd: serializer.fromJson<String>(json['bodyMd']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'dayId': serializer.toJson<String>(dayId),
+      'bodyMd': serializer.toJson<String>(bodyMd),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DayBodyRow copyWith({String? dayId, String? bodyMd, DateTime? updatedAt}) =>
+      DayBodyRow(
+        dayId: dayId ?? this.dayId,
+        bodyMd: bodyMd ?? this.bodyMd,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  DayBodyRow copyWithCompanion(DayBodiesCompanion data) {
+    return DayBodyRow(
+      dayId: data.dayId.present ? data.dayId.value : this.dayId,
+      bodyMd: data.bodyMd.present ? data.bodyMd.value : this.bodyMd,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayBodyRow(')
+          ..write('dayId: $dayId, ')
+          ..write('bodyMd: $bodyMd, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(dayId, bodyMd, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DayBodyRow &&
+          other.dayId == this.dayId &&
+          other.bodyMd == this.bodyMd &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DayBodiesCompanion extends UpdateCompanion<DayBodyRow> {
+  final Value<String> dayId;
+  final Value<String> bodyMd;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const DayBodiesCompanion({
+    this.dayId = const Value.absent(),
+    this.bodyMd = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DayBodiesCompanion.insert({
+    required String dayId,
+    required String bodyMd,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : dayId = Value(dayId),
+       bodyMd = Value(bodyMd),
+       updatedAt = Value(updatedAt);
+  static Insertable<DayBodyRow> custom({
+    Expression<String>? dayId,
+    Expression<String>? bodyMd,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (dayId != null) 'day_id': dayId,
+      if (bodyMd != null) 'body_md': bodyMd,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DayBodiesCompanion copyWith({
+    Value<String>? dayId,
+    Value<String>? bodyMd,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return DayBodiesCompanion(
+      dayId: dayId ?? this.dayId,
+      bodyMd: bodyMd ?? this.bodyMd,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (dayId.present) {
+      map['day_id'] = Variable<String>(dayId.value);
+    }
+    if (bodyMd.present) {
+      map['body_md'] = Variable<String>(bodyMd.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DayBodiesCompanion(')
+          ..write('dayId: $dayId, ')
+          ..write('bodyMd: $bodyMd, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dayIdMeta = const VerificationMeta('dayId');
+  @override
+  late final GeneratedColumn<String> dayId = GeneratedColumn<String>(
+    'day_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
@@ -2146,8 +2883,7 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
   @override
   List<GeneratedColumn> get $columns => [
     id,
-    campaignId,
-    dayIndex,
+    dayId,
     title,
     whyDoctrineId,
     effort,
@@ -2172,21 +2908,13 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('campaign_id')) {
+    if (data.containsKey('day_id')) {
       context.handle(
-        _campaignIdMeta,
-        campaignId.isAcceptableOrUnknown(data['campaign_id']!, _campaignIdMeta),
+        _dayIdMeta,
+        dayId.isAcceptableOrUnknown(data['day_id']!, _dayIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_campaignIdMeta);
-    }
-    if (data.containsKey('day_index')) {
-      context.handle(
-        _dayIndexMeta,
-        dayIndex.isAcceptableOrUnknown(data['day_index']!, _dayIndexMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_dayIndexMeta);
+      context.missing(_dayIdMeta);
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -2238,7 +2966,7 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
   List<Set<GeneratedColumn>> get uniqueKeys => [
-    {campaignId, dayIndex, sort},
+    {dayId, sort},
   ];
   @override
   ActionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
@@ -2248,13 +2976,9 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
-      campaignId: attachedDatabase.typeMapping.read(
+      dayId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}campaign_id'],
-      )!,
-      dayIndex: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}day_index'],
+        data['${effectivePrefix}day_id'],
       )!,
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2291,8 +3015,11 @@ class $ActionsTable extends Actions with TableInfo<$ActionsTable, ActionRow> {
 
 class ActionRow extends DataClass implements Insertable<ActionRow> {
   final String id;
-  final String campaignId;
-  final int dayIndex;
+
+  /// The day this action belongs to. The action no longer knows its campaign
+  /// or its day number — the day knows both, and a denormalized copy would be a
+  /// second place for the truth to live and eventually disagree (ADR-0034).
+  final String dayId;
   final String title;
 
   /// The archetypes an action serves live in [ActionArchetypes], not here. The
@@ -2309,10 +3036,10 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   final int effort;
 
   /// False for the day's one mandatory action, true for every extra the user
-  /// may take on. Server-enforced: exactly one mandatory row per (campaign,
-  /// day). Not mirrored as a local constraint — content is a read-only cache
-  /// of a server that already guarantees it, and drift's table DSL cannot
-  /// express a partial unique index without custom SQL.
+  /// may take on. Server-enforced: exactly one mandatory row per day. Not
+  /// mirrored as a local constraint — content is a read-only cache of a server
+  /// that already guarantees it, and drift's table DSL cannot express a partial
+  /// unique index without custom SQL.
   final bool isOptional;
 
   /// Display order within the day. The mandatory action sorts first.
@@ -2320,8 +3047,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   final DateTime updatedAt;
   const ActionRow({
     required this.id,
-    required this.campaignId,
-    required this.dayIndex,
+    required this.dayId,
     required this.title,
     this.whyDoctrineId,
     required this.effort,
@@ -2333,8 +3059,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    map['campaign_id'] = Variable<String>(campaignId);
-    map['day_index'] = Variable<int>(dayIndex);
+    map['day_id'] = Variable<String>(dayId);
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || whyDoctrineId != null) {
       map['why_doctrine_id'] = Variable<String>(whyDoctrineId);
@@ -2349,8 +3074,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   ActionsCompanion toCompanion(bool nullToAbsent) {
     return ActionsCompanion(
       id: Value(id),
-      campaignId: Value(campaignId),
-      dayIndex: Value(dayIndex),
+      dayId: Value(dayId),
       title: Value(title),
       whyDoctrineId: whyDoctrineId == null && nullToAbsent
           ? const Value.absent()
@@ -2369,8 +3093,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ActionRow(
       id: serializer.fromJson<String>(json['id']),
-      campaignId: serializer.fromJson<String>(json['campaignId']),
-      dayIndex: serializer.fromJson<int>(json['dayIndex']),
+      dayId: serializer.fromJson<String>(json['dayId']),
       title: serializer.fromJson<String>(json['title']),
       whyDoctrineId: serializer.fromJson<String?>(json['whyDoctrineId']),
       effort: serializer.fromJson<int>(json['effort']),
@@ -2384,8 +3107,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'campaignId': serializer.toJson<String>(campaignId),
-      'dayIndex': serializer.toJson<int>(dayIndex),
+      'dayId': serializer.toJson<String>(dayId),
       'title': serializer.toJson<String>(title),
       'whyDoctrineId': serializer.toJson<String?>(whyDoctrineId),
       'effort': serializer.toJson<int>(effort),
@@ -2397,8 +3119,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
 
   ActionRow copyWith({
     String? id,
-    String? campaignId,
-    int? dayIndex,
+    String? dayId,
     String? title,
     Value<String?> whyDoctrineId = const Value.absent(),
     int? effort,
@@ -2407,8 +3128,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
     DateTime? updatedAt,
   }) => ActionRow(
     id: id ?? this.id,
-    campaignId: campaignId ?? this.campaignId,
-    dayIndex: dayIndex ?? this.dayIndex,
+    dayId: dayId ?? this.dayId,
     title: title ?? this.title,
     whyDoctrineId: whyDoctrineId.present
         ? whyDoctrineId.value
@@ -2421,10 +3141,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   ActionRow copyWithCompanion(ActionsCompanion data) {
     return ActionRow(
       id: data.id.present ? data.id.value : this.id,
-      campaignId: data.campaignId.present
-          ? data.campaignId.value
-          : this.campaignId,
-      dayIndex: data.dayIndex.present ? data.dayIndex.value : this.dayIndex,
+      dayId: data.dayId.present ? data.dayId.value : this.dayId,
       title: data.title.present ? data.title.value : this.title,
       whyDoctrineId: data.whyDoctrineId.present
           ? data.whyDoctrineId.value
@@ -2442,8 +3159,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   String toString() {
     return (StringBuffer('ActionRow(')
           ..write('id: $id, ')
-          ..write('campaignId: $campaignId, ')
-          ..write('dayIndex: $dayIndex, ')
+          ..write('dayId: $dayId, ')
           ..write('title: $title, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
@@ -2457,8 +3173,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
   @override
   int get hashCode => Object.hash(
     id,
-    campaignId,
-    dayIndex,
+    dayId,
     title,
     whyDoctrineId,
     effort,
@@ -2471,8 +3186,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
       identical(this, other) ||
       (other is ActionRow &&
           other.id == this.id &&
-          other.campaignId == this.campaignId &&
-          other.dayIndex == this.dayIndex &&
+          other.dayId == this.dayId &&
           other.title == this.title &&
           other.whyDoctrineId == this.whyDoctrineId &&
           other.effort == this.effort &&
@@ -2483,8 +3197,7 @@ class ActionRow extends DataClass implements Insertable<ActionRow> {
 
 class ActionsCompanion extends UpdateCompanion<ActionRow> {
   final Value<String> id;
-  final Value<String> campaignId;
-  final Value<int> dayIndex;
+  final Value<String> dayId;
   final Value<String> title;
   final Value<String?> whyDoctrineId;
   final Value<int> effort;
@@ -2494,8 +3207,7 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   final Value<int> rowid;
   const ActionsCompanion({
     this.id = const Value.absent(),
-    this.campaignId = const Value.absent(),
-    this.dayIndex = const Value.absent(),
+    this.dayId = const Value.absent(),
     this.title = const Value.absent(),
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
@@ -2506,8 +3218,7 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   });
   ActionsCompanion.insert({
     required String id,
-    required String campaignId,
-    required int dayIndex,
+    required String dayId,
     required String title,
     this.whyDoctrineId = const Value.absent(),
     this.effort = const Value.absent(),
@@ -2516,14 +3227,12 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
-       campaignId = Value(campaignId),
-       dayIndex = Value(dayIndex),
+       dayId = Value(dayId),
        title = Value(title),
        updatedAt = Value(updatedAt);
   static Insertable<ActionRow> custom({
     Expression<String>? id,
-    Expression<String>? campaignId,
-    Expression<int>? dayIndex,
+    Expression<String>? dayId,
     Expression<String>? title,
     Expression<String>? whyDoctrineId,
     Expression<int>? effort,
@@ -2534,8 +3243,7 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (campaignId != null) 'campaign_id': campaignId,
-      if (dayIndex != null) 'day_index': dayIndex,
+      if (dayId != null) 'day_id': dayId,
       if (title != null) 'title': title,
       if (whyDoctrineId != null) 'why_doctrine_id': whyDoctrineId,
       if (effort != null) 'effort': effort,
@@ -2548,8 +3256,7 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
 
   ActionsCompanion copyWith({
     Value<String>? id,
-    Value<String>? campaignId,
-    Value<int>? dayIndex,
+    Value<String>? dayId,
     Value<String>? title,
     Value<String?>? whyDoctrineId,
     Value<int>? effort,
@@ -2560,8 +3267,7 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   }) {
     return ActionsCompanion(
       id: id ?? this.id,
-      campaignId: campaignId ?? this.campaignId,
-      dayIndex: dayIndex ?? this.dayIndex,
+      dayId: dayId ?? this.dayId,
       title: title ?? this.title,
       whyDoctrineId: whyDoctrineId ?? this.whyDoctrineId,
       effort: effort ?? this.effort,
@@ -2578,11 +3284,8 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (campaignId.present) {
-      map['campaign_id'] = Variable<String>(campaignId.value);
-    }
-    if (dayIndex.present) {
-      map['day_index'] = Variable<int>(dayIndex.value);
+    if (dayId.present) {
+      map['day_id'] = Variable<String>(dayId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -2612,8 +3315,7 @@ class ActionsCompanion extends UpdateCompanion<ActionRow> {
   String toString() {
     return (StringBuffer('ActionsCompanion(')
           ..write('id: $id, ')
-          ..write('campaignId: $campaignId, ')
-          ..write('dayIndex: $dayIndex, ')
+          ..write('dayId: $dayId, ')
           ..write('title: $title, ')
           ..write('whyDoctrineId: $whyDoctrineId, ')
           ..write('effort: $effort, ')
@@ -8116,6 +8818,8 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
   late final $CampaignsTable campaigns = $CampaignsTable(this);
   late final $CampaignArchetypesTable campaignArchetypes =
       $CampaignArchetypesTable(this);
+  late final $DaysTable days = $DaysTable(this);
+  late final $DayBodiesTable dayBodies = $DayBodiesTable(this);
   late final $ActionsTable actions = $ActionsTable(this);
   late final $ActionArchetypesTable actionArchetypes = $ActionArchetypesTable(
     this,
@@ -8146,6 +8850,8 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     packs,
     campaigns,
     campaignArchetypes,
+    days,
+    dayBodies,
     actions,
     actionArchetypes,
     actionBodies,
@@ -9210,11 +9916,407 @@ typedef $$CampaignArchetypesTableProcessedTableManager =
       CampaignArchetypeRow,
       PrefetchHooks Function()
     >;
-typedef $$ActionsTableCreateCompanionBuilder =
-    ActionsCompanion Function({
+typedef $$DaysTableCreateCompanionBuilder =
+    DaysCompanion Function({
       required String id,
       required String campaignId,
       required int dayIndex,
+      required String title,
+      Value<String> kind,
+      Value<String?> primaryArchetypeId,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DaysTableUpdateCompanionBuilder =
+    DaysCompanion Function({
+      Value<String> id,
+      Value<String> campaignId,
+      Value<int> dayIndex,
+      Value<String> title,
+      Value<String> kind,
+      Value<String?> primaryArchetypeId,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$DaysTableFilterComposer extends Composer<_$FeralDatabase, $DaysTable> {
+  $$DaysTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get campaignId => $composableBuilder(
+    column: $table.campaignId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dayIndex => $composableBuilder(
+    column: $table.dayIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get primaryArchetypeId => $composableBuilder(
+    column: $table.primaryArchetypeId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DaysTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DaysTable> {
+  $$DaysTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get campaignId => $composableBuilder(
+    column: $table.campaignId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dayIndex => $composableBuilder(
+    column: $table.dayIndex,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get primaryArchetypeId => $composableBuilder(
+    column: $table.primaryArchetypeId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DaysTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DaysTable> {
+  $$DaysTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get campaignId => $composableBuilder(
+    column: $table.campaignId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dayIndex =>
+      $composableBuilder(column: $table.dayIndex, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get primaryArchetypeId => $composableBuilder(
+    column: $table.primaryArchetypeId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DaysTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DaysTable,
+          DayRow,
+          $$DaysTableFilterComposer,
+          $$DaysTableOrderingComposer,
+          $$DaysTableAnnotationComposer,
+          $$DaysTableCreateCompanionBuilder,
+          $$DaysTableUpdateCompanionBuilder,
+          (DayRow, BaseReferences<_$FeralDatabase, $DaysTable, DayRow>),
+          DayRow,
+          PrefetchHooks Function()
+        > {
+  $$DaysTableTableManager(_$FeralDatabase db, $DaysTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DaysTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DaysTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DaysTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> campaignId = const Value.absent(),
+                Value<int> dayIndex = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String?> primaryArchetypeId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DaysCompanion(
+                id: id,
+                campaignId: campaignId,
+                dayIndex: dayIndex,
+                title: title,
+                kind: kind,
+                primaryArchetypeId: primaryArchetypeId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String campaignId,
+                required int dayIndex,
+                required String title,
+                Value<String> kind = const Value.absent(),
+                Value<String?> primaryArchetypeId = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DaysCompanion.insert(
+                id: id,
+                campaignId: campaignId,
+                dayIndex: dayIndex,
+                title: title,
+                kind: kind,
+                primaryArchetypeId: primaryArchetypeId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DaysTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DaysTable,
+      DayRow,
+      $$DaysTableFilterComposer,
+      $$DaysTableOrderingComposer,
+      $$DaysTableAnnotationComposer,
+      $$DaysTableCreateCompanionBuilder,
+      $$DaysTableUpdateCompanionBuilder,
+      (DayRow, BaseReferences<_$FeralDatabase, $DaysTable, DayRow>),
+      DayRow,
+      PrefetchHooks Function()
+    >;
+typedef $$DayBodiesTableCreateCompanionBuilder =
+    DayBodiesCompanion Function({
+      required String dayId,
+      required String bodyMd,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$DayBodiesTableUpdateCompanionBuilder =
+    DayBodiesCompanion Function({
+      Value<String> dayId,
+      Value<String> bodyMd,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$DayBodiesTableFilterComposer
+    extends Composer<_$FeralDatabase, $DayBodiesTable> {
+  $$DayBodiesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get dayId => $composableBuilder(
+    column: $table.dayId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bodyMd => $composableBuilder(
+    column: $table.bodyMd,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DayBodiesTableOrderingComposer
+    extends Composer<_$FeralDatabase, $DayBodiesTable> {
+  $$DayBodiesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get dayId => $composableBuilder(
+    column: $table.dayId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bodyMd => $composableBuilder(
+    column: $table.bodyMd,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DayBodiesTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $DayBodiesTable> {
+  $$DayBodiesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get dayId =>
+      $composableBuilder(column: $table.dayId, builder: (column) => column);
+
+  GeneratedColumn<String> get bodyMd =>
+      $composableBuilder(column: $table.bodyMd, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$DayBodiesTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $DayBodiesTable,
+          DayBodyRow,
+          $$DayBodiesTableFilterComposer,
+          $$DayBodiesTableOrderingComposer,
+          $$DayBodiesTableAnnotationComposer,
+          $$DayBodiesTableCreateCompanionBuilder,
+          $$DayBodiesTableUpdateCompanionBuilder,
+          (
+            DayBodyRow,
+            BaseReferences<_$FeralDatabase, $DayBodiesTable, DayBodyRow>,
+          ),
+          DayBodyRow,
+          PrefetchHooks Function()
+        > {
+  $$DayBodiesTableTableManager(_$FeralDatabase db, $DayBodiesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DayBodiesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DayBodiesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DayBodiesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> dayId = const Value.absent(),
+                Value<String> bodyMd = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DayBodiesCompanion(
+                dayId: dayId,
+                bodyMd: bodyMd,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String dayId,
+                required String bodyMd,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DayBodiesCompanion.insert(
+                dayId: dayId,
+                bodyMd: bodyMd,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DayBodiesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $DayBodiesTable,
+      DayBodyRow,
+      $$DayBodiesTableFilterComposer,
+      $$DayBodiesTableOrderingComposer,
+      $$DayBodiesTableAnnotationComposer,
+      $$DayBodiesTableCreateCompanionBuilder,
+      $$DayBodiesTableUpdateCompanionBuilder,
+      (
+        DayBodyRow,
+        BaseReferences<_$FeralDatabase, $DayBodiesTable, DayBodyRow>,
+      ),
+      DayBodyRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ActionsTableCreateCompanionBuilder =
+    ActionsCompanion Function({
+      required String id,
+      required String dayId,
       required String title,
       Value<String?> whyDoctrineId,
       Value<int> effort,
@@ -9226,8 +10328,7 @@ typedef $$ActionsTableCreateCompanionBuilder =
 typedef $$ActionsTableUpdateCompanionBuilder =
     ActionsCompanion Function({
       Value<String> id,
-      Value<String> campaignId,
-      Value<int> dayIndex,
+      Value<String> dayId,
       Value<String> title,
       Value<String?> whyDoctrineId,
       Value<int> effort,
@@ -9251,13 +10352,8 @@ class $$ActionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get campaignId => $composableBuilder(
-    column: $table.campaignId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get dayIndex => $composableBuilder(
-    column: $table.dayIndex,
+  ColumnFilters<String> get dayId => $composableBuilder(
+    column: $table.dayId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9306,13 +10402,8 @@ class $$ActionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get campaignId => $composableBuilder(
-    column: $table.campaignId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get dayIndex => $composableBuilder(
-    column: $table.dayIndex,
+  ColumnOrderings<String> get dayId => $composableBuilder(
+    column: $table.dayId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -9359,13 +10450,8 @@ class $$ActionsTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get campaignId => $composableBuilder(
-    column: $table.campaignId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get dayIndex =>
-      $composableBuilder(column: $table.dayIndex, builder: (column) => column);
+  GeneratedColumn<String> get dayId =>
+      $composableBuilder(column: $table.dayId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -9422,8 +10508,7 @@ class $$ActionsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
-                Value<String> campaignId = const Value.absent(),
-                Value<int> dayIndex = const Value.absent(),
+                Value<String> dayId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
@@ -9433,8 +10518,7 @@ class $$ActionsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => ActionsCompanion(
                 id: id,
-                campaignId: campaignId,
-                dayIndex: dayIndex,
+                dayId: dayId,
                 title: title,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
@@ -9446,8 +10530,7 @@ class $$ActionsTableTableManager
           createCompanionCallback:
               ({
                 required String id,
-                required String campaignId,
-                required int dayIndex,
+                required String dayId,
                 required String title,
                 Value<String?> whyDoctrineId = const Value.absent(),
                 Value<int> effort = const Value.absent(),
@@ -9457,8 +10540,7 @@ class $$ActionsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => ActionsCompanion.insert(
                 id: id,
-                campaignId: campaignId,
-                dayIndex: dayIndex,
+                dayId: dayId,
                 title: title,
                 whyDoctrineId: whyDoctrineId,
                 effort: effort,
@@ -12463,6 +13545,9 @@ class $FeralDatabaseManager {
       $$CampaignsTableTableManager(_db, _db.campaigns);
   $$CampaignArchetypesTableTableManager get campaignArchetypes =>
       $$CampaignArchetypesTableTableManager(_db, _db.campaignArchetypes);
+  $$DaysTableTableManager get days => $$DaysTableTableManager(_db, _db.days);
+  $$DayBodiesTableTableManager get dayBodies =>
+      $$DayBodiesTableTableManager(_db, _db.dayBodies);
   $$ActionsTableTableManager get actions =>
       $$ActionsTableTableManager(_db, _db.actions);
   $$ActionArchetypesTableTableManager get actionArchetypes =>

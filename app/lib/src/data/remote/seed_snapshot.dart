@@ -25,8 +25,8 @@ class SeedSnapshotLoader {
   /// like any other, but they establish no high-water mark: a mark taken from
   /// the free pack's bodies sits above every paid body's timestamp, and the
   /// incremental pull would then filter out exactly what a purchase paid for
-  /// (ADR-0025).
-  static const _partialTables = {'action_bodies'};
+  /// (ADR-0025). `day_bodies` walks into the identical trap (ADR-0034).
+  static const _partialTables = {'action_bodies', 'day_bodies'};
 
   final FeralDatabase db;
   final ContentRepository content;

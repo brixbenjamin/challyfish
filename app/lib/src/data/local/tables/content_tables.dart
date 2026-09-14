@@ -55,11 +55,67 @@ class Campaigns extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// One day of a campaign, and the owner of its actions (ADR-0034). Before this
+/// a day was an integer that several [Actions] rows happened to share, and
+/// nothing could be said about a day that was not said about one of its actions.
+@DataClassName('DayRow')
+class Days extends Table {
+  TextColumn get id => text()();
+  TextColumn get campaignId => text()();
+
+  /// 1-based. Contiguous from 1 to the campaign's lengthDays — enforced in
+  /// Postgres by a pgTAP assertion over rows that now exist, and not mirrored
+  /// here, because content is a read-only cache of a server that checks it.
+  IntColumn get dayIndex => integer()();
+  TextColumn get title => text()();
+
+  /// `standard` or `rest`, stored as the server's own string. Text rather than
+  /// a boolean because the taxonomy has a second member lurking — the bridge
+  /// day — and parallel flags would permit a day that is both. Unknown values
+  /// are not a failure: the domain reads an unrecognised kind as `standard`,
+  /// so content authored against a newer app degrades rather than throws.
+  TextColumn get kind => text().withDefault(const Constant('standard'))();
+
+  /// The one drive the day's surface wears, under the One Drive Per Loop Rule.
+  /// Null falls back to the mandatory action's dominant drive, which is what
+  /// the surface does today.
+  TextColumn get primaryArchetypeId => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  /// The day's natural key, and the reason a re-issued day id is an update
+  /// rather than a failed pull — see `_byIdOrNaturalKey`.
+  @override
+  List<Set<Column<Object>>> get uniqueKeys => [
+    {campaignId, dayIndex},
+  ];
+}
+
+/// The day's framing copy, read before the commit. Kept apart from the day so
+/// the server can withhold it for a pack the user does not own (ADR-0025,
+/// ADR-0034). Locally this is a plain cache like every other content table; the
+/// boundary is enforced in Postgres, and a row's presence here means only that
+/// the server was once willing to send it.
+@DataClassName('DayBodyRow')
+class DayBodies extends Table {
+  TextColumn get dayId => text()();
+  TextColumn get bodyMd => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {dayId};
+}
+
 @DataClassName('ActionRow')
 class Actions extends Table {
   TextColumn get id => text()();
-  TextColumn get campaignId => text()();
-  IntColumn get dayIndex => integer()();
+
+  /// The day this action belongs to. The action no longer knows its campaign
+  /// or its day number — the day knows both, and a denormalized copy would be a
+  /// second place for the truth to live and eventually disagree (ADR-0034).
+  TextColumn get dayId => text()();
   TextColumn get title => text()();
 
   /// The archetypes an action serves live in [ActionArchetypes], not here. The
@@ -76,10 +132,10 @@ class Actions extends Table {
   IntColumn get effort => integer().withDefault(const Constant(1))();
 
   /// False for the day's one mandatory action, true for every extra the user
-  /// may take on. Server-enforced: exactly one mandatory row per (campaign,
-  /// day). Not mirrored as a local constraint — content is a read-only cache
-  /// of a server that already guarantees it, and drift's table DSL cannot
-  /// express a partial unique index without custom SQL.
+  /// may take on. Server-enforced: exactly one mandatory row per day. Not
+  /// mirrored as a local constraint — content is a read-only cache of a server
+  /// that already guarantees it, and drift's table DSL cannot express a partial
+  /// unique index without custom SQL.
   BoolColumn get isOptional => boolean().withDefault(const Constant(false))();
 
   /// Display order within the day. The mandatory action sorts first.
@@ -89,11 +145,12 @@ class Actions extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 
-  /// The day is no longer the unique slot — (day, sort) is, so a day can hold
-  /// a mandatory action and n optional ones (ADR-0030).
+  /// The day slot, one level down from where ADR-0030 put it: a real foreign
+  /// key rather than two columns kept consistent by authoring discipline
+  /// (ADR-0034).
   @override
   List<Set<Column<Object>>> get uniqueKeys => [
-    {campaignId, dayIndex, sort},
+    {dayId, sort},
   ];
 }
 

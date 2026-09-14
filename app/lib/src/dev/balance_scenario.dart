@@ -128,8 +128,7 @@ class BalanceScenario {
       for (final tick in entry.value) {
         actionsById[tick.actionId] = ActionSpec(
           id: tick.actionId,
-          campaignId: 'camp',
-          dayIndex: entry.key,
+          dayId: 'day-${entry.key}',
           title: tick.actionId,
           archetypeWeights: archetypeWeightsFromShares(tick.shares),
           effort: tick.effort,

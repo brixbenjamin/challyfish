@@ -355,15 +355,23 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
 
     final actions = await content.actionsFor(campaign.id);
     if (actions.isNotEmpty) {
+      // An action no longer carries its day number (ADR-0034), so the day has
+      // to be asked for. A query per day is wasteful and deliberately
+      // short-lived: `daysFor` lands in the next commit and replaces the whole
+      // block with one read.
+      final mandatoryByDay = <int, String>{};
+      for (var index = 1; index <= campaign.lengthDays; index++) {
+        final mandatory = (await content.actionsForDay(
+          campaign.id,
+          index,
+        )).where((a) => !a.isOptional).firstOrNull;
+        if (mandatory != null) mandatoryByDay[index] = mandatory.id;
+      }
       await progress.applyRollover(
         run: run,
         lengthDays: campaign.lengthDays,
-        mandatoryActionIdForDay: (day) => actions
-            .firstWhere(
-              (a) => a.dayIndex == day && !a.isOptional,
-              orElse: () => actions.first,
-            )
-            .id,
+        mandatoryActionIdForDay: (day) =>
+            mandatoryByDay[day] ?? actions.first.id,
       );
     }
 

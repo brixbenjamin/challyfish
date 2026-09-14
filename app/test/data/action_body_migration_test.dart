@@ -8,12 +8,22 @@ void main() {
     addTearDown(db.close);
 
     await db
+        .into(db.days)
+        .insert(
+          DaysCompanion.insert(
+            id: 'd1',
+            campaignId: 'c1',
+            dayIndex: 1,
+            title: 'Day 1',
+            updatedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
+    await db
         .into(db.actions)
         .insert(
           ActionsCompanion.insert(
             id: 'a1',
-            campaignId: 'c1',
-            dayIndex: 1,
+            dayId: 'd1',
             title: 'Day 1',
             updatedAt: DateTime.utc(2026, 9, 9),
           ),
@@ -39,12 +49,22 @@ void main() {
     addTearDown(db.close);
 
     await db
+        .into(db.days)
+        .insert(
+          DaysCompanion.insert(
+            id: 'd2',
+            campaignId: 'c1',
+            dayIndex: 2,
+            title: 'Day 2',
+            updatedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
+    await db
         .into(db.actions)
         .insert(
           ActionsCompanion.insert(
             id: 'a2',
-            campaignId: 'c1',
-            dayIndex: 2,
+            dayId: 'd2',
             title: 'Day 2',
             updatedAt: DateTime.utc(2026, 9, 9),
           ),

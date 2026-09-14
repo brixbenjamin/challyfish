@@ -100,42 +100,9 @@ void main() {
     expect(await db.select(db.dayLogActions).get(), hasLength(1));
   });
 
-  test('a day can hold several actions once optionals exist', () async {
-    // The constraint this schema version relaxes. Under the old unique key on
-    // (campaign_id, day_index) the second row here was rejected outright, so an
-    // upgraded install could not store an optional action at all.
-    await db
-        .into(db.actions)
-        .insert(
-          ActionsCompanion.insert(
-            id: 'a-mandatory',
-            campaignId: 'campaign-1',
-            dayIndex: 1,
-            title: 'The mandatory act',
-            updatedAt: DateTime.utc(2026, 6, 1),
-          ),
-        );
-    await db
-        .into(db.actions)
-        .insert(
-          ActionsCompanion.insert(
-            id: 'a-optional',
-            campaignId: 'campaign-1',
-            dayIndex: 1,
-            title: 'An optional act',
-            isOptional: const Value(true),
-            sort: const Value(1),
-            updatedAt: DateTime.utc(2026, 6, 1),
-          ),
-        );
-
-    final rows = await (db.select(
-      db.actions,
-    )..where((a) => a.dayIndex.equals(1))).get();
-    expect(rows, hasLength(2));
-    expect(rows.where((a) => a.isOptional), hasLength(1));
-  });
-
+  // v8 drops the cached content rows rather than carrying them (ADR-0034), so
+  // a v5 action no longer reaches the present and the assertions that said it
+  // did have moved to day_entity_migration_test.dart, which asserts the drop.
   group('upgrading a real v5 file', () {
     /// A genuine v5 install: the old `actions` table with UNIQUE(campaign_id,
     /// day_index), a run, and a reported day log, at user_version 5.
@@ -155,6 +122,14 @@ void main() {
           '"archetype_id" TEXT NOT NULL, "why_doctrine_id" TEXT NULL, '
           '"effort" INTEGER NOT NULL DEFAULT 1, "updated_at" INTEGER NOT NULL, '
           'PRIMARY KEY ("id"), UNIQUE ("campaign_id", "day_index"))',
+        );
+        raw.execute(
+          // Created at v3, so a genuine v5 file has it. The v8 step clears the
+          // rebuilt content tables' watermarks and needs somewhere to clear
+          // them from.
+          'CREATE TABLE "sync_state" ("table_name" TEXT NOT NULL, "watermark" '
+          'INTEGER NULL, "last_pulled_at" INTEGER NULL, '
+          'PRIMARY KEY ("table_name"))',
         );
         raw.execute(
           'CREATE TABLE "campaign_runs" ("id" TEXT NOT NULL, "user_id" TEXT '
@@ -207,21 +182,6 @@ void main() {
       expect(await migrated.select(migrated.dayLogs).get(), hasLength(1));
     });
 
-    test('the authored action survives, with its effort intact', () async {
-      final migrated = FeralDatabase(NativeDatabase(await writeV5Database()));
-      addTearDown(migrated.close);
-
-      final action = await migrated.select(migrated.actions).getSingle();
-      expect(action.id, 'legacy-action');
-      expect(action.effort, 3, reason: 'effort is the points value now');
-      expect(
-        action.isOptional,
-        isFalse,
-        reason: "an existing action becomes its day mandatory one",
-      );
-      expect(action.sort, 0);
-    });
-
     test(
       'the radar does not collapse: the reported day gained a tick',
       () async {
@@ -232,61 +192,6 @@ void main() {
         expect(ticks, hasLength(1));
         expect(ticks.single.actionId, 'legacy-action');
         expect(ticks.single.completed, isTrue);
-      },
-    );
-
-    test(
-      'the archetype survives the column being dropped for a join table',
-      () async {
-        // v5 to v7 in one open, which is the case that nearly went wrong: the
-        // v6 step recreates `actions` against the current schema and takes
-        // archetype_id with it, so the pairs have to be read before any step
-        // runs rather than inside the v7 block.
-        final migrated = FeralDatabase(NativeDatabase(await writeV5Database()));
-        addTearDown(migrated.close);
-
-        final shares = await migrated.select(migrated.actionArchetypes).get();
-        expect(shares, hasLength(1));
-        expect(shares.single.actionId, 'legacy-action');
-        expect(shares.single.archetypeId, 'arch-1');
-        expect(
-          shares.single.share,
-          1,
-          reason:
-              'one row at share 1 normalises to the weight 1.0 the '
-              'dropped column meant, so no upgraded radar moves',
-        );
-      },
-    );
-
-    test(
-      'the day slot constraint moved, so an optional can be stored',
-      () async {
-        // The reason the v6 step recreates `actions` rather than adding two
-        // columns to it. Under the v5 UNIQUE(campaign_id, day_index) this
-        // insert is rejected, and an upgraded install could never hold an
-        // optional action -- which is the entire feature.
-        final migrated = FeralDatabase(NativeDatabase(await writeV5Database()));
-        addTearDown(migrated.close);
-
-        await migrated
-            .into(migrated.actions)
-            .insert(
-              ActionsCompanion.insert(
-                id: 'new-optional',
-                campaignId: 'campaign-1',
-                dayIndex: 1,
-                title: 'An optional act',
-                isOptional: const Value(true),
-                sort: const Value(1),
-                updatedAt: DateTime.utc(2026, 9, 11),
-              ),
-            );
-
-        final onDayOne = await (migrated.select(
-          migrated.actions,
-        )..where((a) => a.dayIndex.equals(1))).get();
-        expect(onDayOne, hasLength(2));
       },
     );
   });

@@ -57,8 +57,7 @@ Map<String, double> archetypeWeightsFromShares(Map<String, int> shares) {
 class ActionSpec {
   const ActionSpec({
     required this.id,
-    required this.campaignId,
-    required this.dayIndex,
+    required this.dayId,
     required this.title,
     this.bodyMd,
     required this.archetypeWeights,
@@ -69,10 +68,11 @@ class ActionSpec {
   });
 
   final String id;
-  final String campaignId;
 
-  /// 1-based. Contiguous from 1 to the campaign's lengthDays.
-  final int dayIndex;
+  /// The day this action belongs to. An action no longer knows its campaign or
+  /// its day number; the day knows both, and is reached through
+  /// `ContentRepository.dayFor` (ADR-0034).
+  final String dayId;
   final String title;
 
   /// Null when the copy is not available: a locked pack, or an owned pack

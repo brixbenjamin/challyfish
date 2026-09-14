@@ -72,13 +72,24 @@ void main() {
           ),
         );
     for (final (id, campaign) in [('aCore', 'cCore'), ('aPaid', 'cPaid')]) {
+      final dayId = id == 'aCore' ? 'dCore' : 'dPaid';
+      await db
+          .into(db.days)
+          .insert(
+            DaysCompanion.insert(
+              id: dayId,
+              campaignId: campaign,
+              dayIndex: 1,
+              title: 'Day one',
+              updatedAt: DateTime.utc(2026, 9, 9),
+            ),
+          );
       await db
           .into(db.actions)
           .insert(
             ActionsCompanion.insert(
               id: id,
-              campaignId: campaign,
-              dayIndex: 1,
+              dayId: dayId,
               title: 't',
               updatedAt: DateTime.utc(2026, 9, 9),
             ),

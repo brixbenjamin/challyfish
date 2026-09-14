@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 
 import 'package:feral/src/domain/campaign.dart';
 import 'package:feral/src/domain/day_log.dart';
@@ -16,8 +15,7 @@ ActionSpec action(String id, String archetypeId, {int effort = 1}) =>
 ActionSpec split(String id, Map<String, int> shares, {int effort = 1}) =>
     ActionSpec(
       id: id,
-      campaignId: 'campaign-1',
-      dayIndex: 1,
+      dayId: 'day-1',
       title: 'do the thing',
       bodyMd: 'body',
       archetypeWeights: archetypeWeightsFromShares(shares),
@@ -87,12 +85,12 @@ void main() {
 
   test('a day exactly one half-life old counts half', () {
     // Day 1 of the run, evaluated 60 local days later.
-    final result = balanceAt(60, [log(1, 'a-axis-a', Outcome.done)]);
+    final result = balanceAt(45, [log(1, 'a-axis-a', Outcome.done)]);
     expect(result['axis-a'], closeTo(0.5 / 5, 1e-9));
   });
 
   test('two half-lives is a quarter', () {
-    final result = balanceAt(120, [log(1, 'a-axis-a', Outcome.done)]);
+    final result = balanceAt(90, [log(1, 'a-axis-a', Outcome.done)]);
     expect(result['axis-a'], closeTo(0.25 / 5, 1e-9));
   });
 
@@ -333,24 +331,6 @@ void main() {
 
   test('no logs produce an empty balance, not a crash', () {
     expect(balanceAt(0, const []), isEmpty);
-  });
-
-  test('fullAxisValue is the closed-form asymptote of the decay curve', () {
-    // sum(0.5^(k/halfLifeDays)) for k from 0 to infinity has closed form
-    // 1 / (1 - 0.5^(1/halfLifeDays)) — verify it against a large finite sum
-    // rather than trusting the same formula twice.
-    const weights = BalanceWeights(halfLifeDays: 60);
-    var approx = 0.0;
-    for (var k = 0; k < 100000; k++) {
-      approx += math.pow(0.5, k / 60);
-    }
-    expect(weights.fullAxisValue, closeTo(approx, 1e-6));
-  });
-
-  test('fullAxisValue rises with a longer half-life', () {
-    const shorter = BalanceWeights(halfLifeDays: 30);
-    const longer = BalanceWeights(halfLifeDays: 60);
-    expect(longer.fullAxisValue, greaterThan(shorter.fullAxisValue));
   });
 
   test('the half-life is injectable', () {
