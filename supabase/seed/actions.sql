@@ -21,6 +21,11 @@
 -- arriving under a new id is a second row, not a correction. Every other seed
 -- file pins its ids by hand for the same reason; these are only computed
 -- because there are 123 of them.
+--
+-- The action no longer knows its campaign or its day number. It knows its day,
+-- and the day knows the rest (ADR-0034). The md5 below is over the *day* id, so
+-- seed/days.sql and this file agree without joining.
+--
 -- The action and its archetype shares are written by one statement, not two.
 -- actions_have_an_archetype is a deferred constraint trigger, so it is checked
 -- at commit -- and `supabase db reset` seeds over the wire, where the
@@ -33,8 +38,7 @@
 with authored as (
   select
     md5('feral:action:' || v.campaign_id || ':' || v.day_index)::uuid as id,
-    v.campaign_id::uuid as campaign_id,
-    v.day_index,
+    md5('feral:day:'    || v.campaign_id || ':' || v.day_index)::uuid as day_id,
     v.title,
     v.effort,
     v.archetype_id::uuid as archetype_id,
@@ -64,8 +68,8 @@ with authored as (
   -- Data-modifying CTEs run to completion whether or not the main query reads
   -- them, and the foreign key is checked at end of statement, by which point
   -- both inserts have happened.
-  insert into public.actions (id, campaign_id, day_index, title, effort)
-  select distinct id, campaign_id, day_index, title, effort from authored
+  insert into public.actions (id, day_id, title, effort)
+  select distinct id, day_id, title, effort from authored
 )
 insert into public.action_archetypes (action_id, archetype_id, share)
 select id, archetype_id, share from authored;
@@ -77,8 +81,7 @@ select id, archetype_id, share from authored;
 with generated as (
   select
     md5('feral:action:' || c.id || ':' || g.day)::uuid as id,
-    c.id as campaign_id,
-    g.day as day_index,
+    md5('feral:day:'    || c.id || ':' || g.day)::uuid as day_id,
     format('Day %s', g.day) as title,
     1 + (g.day % 3) as effort,
     (select ca.archetype_id
@@ -96,8 +99,8 @@ with generated as (
     'bbbbbbbb-0000-0000-0000-000000000006'
   )
 ), inserted as (
-  insert into public.actions (id, campaign_id, day_index, title, effort)
-  select id, campaign_id, day_index, title, effort from generated
+  insert into public.actions (id, day_id, title, effort)
+  select id, day_id, title, effort from generated
 )
 insert into public.action_archetypes (action_id, archetype_id, share)
 select id, archetype_id, 1 from generated;

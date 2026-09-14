@@ -29,8 +29,10 @@ select
   r.user_id,
   r.id,
   1,
-  (select id from public.actions
-     where campaign_id = r.campaign_id and day_index = 1),
+  (select a.id from public.actions a
+     join public.days d on d.id = a.day_id
+    where d.campaign_id = r.campaign_id and d.day_index = 1
+      and not a.is_optional),
   'done'
 from public.campaign_runs r;
 

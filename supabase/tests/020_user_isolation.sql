@@ -29,9 +29,16 @@ values ('bbbbbbbb-2222-2222-2222-222222222222',
 
 -- No body: the copy lives in public.action_bodies now (ADR-0025), and nothing
 -- below reads it. day_logs references the action, not its body.
-insert into public.actions (id, campaign_id, day_index, title)
+--
+-- The action hangs off a day row since ADR-0034; it no longer carries its own
+-- campaign or day number.
+insert into public.days (id, campaign_id, day_index, title)
+values ('dddddddd-9999-0000-0000-000000000001',
+        'bbbbbbbb-2222-2222-2222-222222222222', 1, 'Day one');
+
+insert into public.actions (id, day_id, title)
 values ('dddddddd-0000-0000-0000-000000000001',
-        'bbbbbbbb-2222-2222-2222-222222222222', 1, 'Do the thing');
+        'dddddddd-9999-0000-0000-000000000001', 'Do the thing');
 
 -- The archetype is a join row since 0007. One row at share 1 is the ordinary
 -- single-drive action, which is all this fixture needs.

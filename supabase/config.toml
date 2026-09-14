@@ -82,6 +82,8 @@ sql_paths = [
   "./seed/doctrine.sql",
   "./seed/packs.sql",
   "./seed/campaigns.sql",
+  "./seed/days.sql",
+  "./seed/day_bodies.sql",
   "./seed/actions.sql",
   "./seed/action_bodies.sql",
 ]

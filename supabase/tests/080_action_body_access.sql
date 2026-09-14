@@ -1,5 +1,5 @@
 begin;
-select plan(7);
+select plan(8);
 
 -- Fixture campaigns hang off the two seeded packs rather than inserting packs of
 -- their own: packs_single_core (0001) permits exactly one core pack forever, so a
@@ -15,11 +15,17 @@ values ('dddddddd-0000-0000-0000-000000000001',
         (select id from public.packs where not is_core order by sort limit 1),
         'fixture-paid-camp', 'Paid', 'i', 3, 902);
 
-insert into public.actions (id, campaign_id, day_index, title, effort)
-values ('dddddddd-1111-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001',
-        1, 'Free day one', 1),
-       ('dddddddd-1111-0000-0000-000000000002', 'dddddddd-0000-0000-0000-000000000002',
-        1, 'Paid day one', 1);
+insert into public.days (id, campaign_id, day_index, title)
+values ('dddddddd-2222-0000-0000-000000000001',
+        'dddddddd-0000-0000-0000-000000000001', 1, 'Free day one'),
+       ('dddddddd-2222-0000-0000-000000000002',
+        'dddddddd-0000-0000-0000-000000000002', 1, 'Paid day one');
+
+insert into public.actions (id, day_id, title, effort)
+values ('dddddddd-1111-0000-0000-000000000001',
+        'dddddddd-2222-0000-0000-000000000001', 'Free day one', 1),
+       ('dddddddd-1111-0000-0000-000000000002',
+        'dddddddd-2222-0000-0000-000000000002', 'Paid day one', 1);
 
 insert into public.action_archetypes (action_id, archetype_id, share)
 values ('dddddddd-1111-0000-0000-000000000001',
@@ -100,6 +106,17 @@ select results_eq(
       where id = 'dddddddd-1111-0000-0000-000000000002' $$,
   array['Paid day one'],
   'a locked action is still browsable by title'
+);
+
+-- 8. The helper was rewritten in 0008 to reach the campaign through the day.
+-- A join that silently matched nothing would make every body unreadable and
+-- this file would still pass its "cannot read" assertions -- failing closed
+-- looks identical to a working gate from the outside.
+select results_eq(
+  $$ select body_md from public.action_bodies
+      where action_id = 'dddddddd-1111-0000-0000-000000000001' $$,
+  array['FREE BODY'],
+  'the rewritten helper still reaches the pack through days'
 );
 
 select * from finish();

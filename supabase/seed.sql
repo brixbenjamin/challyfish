@@ -15,5 +15,7 @@
 \i seed/doctrine.sql
 \i seed/packs.sql
 \i seed/campaigns.sql
+\i seed/days.sql
+\i seed/day_bodies.sql
 \i seed/actions.sql
 \i seed/action_bodies.sql

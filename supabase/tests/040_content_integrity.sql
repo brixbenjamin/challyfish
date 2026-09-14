@@ -1,17 +1,17 @@
 begin;
-select plan(17);
+select plan(20);
 
 -- Structural validation only. The safety floor in design spec section 9 cannot
 -- be checked by a machine and is an authoring obligation (Q11).
 
--- Exactly one mandatory action per day, for every day of every campaign
--- (ADR-0030). The count is of mandatory rows only: optionals are authored
--- freely on top and must not make a well-formed campaign look malformed.
+-- Exactly one mandatory action per day (ADR-0030), asserted against day_id now
+-- that the day is a row. The count is of mandatory rows only: optionals are
+-- authored freely on top and must not make a well-formed campaign look malformed.
 select is_empty(
-  $$ select c.id from public.campaigns c
+  $$ select d.id from public.days d
      where (select count(*) from public.actions a
-            where a.campaign_id = c.id and not a.is_optional) <> c.length_days $$,
-  'every campaign has exactly one mandatory action per day'
+            where a.day_id = d.id and not a.is_optional) <> 1 $$,
+  'every day has exactly one mandatory action'
 );
 
 -- An optional action on a day with no mandatory one is an orphan: the grade
@@ -21,22 +21,49 @@ select is_empty(
      where a.is_optional
        and not exists (
          select 1 from public.actions m
-         where m.campaign_id = a.campaign_id
-           and m.day_index = a.day_index
-           and not m.is_optional) $$,
+         where m.day_id = a.day_id and not m.is_optional) $$,
   'no optional action sits on a day without a mandatory one'
 );
 
+-- Contiguity, previously unenforceable: before ADR-0034 there was no row to
+-- constrain, and docs/technical/data-model.md asserted this on trust.
 select is_empty(
   $$ select c.key from public.campaigns c
      where exists (
        select 1 from generate_series(1, c.length_days) g(day)
        where not exists (
-         select 1 from public.actions a
-         where a.campaign_id = c.id and a.day_index = g.day
+         select 1 from public.days d
+         where d.campaign_id = c.id and d.day_index = g.day
        )
      ) $$,
   'every campaign has a contiguous day_index from 1 to length_days'
+);
+
+-- The other half of the same invariant. Contiguity alone permits a 21-day
+-- campaign carrying 30 days; campaigns.length_days stays authoritative.
+select is_empty(
+  $$ select c.key from public.campaigns c
+     where (select count(*) from public.days d where d.campaign_id = c.id)
+           <> c.length_days $$,
+  'every campaign has exactly length_days days'
+);
+
+-- Every day is readable. A day with no body is a day the user cannot decide to
+-- commit to, which is the whole point of the body existing (ADR-0034).
+select is_empty(
+  $$ select d.id from public.days d
+      left join public.day_bodies b on b.day_id = d.id
+      where b.day_id is null $$,
+  'every day has a body'
+);
+
+-- The gate that stops unauthored copy shipping must still see it, exactly as
+-- it must for action bodies. If this passes while placeholders are present,
+-- the gate has stopped looking rather than the copy having been written.
+select isnt_empty(
+  $$ select b.day_id from public.day_bodies b
+      where b.body_md like '%[TO AUTHOR]%' or b.body_md like '%[PLACEHOLDER]%' $$,
+  'placeholder day bodies are still visible to an unauthored-copy check'
 );
 
 select is_empty(
