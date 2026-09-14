@@ -188,7 +188,8 @@ void main() {
     expect(
       actions.where((a) => a.bodyMd != null),
       isEmpty,
-      reason: 'the server refused the copy for a pack this account has not '
+      reason:
+          'the server refused the copy for a pack this account has not '
           'bought, and no client-side filter was involved',
     );
 
@@ -210,7 +211,7 @@ void main() {
     final paid = await paidPack();
     final campaign = (await device.content.campaignsFor(paid.id)).first;
     expect(
-      (await device.content.actionFor(campaign.id, 1))?.bodyMd,
+      (await device.content.dayFor(campaign.id, 1))?.mandatory?.bodyMd,
       isNull,
       reason: 'nothing to deliver yet',
     );
@@ -229,7 +230,7 @@ void main() {
       isTrue,
       reason: 'the pack opens onto a real day, not a blank one',
     );
-    final day1 = await device.content.actionFor(campaign.id, 1);
+    final day1 = (await device.content.dayFor(campaign.id, 1))?.mandatory;
     expect(day1?.bodyMd, isNotNull);
     expect(day1!.bodyMd, isNotEmpty);
   });
@@ -253,7 +254,10 @@ void main() {
       isUnlocked: true,
     );
     for (var day = 1; day <= 3; day++) {
-      final action = (await device.content.actionFor(campaign.id, day))!;
+      final action = (await device.content.dayFor(
+        campaign.id,
+        day,
+      ))!.mandatory!;
       await device.progress.commitToday(
         run: run,
         dayIndex: day,

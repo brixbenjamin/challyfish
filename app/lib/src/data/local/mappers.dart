@@ -1,4 +1,5 @@
 import '../../domain/campaign.dart';
+import '../../domain/day.dart';
 import 'database.dart';
 
 /// Maps between the Drift-generated row classes and the domain types the rest
@@ -29,6 +30,23 @@ Campaign toCampaign(CampaignRow row) => Campaign(
 /// A null [body] is a real state too, not a failure: a locked pack, or an owned
 /// pack whose bodies have not been pulled yet. Callers degrade to the existing
 /// "content unavailable" path (ADR-0025).
+/// A null [body] is a real state, not a failure: a locked pack, or an owned
+/// pack whose bodies have not been pulled yet (ADR-0025, ADR-0034).
+///
+/// [actions] arrive already ordered — mandatory first, then by `sort` — because
+/// the ordering is the repository's query, not this function's arithmetic.
+DaySpec toDay(DayRow row, List<ActionSpec> actions, [DayBodyRow? body]) =>
+    DaySpec(
+      id: row.id,
+      campaignId: row.campaignId,
+      dayIndex: row.dayIndex,
+      title: row.title,
+      kind: DayKind.fromKey(row.kind),
+      primaryArchetypeId: row.primaryArchetypeId,
+      bodyMd: body?.bodyMd,
+      actions: actions,
+    );
+
 ActionSpec toAction(
   ActionRow row,
   Map<String, int> shares, [

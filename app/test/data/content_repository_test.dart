@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:feral/src/data/local/database.dart';
 import 'package:feral/src/data/remote/content_api.dart';
 import 'package:feral/src/data/repositories/content_repository.dart';
+import 'package:feral/src/domain/day.dart';
 import 'package:test/test.dart';
 
 class FakeContentApi implements ContentApi {
@@ -141,7 +142,7 @@ void main() {
     },
   );
 
-  test('actionFor returns the action for a given campaign day', () async {
+  test('dayFor hands back the day mandatory action, hydrated', () async {
     final api = FakeContentApi({
       'days': [
         dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z'),
@@ -158,7 +159,7 @@ void main() {
     final repo = ContentRepository(db: db, api: api);
     await repo.pull();
 
-    final action = await repo.actionFor('campaign-1', 2);
+    final action = (await repo.dayFor('campaign-1', 2))?.mandatory;
     expect(action?.id, 'action-2');
     expect(action?.archetypeWeights, {'arch-1': 1.0});
   });
@@ -187,7 +188,7 @@ void main() {
       final repo = ContentRepository(db: db, api: api);
       await repo.pull();
 
-      final action = await repo.actionFor('campaign-1', 1);
+      final action = (await repo.dayFor('campaign-1', 1))?.mandatory;
       expect(action?.archetypeWeights, {'arch-1': 2 / 3, 'arch-2': 1 / 3});
     },
   );
@@ -205,18 +206,8 @@ void main() {
       final repo = ContentRepository(db: db, api: api);
       await repo.pull();
 
-      final action = await repo.actionFor('campaign-1', 1);
+      final action = (await repo.dayFor('campaign-1', 1))?.mandatory;
       expect(action?.archetypeWeights, isEmpty);
-    },
-  );
-
-  test(
-    'actionFor returns null rather than throwing when content is missing',
-    () async {
-      // The dashboard must degrade to a recoverable "content unavailable" state.
-      final repo = ContentRepository(db: db, api: FakeContentApi(const {}));
-      await repo.pull();
-      expect(await repo.actionFor('campaign-1', 1), isNull);
     },
   );
 
@@ -446,6 +437,119 @@ void main() {
 
     final rows = await db.select(db.days).get();
     expect(rows.map((r) => (r.id, r.dayIndex)), [('day-1', 2)]);
+  });
+
+  test('dayFor returns the day with its actions, mandatory first', () async {
+    final api = FakeContentApi({
+      'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+      'day_bodies': [
+        {
+          'day_id': 'day-1',
+          'body_md': 'what today asks',
+          'updated_at': '2026-06-01T09:00:00Z',
+        },
+      ],
+      'actions': [
+        actionRow(
+          'a-optional',
+          'day-1',
+          '2026-06-01T09:00:00Z',
+          isOptional: true,
+          sort: 1,
+        ),
+        actionRow('a-mandatory', 'day-1', '2026-06-01T09:00:00Z'),
+      ],
+      'action_archetypes': [
+        actionArchetypeRow('a-mandatory', 'arch-1', '2026-06-01T09:00:00Z'),
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    final day = await repo.dayFor('campaign-1', 1);
+    expect(day?.title, 'Day 1');
+    expect(day?.kind, DayKind.standard);
+    expect(day?.bodyMd, 'what today asks');
+    expect(
+      day?.actions.map((a) => a.id),
+      ['a-mandatory', 'a-optional'],
+      reason: 'mandatory first, then by sort -- never by arrival order',
+    );
+    expect(day?.mandatory?.id, 'a-mandatory');
+    expect(day?.optionals.map((a) => a.id), ['a-optional']);
+  });
+
+  test('dayFor returns null rather than throwing for an uncached day', () async {
+    // The surface must degrade to a recoverable "content unavailable" state.
+    final repo = ContentRepository(db: db, api: FakeContentApi(const {}));
+    await repo.pull();
+    expect(await repo.dayFor('campaign-1', 1), isNull);
+  });
+
+  test('a day whose body has not arrived is a day, not a failure', () async {
+    // A locked pack, or an owned pack mid-pull. Exactly the state ActionSpec
+    // already models with a null bodyMd (ADR-0025).
+    final api = FakeContentApi({
+      'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    final day = await repo.dayFor('campaign-1', 1);
+    expect(day, isNotNull);
+    expect(day?.bodyMd, isNull);
+    expect(day?.actions, isEmpty);
+    expect(day?.mandatory, isNull);
+  });
+
+  test('a rest day reads as a rest day', () async {
+    final api = FakeContentApi({
+      'days': [
+        dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z', kind: 'rest'),
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    expect((await repo.dayFor('campaign-1', 1))?.kind, DayKind.rest);
+  });
+
+  test('an unknown kind degrades to standard rather than throwing', () async {
+    // Content authored against a newer app than this one. The surface loses a
+    // presentation nuance; it does not lose the day.
+    final api = FakeContentApi({
+      'days': [
+        dayRow(
+          'day-1',
+          'campaign-1',
+          1,
+          '2026-06-01T09:00:00Z',
+          kind: 'bridge',
+        ),
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    expect((await repo.dayFor('campaign-1', 1))?.kind, DayKind.standard);
+  });
+
+  test('daysFor returns the campaign in day order', () async {
+    final api = FakeContentApi({
+      'days': [
+        dayRow('day-2', 'campaign-1', 2, '2026-06-01T09:00:00Z'),
+        dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z'),
+        dayRow('other', 'campaign-2', 1, '2026-06-01T09:00:00Z'),
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.pull();
+
+    expect(
+      (await repo.daysFor('campaign-1')).map((d) => d.dayIndex),
+      [1, 2],
+      reason: 'ordered by day_index, not by arrival',
+    );
   });
 
   /// Content can lag itself after a partial sync, and `days` is now the table

@@ -273,7 +273,9 @@ class ProgressRepository {
   Future<void> applyRollover({
     required CampaignRun run,
     required int lengthDays,
-    required String Function(int dayIndex) mandatoryActionIdForDay,
+    // Nullable since ADR-0034: a day whose content has not been cached has no
+    // mandatory action id to offer, and day_logs.action_id is not nullable.
+    required String? Function(int dayIndex) mandatoryActionIdForDay,
   }) async {
     final today = engine.currentDay(
       startedAt: run.startedAt,
@@ -290,6 +292,10 @@ class ProgressRepository {
 
     for (final day in pending) {
       final mandatory = mandatoryActionIdForDay(day);
+      // Left unresolved rather than written with another day's action id. The
+      // record stays honest (ADR-0003) and the next open, after the pull, sees
+      // the day still pending and resolves it properly.
+      if (mandatory == null) continue;
       final ticks = ticksByDay[day] ?? const <String>{};
 
       final outcome = ticks.isEmpty

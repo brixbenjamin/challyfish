@@ -98,12 +98,19 @@ void main() {
     final run = await progressAt(
       at(1, 9),
     ).startRun(userId: 'u', campaignId: recommended!.id, isUnlocked: true);
-    expect(await content.actionFor(recommended.id, 1), isNotNull);
+    expect(await content.dayFor(recommended.id, 1), isNotNull);
+
+    // Day one must be readable offline, not merely present: the commit is taken
+    // after reading the body, so a day with no body is a day a first launch
+    // cannot start (ADR-0034).
+    expect((await content.dayFor(recommended.id, 1))?.bodyMd, isNotNull);
 
     // 4. The whole campaign can be committed and reported, day by day.
     for (var day = 1; day <= recommended.lengthDays; day++) {
-      final action = await content.actionFor(recommended.id, day);
-      expect(action, isNotNull, reason: 'day $day has a cached action');
+      final cached = await content.dayFor(recommended.id, day);
+      expect(cached, isNotNull, reason: 'day $day is cached');
+      final action = cached!.mandatory;
+      expect(action, isNotNull, reason: 'day $day has a mandatory action');
 
       final repo = progressAt(at(day, 20));
       await repo.commitToday(run: run, dayIndex: day, actionId: action!.id);

@@ -145,6 +145,16 @@ void main() {
       await content.actionsFor(campaign.id),
       hasLength(campaign.lengthDays),
     );
+    expect(
+      await content.daysFor(campaign.id),
+      hasLength(campaign.lengthDays),
+      reason: 'the snapshot carries one day row per campaign day',
+    );
+    expect(
+      (await content.daysFor(campaign.id)).every((d) => d.mandatory != null),
+      isTrue,
+      reason: 'every bundled day carries its mandatory action',
+    );
     expect(await content.archetypeIdsFor(campaign.id), isNotEmpty);
     expect(await content.archetypesById(), hasLength(4));
 

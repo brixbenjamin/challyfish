@@ -353,25 +353,20 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       return _Home(browse: await _browse(), balance: await _balance());
     }
 
-    final actions = await content.actionsFor(campaign.id);
-    if (actions.isNotEmpty) {
-      // An action no longer carries its day number (ADR-0034), so the day has
-      // to be asked for. A query per day is wasteful and deliberately
-      // short-lived: `daysFor` lands in the next commit and replaces the whole
-      // block with one read.
-      final mandatoryByDay = <int, String>{};
-      for (var index = 1; index <= campaign.lengthDays; index++) {
-        final mandatory = (await content.actionsForDay(
-          campaign.id,
-          index,
-        )).where((a) => !a.isOptional).firstOrNull;
-        if (mandatory != null) mandatoryByDay[index] = mandatory.id;
-      }
+    final days = await content.daysFor(campaign.id);
+    final actions = [for (final day in days) ...day.actions];
+    if (days.isNotEmpty) {
+      // A lookup on the day, with no orElse. The fallback this replaces picked
+      // `actions.first` for any day whose mandatory action was missing, which
+      // wrote an unrelated action's id into the record (ADR-0034).
+      final mandatoryByDay = {
+        for (final day in days)
+          if (day.mandatory != null) day.dayIndex: day.mandatory!.id,
+      };
       await progress.applyRollover(
         run: run,
         lengthDays: campaign.lengthDays,
-        mandatoryActionIdForDay: (day) =>
-            mandatoryByDay[day] ?? actions.first.id,
+        mandatoryActionIdForDay: (day) => mandatoryByDay[day],
       );
     }
 
@@ -419,7 +414,9 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         run: run,
         campaign: campaign,
         logs: logs,
-        todayActions: await content.actionsForDay(campaign.id, day),
+        todayActions:
+            days.where((d) => d.dayIndex == day).firstOrNull?.actions ??
+            const [],
         // Every action of the run, because the run total spans days whose
         // actions are not on screen.
         actionsById: {for (final a in actions) a.id: a},

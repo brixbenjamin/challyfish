@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../domain/archetype.dart';
 import '../../domain/campaign.dart';
+import '../../domain/day.dart';
 import '../../domain/diagnostic.dart';
 import '../../domain/doctrine.dart';
 import '../../domain/pack.dart';
@@ -413,58 +414,72 @@ class ContentRepository {
     return shares;
   }
 
-  /// Null when the action itself is not cached. An action that is cached without
-  /// its body returns a spec with a null `bodyMd` — a locked pack, or one whose
-  /// bodies have not arrived — and callers degrade to the same recoverable
-  /// "content unavailable" state either way.
-  /// Every action on one campaign day: the mandatory one and any optionals,
-  /// ordered mandatory-first then by `sort` (ADR-0030).
+  /// One campaign day, with its actions already ordered mandatory-first then by
+  /// `sort`, and its body attached.
   ///
-  /// Empty when the day's content is not cached at all. A day whose optionals
-  /// are cached but whose mandatory action is not is a partial-sync state the
-  /// caller degrades on, not one this query papers over.
-  Future<List<ActionSpec>> actionsForDay(
-    String campaignId,
-    int dayIndex,
-  ) async {
-    final query =
-        db.select(db.actions).join([
-            innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
-            leftOuterJoin(
-              db.actionBodies,
-              db.actionBodies.actionId.equalsExp(db.actions.id),
-            ),
-          ])
-          ..where(
-            db.days.campaignId.equals(campaignId) &
-                db.days.dayIndex.equals(dayIndex),
-          )
-          ..orderBy([
-            OrderingTerm(expression: db.actions.isOptional),
-            OrderingTerm(expression: db.actions.sort),
-          ]);
-    return _toActions(await query.get());
+  /// Null when the day itself is not cached. A cached day whose actions or body
+  /// have not arrived comes back as a day with an empty action list or a null
+  /// `bodyMd` — partial-sync states the caller degrades on, and the reason this
+  /// replaced `actionFor`, whose single-row query would throw outright on any
+  /// day that had optionals.
+  Future<DaySpec?> dayFor(String campaignId, int dayIndex) async {
+    final row =
+        await (db.select(db.days)..where(
+              (d) =>
+                  d.campaignId.equals(campaignId) & d.dayIndex.equals(dayIndex),
+            ))
+            .getSingleOrNull();
+    if (row == null) return null;
+    return (await _hydrateDays([row])).single;
   }
 
-  Future<ActionSpec?> actionFor(String campaignId, int dayIndex) async {
-    final query =
-        db.select(db.actions).join([
-          innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
-          leftOuterJoin(
-            db.actionBodies,
-            db.actionBodies.actionId.equalsExp(db.actions.id),
-          ),
-        ])..where(
-          db.days.campaignId.equals(campaignId) &
-              db.days.dayIndex.equals(dayIndex) &
-              // The day's *mandatory* action. Without this the query would
-              // throw on any day that has optionals, since a day is no longer
-              // one row (ADR-0030).
-              db.actions.isOptional.equals(false),
-        );
-    final row = await query.getSingleOrNull();
-    if (row == null) return null;
-    return (await _toActions([row])).single;
+  /// Every cached day of a campaign, in day order.
+  Future<List<DaySpec>> daysFor(String campaignId) async {
+    final rows =
+        await (db.select(db.days)
+              ..where((d) => d.campaignId.equals(campaignId))
+              ..orderBy([(d) => OrderingTerm(expression: d.dayIndex)]))
+            .get();
+    return _hydrateDays(rows);
+  }
+
+  /// Attaches each day's actions and body.
+  ///
+  /// Two follow-up queries rather than two more joins: a day has many actions
+  /// and an action has many archetypes, so joining either would multiply the
+  /// rows and every caller would have to fold them back together.
+  Future<List<DaySpec>> _hydrateDays(List<DayRow> rows) async {
+    if (rows.isEmpty) return const [];
+    final ids = [for (final row in rows) row.id];
+
+    final actionRows =
+        await (db.select(db.actions).join([
+              leftOuterJoin(
+                db.actionBodies,
+                db.actionBodies.actionId.equalsExp(db.actions.id),
+              ),
+            ])
+              ..where(db.actions.dayId.isIn(ids))
+              ..orderBy([
+                OrderingTerm(expression: db.actions.isOptional),
+                OrderingTerm(expression: db.actions.sort),
+              ]))
+            .get();
+
+    final byDay = <String, List<ActionSpec>>{};
+    for (final action in await _toActions(actionRows)) {
+      (byDay[action.dayId] ??= <ActionSpec>[]).add(action);
+    }
+
+    final bodies = await (db.select(
+      db.dayBodies,
+    )..where((b) => b.dayId.isIn(ids))).get();
+    final bodyByDay = {for (final body in bodies) body.dayId: body};
+
+    return [
+      for (final row in rows)
+        toDay(row, byDay[row.id] ?? const [], bodyByDay[row.id]),
+    ];
   }
 
   Future<List<Pack>> packs() async {
