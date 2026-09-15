@@ -60,6 +60,10 @@ void main() {
         'p-edge': [paid],
       },
       unlockedPackIds: const {'p-core'},
+      priceLabelsByPack: const {},
+      archetypesByCampaign: const {
+        'c-2': [killer],
+      },
     );
 
     await tester.pumpWidget(wrap(PackListScreen(packs: views, onOpen: (_) {})));

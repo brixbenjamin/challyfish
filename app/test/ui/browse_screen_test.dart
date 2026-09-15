@@ -66,8 +66,20 @@ void main() {
       wrap(
         PackListScreen(
           packs: const [
-            PackView(pack: corePack, campaigns: [short], isUnlocked: true),
-            PackView(pack: paidPack, campaigns: [long], isUnlocked: false),
+            PackView(
+              pack: corePack,
+              campaigns: [short],
+              isUnlocked: true,
+              priceLabel: null,
+              archetypesByCampaign: {},
+            ),
+            PackView(
+              pack: paidPack,
+              campaigns: [long],
+              isUnlocked: false,
+              priceLabel: null,
+              archetypesByCampaign: {},
+            ),
           ],
           onOpen: (_) {},
         ),
@@ -85,7 +97,13 @@ void main() {
       wrap(
         PackListScreen(
           packs: const [
-            PackView(pack: paidPack, campaigns: [long], isUnlocked: false),
+            PackView(
+              pack: paidPack,
+              campaigns: [long],
+              isUnlocked: false,
+              priceLabel: null,
+              archetypesByCampaign: {},
+            ),
           ],
           onOpen: (_) {},
         ),

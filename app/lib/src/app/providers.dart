@@ -22,6 +22,7 @@ import '../data/repositories/entitlement_repository.dart';
 import '../data/repositories/identity_repository.dart';
 import '../data/repositories/progress_repository.dart';
 import '../data/repositories/sync_repository.dart';
+import '../domain/archetype.dart';
 import '../domain/campaign.dart';
 import '../domain/pack.dart';
 import '../notifications/reminder_scheduler.dart';
@@ -151,12 +152,19 @@ List<PackView> packViewsFrom({
   required List<Pack> packs,
   required Map<String, List<Campaign>> campaignsByPack,
   required Set<String> unlockedPackIds,
+  required Map<String, String> priceLabelsByPack,
+  required Map<String, List<Archetype>> archetypesByCampaign,
 }) => [
   for (final pack in packs)
     PackView(
       pack: pack,
       campaigns: campaignsByPack[pack.id] ?? const [],
       isUnlocked: unlockedPackIds.contains(pack.id),
+      priceLabel: priceLabelsByPack[pack.id],
+      archetypesByCampaign: {
+        for (final campaign in campaignsByPack[pack.id] ?? const <Campaign>[])
+          campaign.id: ?archetypesByCampaign[campaign.id],
+      },
     ),
 ];
 
@@ -214,6 +222,8 @@ final packViewsProvider = FutureProvider<List<PackView>>((ref) async {
     packs: packs,
     campaignsByPack: campaignsByPack,
     unlockedPackIds: unlocked,
+    priceLabelsByPack: const {},
+    archetypesByCampaign: const {},
   );
 });
 

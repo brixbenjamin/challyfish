@@ -70,6 +70,7 @@ dev_dependencies:
   test: ^1.31.0
   sqlite3: ^3.5.2
   postgres: ^3.5.12
+  
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -88,6 +89,7 @@ flutter:
   # reach a started campaign (Task 7), and this file is how.
   assets:
     - assets/seed/core_content.json
+    - assets/images/core.png
 
     # Inter, bundled rather than fetched at runtime. google_fonts matches these
     # by filename, and main() forbids the runtime fetch, so a cold offline

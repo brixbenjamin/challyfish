@@ -329,10 +329,44 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         .read(entitlementRepositoryProvider)
         .unlockedPackIds(userId: ref.read(userIdProvider), packs: packs);
 
+    // One store round-trip for every locked pack's price, not one per pack —
+    // the same batched call UnlockSheet's single-pack fetch already uses.
+    final lockedProductIds = [
+      for (final pack in packs)
+        if (!unlocked.contains(pack.id))
+          if (pack.storeProductId case final id? when id.isNotEmpty) id,
+    ];
+    var priceLabelsByPack = const <String, String>{};
+    if (lockedProductIds.isNotEmpty) {
+      try {
+        final products = await ref
+            .read(purchaseGatewayProvider)
+            .products(lockedProductIds);
+        final priceByProductId = {
+          for (final product in products) product.id: product.priceString,
+        };
+        priceLabelsByPack = {
+          for (final pack in packs)
+            pack.id: ?priceByProductId[pack.storeProductId],
+        };
+      } catch (_) {
+        // A store that cannot be reached costs the price line, not the list.
+      }
+    }
+
+    final archetypesByCampaign = <String, List<Archetype>>{};
+    for (final campaigns in campaignsByPack.values) {
+      for (final campaign in campaigns) {
+        archetypesByCampaign[campaign.id] = await _archetypesFor(campaign.id);
+      }
+    }
+
     return packViewsFrom(
       packs: packs,
       campaignsByPack: campaignsByPack,
       unlockedPackIds: unlocked,
+      priceLabelsByPack: priceLabelsByPack,
+      archetypesByCampaign: archetypesByCampaign,
     );
   }
 
