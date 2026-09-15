@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:feral/src/domain/purchase.dart';
 import 'package:test/test.dart';
 
@@ -84,6 +86,21 @@ void main() {
       {'pack.edge'},
     ]);
     await sub.cancel();
+  });
+
+  test('a purchase gate holds the call open until released', () async {
+    final gate = Completer<void>();
+    gateway.purchaseGate = gate.future;
+
+    var resolved = false;
+    final future = gateway.purchase('pack.edge').then((_) => resolved = true);
+
+    await Future<void>.delayed(Duration.zero);
+    expect(resolved, isFalse, reason: 'the call must still be open');
+
+    gate.complete();
+    await future;
+    expect(resolved, isTrue);
   });
 
   test('products come back for known ids only', () async {

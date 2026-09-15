@@ -128,6 +128,19 @@ void main() {
     expect(button.onPressed, isNull, reason: 'a double tap is a double charge');
   });
 
+  testWidgets('while purchasing, the close button is disabled', (tester) async {
+    await pump(tester, state: const PurchaseInProgress());
+
+    final button = tester.widget<IconButton>(find.byKey(UnlockSheet.closeKey));
+    expect(
+      button.onPressed,
+      isNull,
+      reason:
+          'closing mid-purchase abandons a charge the store still considers '
+          'open',
+    );
+  });
+
   testWidgets('a pending purchase is described as waiting, not failed', (
     tester,
   ) async {

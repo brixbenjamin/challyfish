@@ -890,62 +890,72 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) => StatefulBuilder(
-        builder: (sheetContext, setSheetState) => UnlockSheet(
-          pack: pack,
-          campaigns: campaigns,
-          priceLabel: price,
-          state: state,
-          onBuy: () async {
-            setSheetState(() => state = const PurchaseInProgress());
-            final userId = ref.read(userIdProvider);
-            final result = await ref
-                .read(purchaseControllerProvider)
-                .buy(
-                  userId: userId,
-                  pack: pack,
-                  // Paid, now fetching. Shown rather than swallowed, because
-                  // the wait is real and a silent sheet looks stuck.
-                  onProgress: (progress) {
-                    if (sheetContext.mounted) {
-                      setSheetState(() => state = progress);
-                    }
-                  },
-                );
-            ref.invalidate(unlockedPackIdsProvider);
-            if (result is PurchaseComplete && sheetContext.mounted) {
-              Navigator.of(sheetContext).pop();
-              await _loadHome();
-              return;
-            }
-            if (sheetContext.mounted) {
-              setSheetState(() => state = result);
-            }
-          },
-          onRestore: () async {
-            setSheetState(() => state = const PurchaseInProgress());
-            final userId = ref.read(userIdProvider);
-            final allPacks = await ref.read(contentRepositoryProvider).packs();
-            final summary = await ref
-                .read(purchaseControllerProvider)
-                .restore(userId: userId, packs: allPacks);
-            ref.invalidate(unlockedPackIdsProvider);
-            if (!sheetContext.mounted) return;
-            if (summary.succeeded && summary.unlockedPacks > 0) {
-              Navigator.of(sheetContext).pop();
-              await _loadHome();
-              return;
-            }
-            setSheetState(
-              () => state = summary.succeeded
-                  ? const PurchaseProblem(
-                      PurchaseProblemReason.nothingToRestore,
-                    )
-                  : const PurchaseProblem(
-                      PurchaseProblemReason.storeUnreachable,
-                    ),
-            );
-          },
-          onClose: () => Navigator.of(sheetContext).pop(),
+        builder: (sheetContext, setSheetState) => PopScope(
+          // A purchase in flight must not be walked away from: tapping the
+          // scrim, swiping down, or the system back gesture would otherwise
+          // dismiss the sheet while the store call is still running, and the
+          // store still considers that purchase open — a later attempt for the
+          // same pack then runs into its own already-in-progress error.
+          canPop: !state.isBusy,
+          child: UnlockSheet(
+            pack: pack,
+            campaigns: campaigns,
+            priceLabel: price,
+            state: state,
+            onBuy: () async {
+              setSheetState(() => state = const PurchaseInProgress());
+              final userId = ref.read(userIdProvider);
+              final result = await ref
+                  .read(purchaseControllerProvider)
+                  .buy(
+                    userId: userId,
+                    pack: pack,
+                    // Paid, now fetching. Shown rather than swallowed, because
+                    // the wait is real and a silent sheet looks stuck.
+                    onProgress: (progress) {
+                      if (sheetContext.mounted) {
+                        setSheetState(() => state = progress);
+                      }
+                    },
+                  );
+              ref.invalidate(unlockedPackIdsProvider);
+              if (result is PurchaseComplete && sheetContext.mounted) {
+                Navigator.of(sheetContext).pop();
+                await _loadHome();
+                return;
+              }
+              if (sheetContext.mounted) {
+                setSheetState(() => state = result);
+              }
+            },
+            onRestore: () async {
+              setSheetState(() => state = const PurchaseInProgress());
+              final userId = ref.read(userIdProvider);
+              final allPacks = await ref
+                  .read(contentRepositoryProvider)
+                  .packs();
+              final summary = await ref
+                  .read(purchaseControllerProvider)
+                  .restore(userId: userId, packs: allPacks);
+              ref.invalidate(unlockedPackIdsProvider);
+              if (!sheetContext.mounted) return;
+              if (summary.succeeded && summary.unlockedPacks > 0) {
+                Navigator.of(sheetContext).pop();
+                await _loadHome();
+                return;
+              }
+              setSheetState(
+                () => state = summary.succeeded
+                    ? const PurchaseProblem(
+                        PurchaseProblemReason.nothingToRestore,
+                      )
+                    : const PurchaseProblem(
+                        PurchaseProblemReason.storeUnreachable,
+                      ),
+              );
+            },
+            onClose: () => Navigator.of(sheetContext).pop(),
+          ),
         ),
       ),
     );

@@ -65,6 +65,19 @@ void main() {
     );
   });
 
+  test('an operation already in progress is not told nothing was charged', () {
+    // Unlike the other failure branches, this app cannot promise nothing was
+    // charged — the store itself says a previous attempt is still open.
+    final outcome = outcomeForErrorCode(
+      PurchasesErrorCode.operationAlreadyInProgressError,
+      owned: const {},
+    );
+
+    expect(outcome, isA<PurchaseFailed>());
+    final message = (outcome as PurchaseFailed).message;
+    expect(message, isNot(contains('Nothing was charged')));
+  });
+
   test('an unrecognised code still produces a usable message', () {
     final outcome = outcomeForErrorCode(
       PurchasesErrorCode.unknownError,

@@ -47,6 +47,16 @@ PurchaseOutcome outcomeForErrorCode(
       return const PurchaseFailed(
         'The store had a problem. Nothing was charged.',
       );
+    case PurchasesErrorCode.operationAlreadyInProgressError:
+      // A previous attempt for this pack is still open with the store — most
+      // often one that was dismissed rather than explicitly cancelled. Unlike
+      // the other failures here, "nothing was charged" would be a guess this
+      // app cannot back up, so this says only what is true: wait, it will
+      // resolve on its own.
+      return const PurchaseFailed(
+        'A previous attempt for this pack is still being processed by the '
+        'store. Wait a moment and try again.',
+      );
     default:
       return const PurchaseFailed(
         'The purchase did not go through. Nothing was charged.',

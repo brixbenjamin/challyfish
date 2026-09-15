@@ -51,7 +51,7 @@ class UnlockSheet extends StatelessWidget {
 
   // Delivering is busy too: the money is spent and the fetch is running, so
   // offering the button again would invite a second purchase.
-  bool get _busy => state is PurchaseInProgress || state is PurchaseDelivering;
+  bool get _busy => state.isBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +70,9 @@ class UnlockSheet extends StatelessWidget {
                 IconButton(
                   key: closeKey,
                   icon: const Icon(Icons.close),
-                  onPressed: onClose,
+                  // Same rule as the buy button: while the store is working,
+                  // there is nothing left to close.
+                  onPressed: _busy ? null : onClose,
                   tooltip: context.l10n.closeTooltip,
                 ),
               ],

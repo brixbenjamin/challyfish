@@ -20,6 +20,11 @@ class FakePurchaseGateway implements PurchaseGateway {
   /// Set to force the next purchase's outcome. Null means "succeed".
   PurchaseOutcome? nextOutcome;
 
+  /// Awaited before [purchase] resolves, when set. Lets a test hold a purchase
+  /// open to exercise what happens while the store is still working — the way
+  /// a real store call sits open behind its own native purchase sheet.
+  Future<void>? purchaseGate;
+
   /// Set to make restore fail.
   Object? restoreError;
 
@@ -66,6 +71,8 @@ class FakePurchaseGateway implements PurchaseGateway {
 
   @override
   Future<PurchaseOutcome> purchase(String productId) async {
+    final gate = purchaseGate;
+    if (gate != null) await gate;
     final forced = nextOutcome;
     if (forced != null) {
       nextOutcome = null;

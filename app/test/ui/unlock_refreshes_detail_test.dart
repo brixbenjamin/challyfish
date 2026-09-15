@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:feral/l10n/app_localizations.dart';
@@ -314,5 +316,51 @@ void main() {
 
     expect(find.text(l10n.startButton), findsOneWidget);
     expect(find.text(l10n.unlockButton), findsNothing);
+  });
+
+  testWidgets('tapping away mid-purchase does not dismiss the sheet', (
+    tester,
+  ) async {
+    // The reported bug: closing the sheet while the store call is still
+    // open abandons a purchase the store still considers in progress, so a
+    // retry runs into the store's own already-in-progress error.
+    final gate = Completer<void>();
+    store.purchaseGate = gate.future;
+
+    await pumpApp(tester);
+
+    await tester.tap(find.text('Thirty'));
+    await pumpUntil(
+      tester,
+      () => find.byType(CampaignDetailScreen).evaluate().isNotEmpty,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.unlockButton));
+    await pumpUntil(
+      tester,
+      () => find.byKey(UnlockSheet.buyKey).evaluate().isNotEmpty,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(UnlockSheet.buyKey));
+    await tester.pump();
+
+    // The empty space above the sheet — the modal barrier.
+    await tester.tapAt(const Offset(20, 50));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(UnlockSheet.buyKey),
+      findsOneWidget,
+      reason: 'a purchase in flight must not be walked away from',
+    );
+
+    gate.complete();
+    await pumpUntil(
+      tester,
+      () => find.byKey(UnlockSheet.buyKey).evaluate().isEmpty,
+    );
+    await tester.pumpAndSettle();
   });
 }

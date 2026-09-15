@@ -9,6 +9,14 @@ import '../domain/purchase.dart';
 /// What the unlock sheet is currently showing.
 sealed class PurchaseUiState {
   const PurchaseUiState();
+
+  /// The store is working: money may already be spent, or the copy is being
+  /// fetched. Walking away here — closing the sheet, backgrounding the flow —
+  /// abandons a purchase the store still considers open, which is how a later
+  /// attempt for the same product runs into the store's own
+  /// already-in-progress error. Anything that can dismiss the sheet must check
+  /// this first.
+  bool get isBusy => this is PurchaseInProgress || this is PurchaseDelivering;
 }
 
 class PurchaseIdle extends PurchaseUiState {
