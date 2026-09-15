@@ -80,7 +80,7 @@ select results_eq(
 
 select results_eq(
   $$ select array_agg(key order by key) from public.archetypes $$,
-  $$ select array['alchemist', 'creature', 'killer', 'psycho'] $$,
+  $$ select array['trickster', 'beast', 'killer', 'psycho'] $$,
   'the four archetype keys are exactly the fixed set'
 );
 

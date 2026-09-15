@@ -39,7 +39,7 @@ void main() {
             userId: 'user-1',
             takenAt: DateTime.utc(2026, 6, 1, 9),
             scores:
-                '{"psycho":0.25,"killer":0.75,"alchemist":0.5,"creature":0.5}',
+                '{"psycho":0.25,"killer":0.75,"trickster":0.5,"beast":0.5}',
             weakestArchetypeId: 'arch-psycho',
             recommendedCampaignId: 'campaign-1',
             updatedAt: DateTime.utc(2026, 6, 1, 9),

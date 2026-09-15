@@ -26,10 +26,10 @@ const killer = Archetype(
   color: '#000',
   sort: 2,
 );
-const alchemist = Archetype(
-  id: 'a-alchemist',
-  key: 'alchemist',
-  name: 'Alchemist',
+const trickster = Archetype(
+  id: 'a-trickster',
+  key: 'trickster',
+  name: 'Trickster',
   blurb: 'b',
   color: '#000',
   sort: 3,
@@ -54,7 +54,7 @@ const day3 = DaySpec(
   campaignId: 'c-1',
   dayIndex: 3,
   title: 'The Last Ask',
-  primaryArchetypeId: 'a-alchemist',
+  primaryArchetypeId: 'a-trickster',
 );
 
 void main() {
@@ -66,10 +66,10 @@ void main() {
 
   Widget buildScreen({List<DaySpec> days = const []}) => CampaignDetailScreen(
     campaign: campaign,
-    targets: const [killer, alchemist],
+    targets: const [killer, trickster],
     missAllowance: 1,
     days: days,
-    archetypesById: const {'a-killer': killer, 'a-alchemist': alchemist},
+    archetypesById: const {'a-killer': killer, 'a-trickster': trickster},
     isUnlocked: true,
     hasActiveRun: false,
     onStart: () {},
@@ -175,8 +175,8 @@ void main() {
         await tester.pumpWidget(
           wrap(
             buildLongScreen(
-              longDays(day6ArchetypeId: 'a-killer', day10ArchetypeId: 'a-alchemist'),
-              const {'a-killer': killer, 'a-alchemist': alchemist},
+              longDays(day6ArchetypeId: 'a-killer', day10ArchetypeId: 'a-trickster'),
+              const {'a-killer': killer, 'a-trickster': trickster},
             ),
           ),
         );

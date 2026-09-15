@@ -48,10 +48,10 @@ const killer = Archetype(
   color: '#000',
   sort: 2,
 );
-const alchemist = Archetype(
-  id: 'a-alchemist',
-  key: 'alchemist',
-  name: 'Alchemist',
+const trickster = Archetype(
+  id: 'a-trickster',
+  key: 'trickster',
+  name: 'Trickster',
   blurb: 'x',
   color: '#000',
   sort: 3,
@@ -127,13 +127,13 @@ void main() {
       {'p-core', 'p-edge'},
       archetypesByCampaign: {
         'c-1': [killer],
-        'c-2': [alchemist],
+        'c-2': [trickster],
       },
     );
     final coreView = result.firstWhere((v) => v.pack.id == 'p-core');
     final edgeView = result.firstWhere((v) => v.pack.id == 'p-edge');
     expect(coreView.archetypesByCampaign['c-1'], [killer]);
-    expect(edgeView.archetypesByCampaign['c-2'], [alchemist]);
+    expect(edgeView.archetypesByCampaign['c-2'], [trickster]);
   });
 
   test('a campaign with no known targets yet maps to nothing', () {

@@ -4,11 +4,11 @@ import 'package:test/test.dart';
 
 const psycho = 'psycho';
 const killer = 'killer';
-const alchemist = 'alchemist';
-const creature = 'creature';
+const trickster = 'trickster';
+const beast = 'beast';
 
 /// Fixed order, standing in for the archetypes' `sort` column.
-const order = [psycho, killer, alchemist, creature];
+const order = [psycho, killer, trickster, beast];
 
 DiagnosticQuestion pair(int n, String a, String b) => DiagnosticQuestion(
   id: 'q$n',
@@ -36,13 +36,13 @@ DiagnosticQuestion pair(int n, String a, String b) => DiagnosticQuestion(
 /// each.
 final instrument = <DiagnosticQuestion>[
   pair(1, psycho, killer),
-  pair(2, psycho, alchemist),
-  pair(3, psycho, creature),
-  pair(4, killer, alchemist),
-  pair(5, killer, creature),
-  pair(6, alchemist, creature),
+  pair(2, psycho, trickster),
+  pair(3, psycho, beast),
+  pair(4, killer, trickster),
+  pair(5, killer, beast),
+  pair(6, trickster, beast),
   pair(7, psycho, killer),
-  pair(8, alchemist, creature),
+  pair(8, trickster, beast),
 ];
 
 /// Pick the option on `archetype` for each listed question number.
@@ -74,7 +74,7 @@ void main() {
         appearances.update(o.archetypeId, (n) => n + 1, ifAbsent: () => 1);
       }
     }
-    expect(appearances, {psycho: 4, killer: 4, alchemist: 4, creature: 4});
+    expect(appearances, {psycho: 4, killer: 4, trickster: 4, beast: 4});
   });
 
   test('a score is wins over appearances', () {
@@ -85,15 +85,15 @@ void main() {
       3: psycho,
       4: killer,
       5: killer,
-      6: alchemist,
+      6: trickster,
       7: killer,
-      8: alchemist,
+      8: trickster,
     });
 
     expect(outcome.scores[killer], closeTo(1.0, 1e-9));
     expect(outcome.scores[psycho], closeTo(0.5, 1e-9)); // won q2, q3 of 4
-    expect(outcome.scores[alchemist], closeTo(0.5, 1e-9)); // won q6, q8 of 4
-    expect(outcome.scores[creature], closeTo(0.0, 1e-9)); // won nothing
+    expect(outcome.scores[trickster], closeTo(0.5, 1e-9)); // won q6, q8 of 4
+    expect(outcome.scores[beast], closeTo(0.0, 1e-9)); // won nothing
   });
 
   test('the weakest archetype is the one never chosen', () {
@@ -103,11 +103,11 @@ void main() {
       3: psycho,
       4: killer,
       5: killer,
-      6: alchemist,
+      6: trickster,
       7: killer,
-      8: alchemist,
+      8: trickster,
     });
-    expect(outcome.weakestArchetypeId, creature);
+    expect(outcome.weakestArchetypeId, beast);
   });
 
   test('every archetype gets a score, including one never chosen', () {
@@ -117,23 +117,23 @@ void main() {
       3: psycho,
       4: killer,
       5: killer,
-      6: alchemist,
+      6: trickster,
       7: killer,
-      8: alchemist,
+      8: trickster,
     });
-    expect(outcome.scores.keys.toSet(), {psycho, killer, alchemist, creature});
+    expect(outcome.scores.keys.toSet(), {psycho, killer, trickster, beast});
   });
 
   test('scores sum to two, since eight questions award one win each', () {
     final outcome = scoreOf({
       1: psycho,
-      2: alchemist,
-      3: creature,
+      2: trickster,
+      3: beast,
       4: killer,
-      5: creature,
-      6: alchemist,
+      5: beast,
+      6: trickster,
       7: killer,
-      8: creature,
+      8: beast,
     });
     final total = outcome.scores.values.reduce((a, b) => a + b);
     expect(
@@ -145,26 +145,26 @@ void main() {
 
   group('tie-break', () {
     test('head-to-head decides a two-way tie', () {
-      // Psycho and creature both end on 0.25: psycho won only q3, creature only
-      // q8. They met in q3, and psycho won it, so creature is the weaker.
+      // Psycho and beast both end on 0.25: psycho won only q3, beast only
+      // q8. They met in q3, and psycho won it, so beast is the weaker.
       final outcome = scoreOf({
         1: killer,
-        2: alchemist,
+        2: trickster,
         3: psycho,
-        4: alchemist,
+        4: trickster,
         5: killer,
-        6: alchemist,
+        6: trickster,
         7: killer,
-        8: creature,
+        8: beast,
       });
 
       expect(
         outcome.scores[psycho],
-        closeTo(outcome.scores[creature]!, 1e-9),
+        closeTo(outcome.scores[beast]!, 1e-9),
         reason: 'the tie this case exists to test',
       );
       expect(outcome.scores[psycho], closeTo(0.25, 1e-9));
-      expect(outcome.weakestArchetypeId, creature);
+      expect(outcome.weakestArchetypeId, beast);
     });
 
     test('the fixed order decides when head-to-head cannot', () {
@@ -173,13 +173,13 @@ void main() {
       // can separate them.
       final outcome = scoreOf({
         1: psycho,
-        2: alchemist,
+        2: trickster,
         3: psycho,
         4: killer,
-        5: creature,
-        6: alchemist,
+        5: beast,
+        6: trickster,
         7: killer,
-        8: creature,
+        8: beast,
       });
 
       expect(
@@ -197,13 +197,13 @@ void main() {
     test('the same answers always give the same weakest archetype', () {
       final choices = {
         1: psycho,
-        2: alchemist,
+        2: trickster,
         3: psycho,
         4: killer,
-        5: creature,
-        6: alchemist,
+        5: beast,
+        6: trickster,
         7: killer,
-        8: creature,
+        8: beast,
       };
       final first = scoreOf(choices).weakestArchetypeId;
       for (var i = 0; i < 20; i++) {
@@ -221,12 +221,12 @@ void main() {
       final outcome = scoreOf({
         1: killer,
         2: psycho,
-        3: creature,
-        4: alchemist,
+        3: beast,
+        4: trickster,
         5: killer,
-        6: alchemist,
+        6: trickster,
         7: psycho,
-        8: creature,
+        8: beast,
       });
       expect(outcome.scores.values, everyElement(closeTo(0.5, 1e-9)));
       expect(outcome.weakestArchetypeId, psycho);
@@ -241,7 +241,7 @@ void main() {
         archetypeOrder: order,
       );
       expect(outcome.scores[killer], closeTo(0.25, 1e-9));
-      expect(outcome.scores[creature], closeTo(0.0, 1e-9));
+      expect(outcome.scores[beast], closeTo(0.0, 1e-9));
     });
 
     test('a pick for an unknown question is ignored', () {

@@ -24,8 +24,8 @@
     },
     {
       "id": "cccccccc-0000-0000-0000-000000000003",
-      "key": "alchemist",
-      "name": "Alchemist",
+      "key": "trickster",
+      "name": "Trickster",
       "blurb": "The intuitive action force. Immediate action on unearned confidence, turning error and chaos into progress.",
       "color": "#C98C1E",
       "sort": 3,
@@ -35,8 +35,8 @@
     },
     {
       "id": "cccccccc-0000-0000-0000-000000000004",
-      "key": "creature",
-      "name": "Creature",
+      "key": "beast",
+      "name": "Beast",
       "blurb": "Primal desire. Raw drive without sterile guilt, social policing, or self-sabotaging shame.",
       "color": "#4A7C59",
       "sort": 4,

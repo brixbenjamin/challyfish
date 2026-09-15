@@ -292,7 +292,7 @@ void main() {
           'id': 'o-1',
           'question_id': 'q-1',
           'label': 'Act now',
-          'archetype_id': 'arch-alchemist',
+          'archetype_id': 'arch-trickster',
           'sort': 0,
           'updated_at': '2026-06-01T09:00:00Z',
         },
@@ -312,7 +312,7 @@ void main() {
     final questions = await repo.diagnosticQuestions();
     expect(questions, hasLength(1));
     expect(questions.single.options.map((o) => o.archetypeId), [
-      'arch-alchemist',
+      'arch-trickster',
       'arch-killer',
     ]);
   });

@@ -28,18 +28,18 @@ const _killer = Archetype(
   color: '#000',
   sort: 2,
 );
-const _alchemist = Archetype(
-  id: 'a-alchemist',
-  key: 'alchemist',
-  name: 'Alchemist',
+const _trickster = Archetype(
+  id: 'a-trickster',
+  key: 'trickster',
+  name: 'Trickster',
   blurb: 'b',
   color: '#000',
   sort: 3,
 );
-const _creature = Archetype(
-  id: 'a-creature',
-  key: 'creature',
-  name: 'Creature',
+const _beast = Archetype(
+  id: 'a-beast',
+  key: 'beast',
+  name: 'Beast',
   blurb: 'b',
   color: '#000',
   sort: 4,
@@ -47,8 +47,8 @@ const _creature = Archetype(
 const _archetypesById = {
   'a-psycho': _psycho,
   'a-killer': _killer,
-  'a-alchemist': _alchemist,
-  'a-creature': _creature,
+  'a-trickster': _trickster,
+  'a-beast': _beast,
 };
 
 const _campaign = Campaign(
@@ -77,7 +77,7 @@ const _days = [
     campaignId: 'c-1',
     dayIndex: 2,
     title: 'What You Avoid',
-    primaryArchetypeId: 'a-creature',
+    primaryArchetypeId: 'a-beast',
   ),
   DaySpec(
     id: 'd-3',
@@ -91,7 +91,7 @@ const _days = [
     campaignId: 'c-1',
     dayIndex: 4,
     title: 'The Long Ask',
-    primaryArchetypeId: 'a-alchemist',
+    primaryArchetypeId: 'a-trickster',
   ),
   DaySpec(
     id: 'd-5',
@@ -119,14 +119,14 @@ const _days = [
     campaignId: 'c-1',
     dayIndex: 8,
     title: 'What the Week Actually Cost',
-    primaryArchetypeId: 'a-creature',
+    primaryArchetypeId: 'a-beast',
   ),
   DaySpec(
     id: 'd-9',
     campaignId: 'c-1',
     dayIndex: 9,
     title: 'One More Than You Wanted',
-    primaryArchetypeId: 'a-alchemist',
+    primaryArchetypeId: 'a-trickster',
   ),
   DaySpec(
     id: 'd-10',
@@ -146,7 +146,7 @@ void main() {
       supportedLocales: AppLocalizations.supportedLocales,
       home: CampaignDetailScreen(
         campaign: _campaign,
-        targets: const [_psycho, _killer, _alchemist, _creature],
+        targets: const [_psycho, _killer, _trickster, _beast],
         missAllowance: 3,
         days: _days,
         archetypesById: _archetypesById,

@@ -41,7 +41,7 @@ values
    30, 4, 3, 3);
 
 -- Coverage, per ADR-0018: the 7-day is Killer, so these two carry Psycho,
--- Alchemist and Creature between them, completing the set of four.
+-- Trickster and Beast between them, completing the set of four.
 insert into public.campaign_archetypes (campaign_id, archetype_id, weight) values
   ('bbbbbbbb-0000-0000-0000-000000000002', 'cccccccc-0000-0000-0000-000000000003', 1),
   ('bbbbbbbb-0000-0000-0000-000000000002', 'cccccccc-0000-0000-0000-000000000001', 1),

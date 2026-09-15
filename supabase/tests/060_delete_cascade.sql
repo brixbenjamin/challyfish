@@ -48,7 +48,7 @@ select
   gen_random_uuid(),
   r.user_id,
   now(),
-  '{"psycho":0.25,"killer":0.75,"alchemist":0.5,"creature":0.5}'::jsonb,
+  '{"psycho":0.25,"killer":0.75,"trickster":0.5,"beast":0.5}'::jsonb,
   (select id from public.archetypes order by sort limit 1),
   r.campaign_id
 from public.campaign_runs r;

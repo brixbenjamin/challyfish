@@ -63,18 +63,18 @@ const _killer = Archetype(
   color: '#000',
   sort: 2,
 );
-const _alchemist = Archetype(
-  id: 'a-alchemist',
-  key: 'alchemist',
-  name: 'Alchemist',
+const _trickster = Archetype(
+  id: 'a-trickster',
+  key: 'trickster',
+  name: 'Trickster',
   blurb: 'b',
   color: '#000',
   sort: 3,
 );
-const _creature = Archetype(
-  id: 'a-creature',
-  key: 'creature',
-  name: 'Creature',
+const _beast = Archetype(
+  id: 'a-beast',
+  key: 'beast',
+  name: 'Beast',
   blurb: 'b',
   color: '#000',
   sort: 4,
@@ -158,8 +158,8 @@ void main() {
             isUnlocked: false,
             priceLabel: r'$6.99',
             archetypesByCampaign: {
-              'c-2': [_alchemist, _creature, _killer],
-              'c-3': [_creature],
+              'c-2': [_trickster, _beast, _killer],
+              'c-3': [_beast],
             },
           ),
           // Locked, price still resolving (or unreachable) — falls back to
@@ -170,7 +170,7 @@ void main() {
             isUnlocked: false,
             priceLabel: null,
             archetypesByCampaign: {
-              'c-5': [_alchemist],
+              'c-5': [_trickster],
             },
           ),
           // Owned: paid, already unlocked. No price, no badge — just "Owned".

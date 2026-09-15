@@ -31,16 +31,16 @@ const archetypes = [
   ),
   Archetype(
     id: 'a-3',
-    key: 'alchemist',
-    name: 'Alchemist',
+    key: 'trickster',
+    name: 'Trickster',
     blurb: 'b',
     color: '#C98C1E',
     sort: 3,
   ),
   Archetype(
     id: 'a-4',
-    key: 'creature',
-    name: 'Creature',
+    key: 'beast',
+    name: 'Beast',
     blurb: 'b',
     color: '#4A7C59',
     sort: 4,
@@ -219,17 +219,17 @@ void main() {
       final centre = tester.getCenter(find.byType(ArchetypeRadar));
       Offset at(String name) => tester.getCenter(find.text(name));
 
-      // Psycho top, Killer right, Creature bottom, Alchemist left. The two
+      // Psycho top, Killer right, Beast bottom, Trickster left. The two
       // red-side hues are opposite each other, never side by side.
       expect(at('Psycho').dy, lessThan(centre.dy));
-      expect(at('Creature').dy, greaterThan(centre.dy));
+      expect(at('Beast').dy, greaterThan(centre.dy));
       expect(at('Killer').dx, greaterThan(centre.dx));
-      expect(at('Alchemist').dx, lessThan(centre.dx));
+      expect(at('Trickster').dx, lessThan(centre.dx));
 
       expect(
-        at('Alchemist').dx,
-        lessThan(at('Creature').dx),
-        reason: 'sort order would have put Alchemist third, at the bottom',
+        at('Trickster').dx,
+        lessThan(at('Beast').dx),
+        reason: 'sort order would have put Trickster third, at the bottom',
       );
     },
   );
@@ -257,11 +257,11 @@ void main() {
       return (key! as OrdinalSortKey).order;
     }
 
-    // Alchemist sits at 9 o'clock, after Creature at 6, but it is sort 3 and
+    // Trickster sits at 9 o'clock, after Beast at 6, but it is sort 3 and
     // a screen reader hears it third (brief section 4.2).
     expect(orderOf('Psycho'), lessThan(orderOf('Killer')));
-    expect(orderOf('Killer'), lessThan(orderOf('Alchemist')));
-    expect(orderOf('Alchemist'), lessThan(orderOf('Creature')));
+    expect(orderOf('Killer'), lessThan(orderOf('Trickster')));
+    expect(orderOf('Trickster'), lessThan(orderOf('Beast')));
     handle.dispose();
   });
 
@@ -433,7 +433,7 @@ void main() {
       lessThan(centre.dy - scaled.width / 2),
     );
     expect(
-      tester.getTopLeft(find.text('Creature')).dy,
+      tester.getTopLeft(find.text('Beast')).dy,
       greaterThan(centre.dy + scaled.width / 2),
     );
   });
