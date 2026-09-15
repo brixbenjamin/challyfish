@@ -414,9 +414,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         run: run,
         campaign: campaign,
         logs: logs,
-        todayActions:
-            days.where((d) => d.dayIndex == day).firstOrNull?.actions ??
-            const [],
+        today: days.where((d) => d.dayIndex == day).firstOrNull,
         // Every action of the run, because the run total spans days whose
         // actions are not on screen.
         actionsById: {for (final a in actions) a.id: a},

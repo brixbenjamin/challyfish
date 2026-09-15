@@ -1,5 +1,6 @@
 import 'package:feral/src/app/run_state.dart';
 import 'package:feral/src/domain/campaign.dart';
+import 'package:feral/src/domain/day.dart';
 import 'package:feral/src/domain/day_log.dart';
 import 'package:feral/src/domain/grade.dart';
 import 'package:feral/src/domain/outcome.dart';
@@ -50,6 +51,18 @@ void main() {
 
   final mandatory = action('action-3');
 
+  /// Day 3 of the run, as the repository hands it over: already ordered,
+  /// carrying its own title and framing copy.
+  DaySpec day3(List<ActionSpec> actions, {String? bodyMd = 'Say it once.'}) =>
+      DaySpec(
+        id: 'day-3',
+        campaignId: 'campaign-1',
+        dayIndex: 3,
+        title: 'The day you stop hedging',
+        bodyMd: bodyMd,
+        actions: actions,
+      );
+
   DayLog log(int day, Outcome? outcome, {Set<String> ticks = const {}}) =>
       DayLog(
         id: 'log-$day',
@@ -64,14 +77,17 @@ void main() {
     run: run,
     campaign: campaign,
     logs: logs,
-    todayActions: [mandatory],
+    today: day3([mandatory]),
     zone: berlin,
     now: now,
   );
 
-  /// Day 3 of the run, with whatever actions and ticks the case needs.
+  /// Day 3 of the run, with whatever day, actions and ticks the case needs.
+  /// `dayCached: false` is the partial-sync state: the run is there, the day
+  /// is not.
   RunState stateWith({
-    required List<ActionSpec> todayActions,
+    List<ActionSpec> actions = const [],
+    bool dayCached = true,
     Set<String> ticks = const {},
     Map<String, ActionSpec>? actionsById,
     List<DayLog> otherLogs = const [],
@@ -82,8 +98,8 @@ void main() {
       ...otherLogs,
       log(3, null, ticks: ticks),
     ],
-    todayActions: todayActions,
-    actionsById: actionsById ?? {for (final a in todayActions) a.id: a},
+    today: dayCached ? day3(actions) : null,
+    actionsById: actionsById ?? {for (final a in actions) a.id: a},
     zone: berlin,
     now: tz.TZDateTime(berlin, 2026, 6, 3, 10).toUtc(),
   );
@@ -136,36 +152,61 @@ void main() {
     expect(stateOn(now, [log(3, null)]).isReportedToday, isFalse);
   });
 
-  group('the day as a list of actions', () {
-    test('puts the mandatory action first, whatever the authored sort', () {
+  group('the day', () {
+    test('the mandatory action and the optionals are read off the day', () {
       final state = stateWith(
-        todayActions: [
-          action('o2', isOptional: true, sort: 2),
-          action('m', sort: 5),
+        actions: [
+          action('m'),
           action('o1', isOptional: true, sort: 1),
+          action('o2', isOptional: true, sort: 2),
         ],
       );
 
-      expect(state.todayActions.map((a) => a.id), ['m', 'o1', 'o2']);
       expect(state.mandatoryToday?.id, 'm');
       expect(state.optionalsToday.map((a) => a.id), ['o1', 'o2']);
     });
 
-    test('mandatoryToday is null when content is not cached', () {
-      final state = stateWith(todayActions: const []);
+    test('the mandatory action is found by predicate, not by position', () {
+      // The defensive re-sort is gone: content_repository.dart already orders
+      // by is_optional then sort in SQL, and DaySpec.mandatory reads the flag
+      // rather than the index. A day handed over in the wrong order still
+      // cannot bury the one action the grade depends on.
+      final state = stateWith(
+        actions: [action('o1', isOptional: true, sort: 1), action('m', sort: 5)],
+      );
+
+      expect(state.mandatoryToday?.id, 'm');
+      expect(state.optionalsToday.map((a) => a.id), ['o1']);
+    });
+
+    test('an uncached day yields no mandatory action and no optionals', () {
+      final state = stateWith(dayCached: false);
+
+      expect(state.today, isNull);
       expect(state.mandatoryToday, isNull);
+      expect(state.optionalsToday, isEmpty);
       expect(
         state.derivedOutcomeToday,
         isNull,
         reason: 'the derivation has nothing to key on',
       );
+      expect(state.todayPoints, 0);
+    });
+
+    test('a cached day with no actions yet is the same recoverable state', () {
+      // A partial sync can land the day row ahead of its actions.
+      final state = stateWith(actions: const []);
+
+      expect(state.today, isNotNull);
+      expect(state.mandatoryToday, isNull);
+      expect(state.derivedOutcomeToday, isNull);
     });
   });
 
   group('derivedOutcomeToday', () {
     test('is partial when only an optional was ticked', () {
       final state = stateWith(
-        todayActions: [action('m'), action('o1', isOptional: true, sort: 1)],
+        actions: [action('m'), action('o1', isOptional: true, sort: 1)],
         ticks: const {'o1'},
       );
       expect(state.derivedOutcomeToday, Outcome.partial);
@@ -173,14 +214,14 @@ void main() {
 
     test('is done when the mandatory action was ticked', () {
       final state = stateWith(
-        todayActions: [action('m'), action('o1', isOptional: true, sort: 1)],
+        actions: [action('m'), action('o1', isOptional: true, sort: 1)],
         ticks: const {'m'},
       );
       expect(state.derivedOutcomeToday, Outcome.done);
     });
 
     test('is skipped when nothing was ticked', () {
-      final state = stateWith(todayActions: [action('m')]);
+      final state = stateWith(actions: [action('m')]);
       expect(state.derivedOutcomeToday, Outcome.skipped);
     });
   });
@@ -188,7 +229,7 @@ void main() {
   group('points', () {
     test('day points are the plain sum of ticked effort', () {
       final state = stateWith(
-        todayActions: [
+        actions: [
           action('m', effort: 2),
           action('o1', isOptional: true, sort: 1, effort: 3),
         ],
@@ -199,7 +240,7 @@ void main() {
 
     test('an unticked action earns nothing', () {
       final state = stateWith(
-        todayActions: [
+        actions: [
           action('m', effort: 2),
           action('o1', isOptional: true, sort: 1, effort: 3),
         ],
@@ -211,7 +252,7 @@ void main() {
     test('run points span every day logged, not only today', () {
       final earlier = action('action-1', dayIndex: 1, effort: 4);
       final state = stateWith(
-        todayActions: [action('m', effort: 2)],
+        actions: [action('m', effort: 2)],
         ticks: const {'m'},
         actionsById: {'m': action('m', effort: 2), 'action-1': earlier},
         otherLogs: [
@@ -225,7 +266,7 @@ void main() {
 
     test('a tick whose action is not cached is skipped, not fatal', () {
       final state = stateWith(
-        todayActions: [action('m', effort: 2)],
+        actions: [action('m', effort: 2)],
         ticks: const {'m', 'vanished'},
       );
       expect(state.todayPoints, 2);

@@ -1,6 +1,7 @@
 import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/campaign.dart';
+import '../domain/day.dart';
 import '../domain/day_log.dart';
 import '../domain/grade.dart';
 import '../domain/outcome.dart';
@@ -21,7 +22,7 @@ class RunState {
     required this.missAllowance,
     required this.grade,
     required this.logs,
-    this.todayActions = const [],
+    this.today,
     this.actionsById = const {},
     this.engine = const RunEngine(),
   });
@@ -32,7 +33,10 @@ class RunState {
     required List<DayLog> logs,
     required tz.Location zone,
     required DateTime now,
-    List<ActionSpec> todayActions = const [],
+
+    /// Today's day, whole. The screen reads its title and body as well as its
+    /// actions, so it is not unwrapped on the way in.
+    DaySpec? today,
 
     /// Every action of the run, not only today's: [runPoints] sums across
     /// every day the user has logged.
@@ -46,15 +50,6 @@ class RunState {
       lengthDays: campaign.lengthDays,
     );
 
-    // The mandatory action leads regardless of the authored sort, so a content
-    // mistake cannot bury the one action the grade depends on.
-    final ordered = [...todayActions]
-      ..sort(
-        (a, b) => a.isOptional == b.isOptional
-            ? a.sort.compareTo(b.sort)
-            : (a.isOptional ? 1 : -1),
-      );
-
     return RunState(
       run: run,
       campaign: campaign,
@@ -63,7 +58,7 @@ class RunState {
       missAllowance: engine.missAllowance(campaign.lengthDays),
       grade: engine.grade(logs, lengthDays: campaign.lengthDays),
       logs: logs,
-      todayActions: ordered,
+      today: today,
       actionsById: actionsById,
       engine: engine,
     );
@@ -82,10 +77,18 @@ class RunState {
   final Grade grade;
   final List<DayLog> logs;
 
-  /// Today's actions, mandatory first then optionals by `sort`. Empty when the
-  /// content is not cached — the UI shows the existing recoverable
-  /// "content unavailable" state and the run is not lost.
-  final List<ActionSpec> todayActions;
+  /// Today's day: its title, its framing copy and its actions, mandatory first
+  /// then optionals by `sort`. Null when the content is not cached — the UI
+  /// shows the existing recoverable "content unavailable" state and the run is
+  /// not lost.
+  ///
+  /// The mandatory-first ordering is the repository's, done in SQL
+  /// (`content_repository.dart` `_hydrateDays`). The defensive re-sort that
+  /// used to live here only ever normalised what was already normalised, and
+  /// [DaySpec.mandatory] finds the action by its flag rather than by its
+  /// index — so a content mistake still cannot bury the action the grade
+  /// depends on.
+  final DaySpec? today;
 
   /// Every action of this campaign, by id. Used for the run total, which spans
   /// days whose actions are not on screen.
@@ -103,17 +106,9 @@ class RunState {
   }
 
   /// The one action the grade depends on. Null when content is not cached.
-  ActionSpec? get mandatoryToday {
-    for (final action in todayActions) {
-      if (!action.isOptional) return action;
-    }
-    return null;
-  }
+  ActionSpec? get mandatoryToday => today?.mandatory;
 
-  List<ActionSpec> get optionalsToday => [
-    for (final action in todayActions)
-      if (action.isOptional) action,
-  ];
+  List<ActionSpec> get optionalsToday => today?.optionals ?? const [];
 
   Set<String> get completedActionIdsToday =>
       todayLog?.completedActionIds ?? const {};
@@ -133,10 +128,13 @@ class RunState {
   }
 
   /// Points earned today. A reading, never a score against a target.
-  int get todayPoints => engine.pointsFor(
-    completedActionIds: completedActionIdsToday,
-    actionsById: {for (final a in todayActions) a.id: a},
-  );
+  int get todayPoints {
+    final actions = today?.actions ?? const <ActionSpec>[];
+    return engine.pointsFor(
+      completedActionIds: completedActionIdsToday,
+      actionsById: {for (final a in actions) a.id: a},
+    );
+  }
 
   /// Points earned so far in this run, across every day logged.
   int get runPoints {

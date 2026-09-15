@@ -3,6 +3,7 @@ import 'package:feral/src/app/balance_state.dart';
 import 'package:feral/src/app/run_state.dart';
 import 'package:feral/src/domain/archetype.dart';
 import 'package:feral/src/domain/campaign.dart';
+import 'package:feral/src/domain/day.dart';
 import 'package:feral/src/domain/day_log.dart';
 import 'package:feral/src/domain/outcome.dart';
 import 'package:feral/src/domain/run.dart';
@@ -65,21 +66,39 @@ void main() {
     sort: 1,
   );
 
-  RunState state({
-    List<DayLog> logs = const [],
-    List<ActionSpec> todayActions = const [action],
-  }) => RunState.derive(
-    run: run,
-    campaign: campaign,
-    logs: logs,
-    todayActions: todayActions,
-    actionsById: {for (final a in todayActions) a.id: a},
-    zone: berlin,
-    now: tz.TZDateTime(berlin, 2026, 6, 3, 10).toUtc(),
+  const day = DaySpec(
+    id: 'day-3',
+    campaignId: 'campaign-1',
+    dayIndex: 3,
+    title: 'The day you stop hedging',
+    bodyMd: 'Say the thing once, in the fewest words that carry it, and let it stand.',
+    actions: [action],
   );
 
+  const dayWithOptional = DaySpec(
+    id: 'day-3',
+    campaignId: 'campaign-1',
+    dayIndex: 3,
+    title: 'The day you stop hedging',
+    bodyMd: 'Say the thing once, in the fewest words that carry it, and let it stand.',
+    actions: [action, optional],
+  );
+
+  RunState state({List<DayLog> logs = const [], DaySpec? today = day}) =>
+      RunState.derive(
+        run: run,
+        campaign: campaign,
+        logs: logs,
+        today: today,
+        actionsById: {
+          for (final a in today?.actions ?? const <ActionSpec>[]) a.id: a,
+        },
+        zone: berlin,
+        now: tz.TZDateTime(berlin, 2026, 6, 3, 10).toUtc(),
+      );
+
   /// Day 3's log, carrying whatever ticks and outcome a case needs.
-  DayLog today({Outcome? outcome, Set<String> ticks = const {}}) => DayLog(
+  DayLog dayLog({Outcome? outcome, Set<String> ticks = const {}}) => DayLog(
     id: 'l3',
     runId: 'run-1',
     dayIndex: 3,
@@ -133,7 +152,7 @@ void main() {
   Future<void> pump(WidgetTester tester, RunState value) =>
       pumpWith(tester, value);
 
-  RunState withOptionals() => state(todayActions: const [action, optional]);
+  RunState withOptionals() => state(today: dayWithOptional);
 
   testWidgets('shows the day, the action, and the miss count', (tester) async {
     await pump(
@@ -166,7 +185,7 @@ void main() {
   testWidgets('missing content shows a recoverable state, not a crash', (
     tester,
   ) async {
-    await pump(tester, state(todayActions: const []));
+    await pump(tester, state(today: null));
     expect(find.textContaining('Content unavailable'), findsOneWidget);
   });
 
@@ -197,7 +216,7 @@ void main() {
         ),
         campaign: long,
         logs: const [],
-        todayActions: const [action],
+        today: day,
         zone: berlin,
         now: tz.TZDateTime(berlin, 2026, 6, 3, 10).toUtc(),
       ),
@@ -313,9 +332,9 @@ void main() {
         tester,
         state(
           logs: [
-            today(ticks: const {'optional-3'}),
+            dayLog(ticks: const {'optional-3'}),
           ],
-          todayActions: const [action, optional],
+          today: dayWithOptional,
         ),
         onToggleAction: (_, value) => completed = value,
       );
@@ -366,9 +385,9 @@ void main() {
         tester,
         state(
           logs: [
-            today(ticks: const {'action-3', 'optional-3'}),
+            dayLog(ticks: const {'action-3', 'optional-3'}),
           ],
-          todayActions: const [action, optional],
+          today: dayWithOptional,
         ),
       );
 
@@ -392,9 +411,9 @@ void main() {
         tester,
         state(
           logs: [
-            today(ticks: const {'action-3'}),
+            dayLog(ticks: const {'action-3'}),
           ],
-          todayActions: const [action, optional],
+          today: dayWithOptional,
         ),
       );
 
@@ -467,7 +486,7 @@ void main() {
               committedAt: tz.TZDateTime(berlin, 2026, 6, 3, 8).toUtc(),
             ),
           ],
-          todayActions: const [action, optional],
+          today: dayWithOptional,
         ),
       );
 
@@ -482,9 +501,9 @@ void main() {
         tester,
         state(
           logs: [
-            today(ticks: const {'optional-3'}),
+            dayLog(ticks: const {'optional-3'}),
           ],
-          todayActions: const [action, optional],
+          today: dayWithOptional,
         ),
       );
 
@@ -559,9 +578,9 @@ void main() {
         tester,
         state(
           logs: [
-            today(outcome: Outcome.done, ticks: const {'action-3'}),
+            dayLog(outcome: Outcome.done, ticks: const {'action-3'}),
           ],
-          todayActions: const [action, optional],
+          today: dayWithOptional,
         ),
         onToggleAction: (_, _) => toggled = true,
       );
@@ -611,13 +630,22 @@ void main() {
         sort: 1,
       );
 
+      const crowded = DaySpec(
+        id: 'day-3',
+        campaignId: 'campaign-1',
+        dayIndex: 3,
+        title: 'The day you stop hedging',
+        bodyMd: 'Say the thing once, in the fewest words that carry it, and let it stand.',
+        actions: [action, long],
+      );
+
       await pumpWith(
         tester,
         state(
           logs: [
-            today(ticks: const {'optional-3'}),
+            dayLog(ticks: const {'optional-3'}),
           ],
-          todayActions: const [action, long],
+          today: crowded,
         ),
         textScale: 2.0,
       );
