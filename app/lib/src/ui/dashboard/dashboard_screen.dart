@@ -9,15 +9,23 @@ import '../theme/theme_context.dart';
 import 'archetype_radar.dart';
 import 'report_sheet.dart';
 
-/// Answers one question: what is today's action, and have I dealt with it.
+/// One screen in two phases. Before the commit it answers "what is today, and
+/// am I willing to take it on"; after the commit it answers "what is today's
+/// action, and have I dealt with it".
 ///
-/// A day now holds several actions, which makes that question harder to keep
+/// The commit is what reveals the actions, and thereby gates ticking behind it.
+/// That is a decision taken on information rather than a bare acknowledgement,
+/// which is the whole point of putting the day's authored framing in front of
+/// it (ADR-0034).
+///
+/// A day holds several actions, which makes the second question harder to keep
 /// answered rather than easier. The mandatory action reads as *the* action and
 /// the optionals are an appendix; equal-weight rows would be the failure mode.
 ///
 /// Holds no rules. Every number on this screen comes from RunState or
-/// BalanceState — a widget that computes a grade, an outcome or a points total
-/// is a defect even when the number happens to be right.
+/// BalanceState, and the phase switch reads one flag — a widget that computes a
+/// grade, an outcome or a total is a defect even when the number happens to be
+/// right.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({
     required this.state,
@@ -66,7 +74,6 @@ class DashboardScreen extends StatelessWidget {
     final l10n = context.l10n;
     final tokens = context.tokens;
     final theme = Theme.of(context);
-    final mandatory = state.mandatoryToday;
 
     return Scaffold(
       appBar: AppBar(
@@ -93,6 +100,8 @@ class DashboardScreen extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.all(tokens.sp24),
               children: [
+                // The run's own line, and it reads the same in both phases:
+                // which day this is, what it has cost, what it has earned.
                 Text(
                   l10n.dayOfLength(state.currentDay, state.lengthDays),
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -107,78 +116,20 @@ class DashboardScreen extends StatelessWidget {
                     color: tokens.mutedInk,
                   ),
                 ),
+                SizedBox(height: tokens.sp8),
+                // With the day line, where the brief always placed it, so it
+                // survives both phases instead of being dropped from the
+                // uncommitted one by accident.
+                _PointsReading(
+                  label: l10n.runPointsTotal,
+                  points: state.runPoints,
+                ),
                 SizedBox(height: tokens.sp32),
 
-                // Today's action comes first. Anything competing with it for
-                // the top of the screen is wrong.
-                if (mandatory == null)
-                  Text(l10n.contentUnavailable)
-                else ...[
-                  _MandatoryAction(
-                    action: mandatory,
-                    isCompleted: state.isCompletedToday(mandatory.id),
-                    // Ticks become a read-only record once the day is
-                    // reported. Changing the record after the fact is not a
-                    // flow this product offers.
-                    onToggle: state.isReportedToday
-                        ? null
-                        : (value) => onToggleAction(mandatory.id, value),
-                  ),
-
-                  // A clear spacing step, not a divider: a rule here would
-                  // read as two equal sections rather than a thing and its
-                  // appendix.
-                  if (state.optionalsToday.isNotEmpty) ...[
-                    SizedBox(height: tokens.sp32),
-                    for (final optional in state.optionalsToday)
-                      _OptionalAction(
-                        action: optional,
-                        isCompleted: state.isCompletedToday(optional.id),
-                        onToggle: state.isReportedToday
-                            ? null
-                            : (value) => onToggleAction(optional.id, value),
-                      ),
-                  ],
-
-                  SizedBox(height: tokens.sp24),
-                  _PointsReading(
-                    label: l10n.dayPointsTotal,
-                    points: state.todayPoints,
-                  ),
-                  SizedBox(height: tokens.sp8),
-                  _PointsReading(
-                    label: l10n.runPointsTotal,
-                    points: state.runPoints,
-                  ),
-
-                  SizedBox(height: tokens.sp24),
-                  if (state.isReportedToday)
-                    Text(
-                      l10n.reportedOutcome(
-                        outcomeLabel(l10n, state.todayLog!.outcome!),
-                      ),
-                    )
-                  else ...[
-                    // In the morning Commit is the one filled control and
-                    // Report is present but clearly not yet the point. Once
-                    // the day is committed, Report becomes the filled one.
-                    if (!state.isCommittedToday) ...[
-                      FilledButton(
-                        onPressed: onCommit,
-                        child: Text(l10n.commitButton),
-                      ),
-                      SizedBox(height: tokens.sp8),
-                      OutlinedButton(
-                        onPressed: () => _report(context),
-                        child: Text(l10n.reportButton),
-                      ),
-                    ] else
-                      FilledButton(
-                        onPressed: () => _report(context),
-                        child: Text(l10n.reportButton),
-                      ),
-                  ],
-                ],
+                if (state.isCommittedToday)
+                  ..._committed(context)
+                else
+                  ..._uncommitted(context),
 
                 SizedBox(height: tokens.sp48),
                 ArchetypeRadar(state: balance),
@@ -196,6 +147,112 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Before the commit, the screen is the day: its title, its framing copy,
+  /// and the one control that accepts them.
+  ///
+  /// No action, no tick, no day total and no Report. A pre-commit Report could
+  /// only ever derive `skipped` from zero ticks, which makes it a "give up on
+  /// today" control sitting beside copy whose consequences the user has not
+  /// been shown. Nothing real is lost: Commit costs nothing and immediately
+  /// reveals the ticks.
+  List<Widget> _uncommitted(BuildContext context) {
+    final l10n = context.l10n;
+    final tokens = context.tokens;
+    final theme = Theme.of(context);
+    final today = state.today;
+
+    return [
+      if (today == null)
+        // With no day there is no title and no body either, so both rows
+        // collapse into the one recoverable message. The day line above and
+        // the radar below still render: the run is never lost, and the surface
+        // must not imply that it is.
+        Text(l10n.contentUnavailable)
+      else ...[
+        // The only element on this screen carrying weight.
+        Text(today.title, style: theme.textTheme.headlineSmall),
+        SizedBox(height: tokens.sp12),
+        // Plain text, as doctrine_entry_screen.dart and _MandatoryAction
+        // already render their copy — there is no markdown renderer yet. A
+        // body can be absent while the day is present: a locked pack, or an
+        // owned one whose bodies have not arrived (ADR-0025).
+        Text(today.bodyMd ?? l10n.contentUnavailable),
+      ],
+      SizedBox(height: tokens.sp32),
+      if (state.mandatoryToday != null)
+        FilledButton(onPressed: onCommit, child: Text(l10n.commitButton))
+      else
+        // onCommit needs the mandatory action's id to write the log row, and
+        // used to swallow the tap when there was none. With the actions hidden
+        // the user would have no way to tell why nothing happened, so the
+        // control is disabled and the reason travels with it.
+        Semantics(
+          label: l10n.commitUnavailable,
+          button: true,
+          enabled: false,
+          excludeSemantics: true,
+          child: FilledButton(onPressed: null, child: Text(l10n.commitButton)),
+        ),
+    ];
+  }
+
+  /// The commit is what reveals these: today's checklist as it stands now.
+  List<Widget> _committed(BuildContext context) {
+    final l10n = context.l10n;
+    final tokens = context.tokens;
+    final today = state.today;
+    final mandatory = today?.mandatory;
+
+    // One missing-content path, not two: no day and no mandatory action read
+    // the same way to the user, and there is nothing useful to say that
+    // distinguishes them.
+    if (today == null || mandatory == null) {
+      return [Text(l10n.contentUnavailable)];
+    }
+
+    return [
+      // Today's action comes first. Anything competing with it for the top of
+      // the screen is wrong.
+      _MandatoryAction(
+        action: mandatory,
+        isCompleted: state.isCompletedToday(mandatory.id),
+        // Ticks become a read-only record once the day is reported. Changing
+        // the record after the fact is not a flow this product offers.
+        onToggle: state.isReportedToday
+            ? null
+            : (value) => onToggleAction(mandatory.id, value),
+      ),
+
+      // A clear spacing step, not a divider: a rule here would read as two
+      // equal sections rather than a thing and its appendix.
+      if (state.optionalsToday.isNotEmpty) ...[
+        SizedBox(height: tokens.sp32),
+        for (final optional in state.optionalsToday)
+          _OptionalAction(
+            action: optional,
+            isCompleted: state.isCompletedToday(optional.id),
+            onToggle: state.isReportedToday
+                ? null
+                : (value) => onToggleAction(optional.id, value),
+          ),
+      ],
+
+      SizedBox(height: tokens.sp24),
+      _PointsReading(label: l10n.dayPointsTotal, points: state.todayPoints),
+
+      SizedBox(height: tokens.sp24),
+      if (state.isReportedToday)
+        Text(l10n.reportedOutcome(outcomeLabel(l10n, state.todayLog!.outcome!)))
+      else
+        // The only control in this phase. Commit belongs to the phase before
+        // it, and the two never render at once.
+        FilledButton(
+          onPressed: () => _report(context),
+          child: Text(l10n.reportButton),
+        ),
+    ];
   }
 }
 

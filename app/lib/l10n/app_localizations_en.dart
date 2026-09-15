@@ -12,6 +12,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commitButton => 'Commit';
 
   @override
+  String get commitUnavailable =>
+      'Commit. Unavailable until today\'s content arrives. Your run is safe.';
+
+  @override
   String get campaignsTitle => 'Campaigns';
 
   @override

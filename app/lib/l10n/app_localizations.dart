@@ -100,6 +100,12 @@ abstract class AppLocalizations {
   /// **'Commit'**
   String get commitButton;
 
+  /// [niche] Screen-reader label for the Commit control when the day has no mandatory action to accept. With the actions hidden before the commit, a disabled button with no reason is a dead end — this carries the reason and the reassurance together, in contentUnavailable's register. German compounds are the length stress case (ADR-0022).
+  ///
+  /// In en, this message translates to:
+  /// **'Commit. Unavailable until today\'s content arrives. Your run is safe.'**
+  String get commitUnavailable;
+
   /// [niche] App bar title of the campaign list.
   ///
   /// In en, this message translates to:

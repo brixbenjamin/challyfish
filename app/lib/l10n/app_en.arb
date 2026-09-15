@@ -4,6 +4,10 @@
   "@commitButton": {
     "description": "[niche] Button that acknowledges today's action before doing it. The commit/report verbs are the product's vocabulary."
   },
+  "commitUnavailable": "Commit. Unavailable until today's content arrives. Your run is safe.",
+  "@commitUnavailable": {
+    "description": "[niche] Screen-reader label for the Commit control when the day has no mandatory action to accept. With the actions hidden before the commit, a disabled button with no reason is a dead end — this carries the reason and the reassurance together, in contentUnavailable's register. German compounds are the length stress case (ADR-0022)."
+  },
   "campaignsTitle": "Campaigns",
   "@campaignsTitle": {
     "description": "[niche] App bar title of the campaign list."

@@ -71,7 +71,8 @@ void main() {
     campaignId: 'campaign-1',
     dayIndex: 3,
     title: 'The day you stop hedging',
-    bodyMd: 'Say the thing once, in the fewest words that carry it, and let it stand.',
+    bodyMd:
+        'Say the thing once, in the fewest words that carry it, and let it stand.',
     actions: [action],
   );
 
@@ -80,7 +81,8 @@ void main() {
     campaignId: 'campaign-1',
     dayIndex: 3,
     title: 'The day you stop hedging',
-    bodyMd: 'Say the thing once, in the fewest words that carry it, and let it stand.',
+    bodyMd:
+        'Say the thing once, in the fewest words that carry it, and let it stand.',
     actions: [action, optional],
   );
 
@@ -98,13 +100,29 @@ void main() {
       );
 
   /// Day 3's log, carrying whatever ticks and outcome a case needs.
+  ///
+  /// Always committed. Since the reveal-on-commit split there is no path that
+  /// ticks or reports a day that was never accepted: the actions do not exist
+  /// on screen until the commit reveals them.
   DayLog dayLog({Outcome? outcome, Set<String> ticks = const {}}) => DayLog(
     id: 'l3',
     runId: 'run-1',
     dayIndex: 3,
     actionId: 'action-3',
+    committedAt: tz.TZDateTime(berlin, 2026, 6, 3, 8).toUtc(),
     outcome: outcome,
     completedActionIds: ticks,
+  );
+
+  /// Day 3, already accepted. This is the state every checklist assertion
+  /// needs: before the commit there is no checklist.
+  RunState committed({
+    Outcome? outcome,
+    Set<String> ticks = const {},
+    DaySpec today = dayWithOptional,
+  }) => state(
+    logs: [dayLog(outcome: outcome, ticks: ticks)],
+    today: today,
   );
 
   const archetypes = [
@@ -159,6 +177,7 @@ void main() {
       tester,
       state(
         logs: [
+          dayLog(),
           DayLog(
             id: 'l1',
             runId: 'run-1',
@@ -167,6 +186,7 @@ void main() {
             outcome: Outcome.skipped,
           ),
         ],
+        today: dayWithOptional,
       ),
     );
 
@@ -226,7 +246,7 @@ void main() {
   });
 
   testWidgets('the radar is below the action, never above it', (tester) async {
-    await pump(tester, state());
+    await pump(tester, committed());
 
     final actionY = tester.getTopLeft(find.text('Do not explain yourself')).dy;
     final radarY = tester.getTopLeft(find.byType(ArchetypeRadar)).dy;
@@ -248,7 +268,7 @@ void main() {
     testWidgets('optional actions render beneath the mandatory one', (
       tester,
     ) async {
-      await pump(tester, withOptionals());
+      await pump(tester, committed());
 
       final mandatory = tester.getTopLeft(find.text('Do not explain yourself'));
       final extra = tester.getTopLeft(find.text('An optional act'));
@@ -258,7 +278,7 @@ void main() {
     testWidgets('the mandatory action keeps its body copy inline', (
       tester,
     ) async {
-      await pump(tester, withOptionals());
+      await pump(tester, committed());
 
       expect(find.text(action.bodyMd!), findsOneWidget);
       expect(
@@ -271,7 +291,7 @@ void main() {
     testWidgets(
       'the mandatory action outweighs the optionals typographically',
       (tester) async {
-        await pump(tester, withOptionals());
+        await pump(tester, committed());
 
         final mandatory = tester.widget<Text>(
           find.text('Do not explain yourself'),
@@ -294,7 +314,7 @@ void main() {
     ) async {
       // The state of every campaign authored so far, so it is the default
       // case rather than the edge one.
-      await pump(tester, state());
+      await pump(tester, committed(today: day));
 
       expect(find.text('Do not explain yourself'), findsOneWidget);
       expect(find.text('Optional'), findsNothing);
@@ -310,7 +330,7 @@ void main() {
       bool? completed;
       await pumpWith(
         tester,
-        withOptionals(),
+        committed(),
         onToggleAction: (id, value) {
           tapped = id;
           completed = value;
@@ -352,7 +372,7 @@ void main() {
     testWidgets('every tick target is at least 44 logical pixels tall', (
       tester,
     ) async {
-      await pump(tester, withOptionals());
+      await pump(tester, committed());
 
       final row = tester.getSize(
         find.ancestor(
@@ -366,7 +386,7 @@ void main() {
     testWidgets('the whole row is the target, not just the control', (
       tester,
     ) async {
-      await pump(tester, withOptionals());
+      await pump(tester, committed());
 
       final row = tester.getSize(
         find.ancestor(
@@ -376,6 +396,140 @@ void main() {
       );
       final screen = tester.getSize(find.byType(DashboardScreen));
       expect(row.width, greaterThan(screen.width / 2));
+    });
+  });
+
+  group('before the commit', () {
+    testWidgets('the day is what the screen is', (tester) async {
+      await pump(tester, state());
+
+      expect(find.text(day.title), findsOneWidget);
+      expect(find.text(day.bodyMd!), findsOneWidget);
+    });
+
+    testWidgets('no action, no tick, no day total and no Report', (
+      tester,
+    ) async {
+      await pump(tester, state(today: dayWithOptional));
+
+      // Between them these are most of what makes this read as a different
+      // moment rather than a stripped dashboard.
+      expect(find.text(action.title), findsNothing);
+      expect(find.text(optional.title), findsNothing);
+      expect(find.byIcon(Icons.check_box_outline_blank), findsNothing);
+      expect(find.text(l10n.dayPointsTotal), findsNothing);
+      expect(find.text(l10n.reportButton), findsNothing);
+    });
+
+    testWidgets('Commit is the one control, and it is filled', (tester) async {
+      await pump(tester, state());
+
+      expect(
+        find.widgetWithText(FilledButton, l10n.commitButton),
+        findsOneWidget,
+      );
+      expect(find.byType(OutlinedButton), findsNothing);
+    });
+
+    testWidgets('committing reveals the actions', (tester) async {
+      await pump(tester, state());
+      expect(find.text(action.title), findsNothing);
+
+      // What _reloadHome() hands back once commitToday has written the row.
+      await pump(tester, committed());
+
+      expect(find.text(action.title), findsOneWidget);
+      expect(find.text(optional.title), findsOneWidget);
+      expect(find.text(l10n.commitButton), findsNothing);
+      expect(
+        find.widgetWithText(FilledButton, l10n.reportButton),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a missing body falls back to the recoverable wording', (
+      tester,
+    ) async {
+      const bodyless = DaySpec(
+        id: 'day-3',
+        campaignId: 'campaign-1',
+        dayIndex: 3,
+        title: 'The day you stop hedging',
+        actions: [action],
+      );
+
+      await pump(tester, state(today: bodyless));
+
+      expect(find.text(bodyless.title), findsOneWidget);
+      expect(find.textContaining('Content unavailable'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, l10n.commitButton),
+            )
+            .onPressed,
+        isNotNull,
+        reason: 'a day that can still be accepted is still acceptable',
+      );
+    });
+
+    testWidgets('a day with no mandatory action disables Commit and says why', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      const actionless = DaySpec(
+        id: 'day-3',
+        campaignId: 'campaign-1',
+        dayIndex: 3,
+        title: 'The day you stop hedging',
+        bodyMd: 'Say the thing once and let it stand.',
+      );
+
+      await pump(tester, state(today: actionless));
+
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, l10n.commitButton),
+            )
+            .onPressed,
+        isNull,
+        reason:
+            'onCommit has no action id to write, and swallowing the tap '
+            'would leave the user nothing to read',
+      );
+      expect(
+        find.bySemanticsLabel(l10n.commitUnavailable),
+        findsOneWidget,
+        reason: 'a bare disabled control tells a screen reader nothing',
+      );
+      handle.dispose();
+    });
+
+    testWidgets('an uncached day keeps the day line and the radar', (
+      tester,
+    ) async {
+      await pump(tester, state(today: null));
+
+      expect(find.text('Day 3 of 7'), findsOneWidget);
+      expect(find.byType(ArchetypeRadar), findsOneWidget);
+      expect(find.textContaining('Content unavailable'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, l10n.commitButton),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('the run total reads in both phases', (tester) async {
+      await pump(tester, state());
+      expect(find.text(l10n.runPointsTotal), findsOneWidget);
+
+      await pump(tester, committed());
+      expect(find.text(l10n.runPointsTotal), findsOneWidget);
     });
   });
 
@@ -399,7 +553,7 @@ void main() {
     testWidgets('a point is announced as a count, not a bare numeral', (
       tester,
     ) async {
-      await pump(tester, withOptionals());
+      await pump(tester, committed());
       expect(find.text('1 point'), findsWidgets);
       expect(find.text('2 points'), findsWidgets);
     });
@@ -427,7 +581,7 @@ void main() {
     });
 
     testWidgets('the all-time total sits with the radar', (tester) async {
-      await pump(tester, withOptionals());
+      await pump(tester, committed());
 
       // Below the fold with optionals on screen, which is itself correct:
       // nothing about a points total may compete with today's action.
@@ -446,7 +600,7 @@ void main() {
 
   group('report', () {
     testWidgets('there is exactly one report control', (tester) async {
-      await pump(tester, withOptionals());
+      await pump(tester, committed());
 
       // The three outcome buttons are gone: the outcome is derived, so
       // skipped has no control of its own to feel exposed by (principle 10).
@@ -456,39 +610,30 @@ void main() {
       expect(find.text(l10n.outcomeSkipped), findsNothing);
     });
 
-    testWidgets(
-      'commit is the one filled control before the day is committed',
-      (tester) async {
-        await pump(tester, withOptionals());
+    testWidgets('Commit and Report never render at once', (tester) async {
+      await pump(tester, state());
+      expect(
+        find.widgetWithText(FilledButton, l10n.commitButton),
+        findsOneWidget,
+      );
+      expect(
+        find.text(l10n.reportButton),
+        findsNothing,
+        reason: 'the uncommitted phase owns Commit exclusively',
+      );
 
-        expect(find.widgetWithText(FilledButton, 'Commit'), findsOneWidget);
-        expect(
-          find.widgetWithText(FilledButton, 'Report'),
-          findsNothing,
-          reason: 'Report is present but not yet the point',
-        );
-        expect(find.widgetWithText(OutlinedButton, 'Report'), findsOneWidget);
-      },
-    );
+      await pump(tester, committed());
+      expect(
+        find.widgetWithText(FilledButton, l10n.reportButton),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.commitButton), findsNothing);
+    });
 
     testWidgets('report becomes the filled control once committed', (
       tester,
     ) async {
-      await pumpWith(
-        tester,
-        state(
-          logs: [
-            DayLog(
-              id: 'l3',
-              runId: 'run-1',
-              dayIndex: 3,
-              actionId: 'action-3',
-              committedAt: tz.TZDateTime(berlin, 2026, 6, 3, 8).toUtc(),
-            ),
-          ],
-          today: dayWithOptional,
-        ),
-      );
+      await pumpWith(tester, committed());
 
       expect(find.widgetWithText(FilledButton, 'Report'), findsOneWidget);
       expect(find.text('Commit'), findsNothing);
@@ -520,7 +665,7 @@ void main() {
       var called = false;
       await pumpWith(
         tester,
-        withOptionals(),
+        committed(),
         onReport: (n) {
           note = n;
           called = true;
@@ -542,7 +687,7 @@ void main() {
       var called = false;
       await pumpWith(
         tester,
-        withOptionals(),
+        committed(),
         onReport: (n) {
           note = n;
           called = true;
@@ -560,7 +705,7 @@ void main() {
 
     testWidgets('dismissing the sheet records nothing', (tester) async {
       var called = false;
-      await pumpWith(tester, withOptionals(), onReport: (_) => called = true);
+      await pumpWith(tester, committed(), onReport: (_) => called = true);
 
       await tester.tap(find.text('Report'));
       await tester.pumpAndSettle();
@@ -602,12 +747,44 @@ void main() {
   });
 
   group('hostile content', () {
+    testWidgets('a long day title and a long body hold at 200%', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      // 63 characters, past the 60 the brief's accessibility bar names.
+      const hostile = DaySpec(
+        id: 'day-3',
+        campaignId: 'campaign-1',
+        dayIndex: 3,
+        title:
+            'The day you stop hedging and say the plain thing right out loud',
+        bodyMd:
+            'Say it once, in the fewest words that carry it, and then stop '
+            'talking. The silence afterwards is not yours to fill, and the '
+            'discomfort of leaving it unfilled is the whole of the exercise.',
+        actions: [action],
+      );
+
+      await pumpWith(tester, state(today: hostile), textScale: 2.0);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(hostile.title),
+        findsOneWidget,
+        reason: 'it wraps; it never truncates',
+      );
+    });
+
     testWidgets('the checklist holds at 200% text scale', (tester) async {
       tester.view.physicalSize = const Size(400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
-      await pumpWith(tester, withOptionals(), textScale: 2.0);
+      await pumpWith(tester, committed(), textScale: 2.0);
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -635,7 +812,8 @@ void main() {
         campaignId: 'campaign-1',
         dayIndex: 3,
         title: 'The day you stop hedging',
-        bodyMd: 'Say the thing once, in the fewest words that carry it, and let it stand.',
+        bodyMd:
+            'Say the thing once, in the fewest words that carry it, and let it stand.',
         actions: [action, long],
       );
 
