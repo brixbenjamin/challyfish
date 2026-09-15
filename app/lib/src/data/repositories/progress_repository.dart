@@ -177,9 +177,9 @@ class ProgressRepository {
 
   /// Records that the user did, or did not, do one of a day's actions.
   ///
-  /// Creates the day row if it is not there yet: ticking may precede
-  /// committing, and the day row is the tick's parent on the server, so it has
-  /// to exist before the tick can be pushed.
+  /// Creates the day row if it is not there yet: this method does not assume
+  /// the commit gate above it holds, and the day row is the tick's parent on
+  /// the server, so it has to exist before the tick can be pushed.
   ///
   /// Unticking flips `completed` rather than deleting the row. A delete would
   /// never propagate — nothing in this sync design carries tombstones, so the

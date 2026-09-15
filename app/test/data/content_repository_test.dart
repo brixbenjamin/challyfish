@@ -450,8 +450,18 @@ void main() {
         },
       ],
       'actions': [
+        // Two optionals, authored out of `sort` order and arriving before the
+        // mandatory action, so neither ordering term can pass by accident of
+        // arrival order.
         actionRow(
-          'a-optional',
+          'a-optional-2',
+          'day-1',
+          '2026-06-01T09:00:00Z',
+          isOptional: true,
+          sort: 2,
+        ),
+        actionRow(
+          'a-optional-1',
           'day-1',
           '2026-06-01T09:00:00Z',
           isOptional: true,
@@ -472,11 +482,11 @@ void main() {
     expect(day?.bodyMd, 'what today asks');
     expect(
       day?.actions.map((a) => a.id),
-      ['a-mandatory', 'a-optional'],
+      ['a-mandatory', 'a-optional-1', 'a-optional-2'],
       reason: 'mandatory first, then by sort -- never by arrival order',
     );
     expect(day?.mandatory?.id, 'a-mandatory');
-    expect(day?.optionals.map((a) => a.id), ['a-optional']);
+    expect(day?.optionals.map((a) => a.id), ['a-optional-1', 'a-optional-2']);
   });
 
   test('dayFor returns null rather than throwing for an uncached day', () async {

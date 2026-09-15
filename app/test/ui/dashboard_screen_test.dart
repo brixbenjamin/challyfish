@@ -170,8 +170,6 @@ void main() {
   Future<void> pump(WidgetTester tester, RunState value) =>
       pumpWith(tester, value);
 
-  RunState withOptionals() => state(today: dayWithOptional);
-
   testWidgets('shows the day, the action, and the miss count', (tester) async {
     await pump(
       tester,
@@ -209,8 +207,26 @@ void main() {
     expect(find.textContaining('Content unavailable'), findsOneWidget);
   });
 
+  testWidgets(
+    'a committed day with no cached content still shows the recoverable '
+    'state',
+    (tester) async {
+      await pump(tester, state(logs: [dayLog()], today: null));
+      expect(
+        find.textContaining('Content unavailable'),
+        findsOneWidget,
+        reason:
+            'logs can restore from the server ahead of content on a '
+            'reinstall, or content can be evicted after a commit',
+      );
+    },
+  );
+
   testWidgets('there is no streak counter anywhere', (tester) async {
-    await pump(tester, withOptionals());
+    await pump(tester, state(today: dayWithOptional));
+    expect(find.textContaining('streak', findRichText: true), findsNothing);
+
+    await pump(tester, committed());
     expect(find.textContaining('streak', findRichText: true), findsNothing);
   });
 
@@ -263,7 +279,12 @@ void main() {
   });
 
   testWidgets('no discouraging copy attaches to skipping', (tester) async {
-    await pump(tester, withOptionals());
+    await pump(tester, state(today: dayWithOptional));
+    for (final banned in ['Are you sure', 'really', 'give up', 'failed']) {
+      expect(find.textContaining(banned, findRichText: true), findsNothing);
+    }
+
+    await pump(tester, committed());
     for (final banned in ['Are you sure', 'really', 'give up', 'failed']) {
       expect(find.textContaining(banned, findRichText: true), findsNothing);
     }
