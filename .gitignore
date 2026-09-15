@@ -17,3 +17,9 @@ app/env.device.json
 graphify-out/cost.json
 graphify-out/cache/
 app/env.prod.json
+
+# Design context symlinks into the sibling planning workspace (feral-maxxing).
+# Local convenience so /impeccable tooling resolves them from here; the specs
+# themselves live in feral-maxxing per the README, not in this repo.
+/PRODUCT.md
+/DESIGN.md

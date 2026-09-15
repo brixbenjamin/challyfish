@@ -75,6 +75,24 @@
       }
     }
   },
+  "campaignDaysRemainingCta": "{count, plural, =1{+1 day ahead} other{+{count} days ahead}}",
+  "@campaignDaysRemainingCta": {
+    "description": "Tap target collapsing the tail of a long campaign's day preview list (ADR-0037), replacing the days beyond the reveal window until tapped. Keeps a 30-day campaign's detail screen from growing endlessly tall.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dayNotYetRevealedLabel": "Day {index}: not yet revealed",
+  "@dayNotYetRevealedLabel": {
+    "description": "Screen-reader label for a fogged day row (ADR-0037) — stands in for the day's title, which is withheld visually behind a blur, so assistive tech never speaks a spoiler the sighted UI is deliberately hiding.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
   "outcomeDone": "Done",
   "@outcomeDone": {
     "description": "Report option."

@@ -42,10 +42,16 @@ class PackView {
 /// it's unambiguous — never through urgency, scarcity or a comparison table
 /// (PRODUCT.md's dark-pattern store screen ban).
 class PackListScreen extends StatelessWidget {
-  const PackListScreen({required this.packs, required this.onOpen, super.key});
+  const PackListScreen({
+    required this.packs,
+    required this.onOpen,
+    required this.onPurchase,
+    super.key,
+  });
 
   final List<PackView> packs;
   final void Function(Campaign campaign) onOpen;
+  final void Function(Pack pack) onPurchase;
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +63,11 @@ class PackListScreen extends StatelessWidget {
         padding: EdgeInsets.all(tokens.sp24),
         itemCount: packs.length,
         separatorBuilder: (_, _) => SizedBox(height: tokens.sp32),
-        itemBuilder: (context, index) =>
-            _PackBlock(view: packs[index], onOpen: onOpen),
+        itemBuilder: (context, index) => _PackBlock(
+          view: packs[index],
+          onOpen: onOpen,
+          onPurchase: onPurchase,
+        ),
       ),
     );
   }
@@ -69,10 +78,15 @@ class PackListScreen extends StatelessWidget {
 /// "grouped block within a scroll" DESIGN.md's neutral ramp defines — rather
 /// than a card holding cards.
 class _PackBlock extends StatelessWidget {
-  const _PackBlock({required this.view, required this.onOpen});
+  const _PackBlock({
+    required this.view,
+    required this.onOpen,
+    required this.onPurchase,
+  });
 
   final PackView view;
   final void Function(Campaign campaign) onOpen;
+  final void Function(Pack pack) onPurchase;
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +127,25 @@ class _PackBlock extends StatelessWidget {
                 targets: view.archetypesByCampaign[campaign.id] ?? const [],
                 isLast: campaign == view.campaigns.last,
                 onTap: () => onOpen(campaign),
+              ),
+            // Only a pack the user hasn't yet unlocked needs a way to buy it —
+            // core and owned packs already read "Included"/"Owned" up in the
+            // header and would make a second CTA redundant here.
+            if (!view.isUnlocked)
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  tokens.sp16,
+                  tokens.sp12,
+                  tokens.sp16,
+                  tokens.sp16,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => onPurchase(view.pack),
+                    child: Text(context.l10n.unlockButton),
+                  ),
+                ),
               ),
           ],
         ),

@@ -1070,6 +1070,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
               .firstWhere((v) => v.pack.id == campaign.packId)
               .isUnlocked,
         ),
+        onPurchase: (pack) => _openUnlockSheet(context, pack),
       );
     }
 

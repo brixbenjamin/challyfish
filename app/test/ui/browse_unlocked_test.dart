@@ -66,7 +66,9 @@ void main() {
       },
     );
 
-    await tester.pumpWidget(wrap(PackListScreen(packs: views, onOpen: (_) {})));
+    await tester.pumpWidget(
+      wrap(PackListScreen(packs: views, onOpen: (_) {}, onPurchase: (_) {})),
+    );
 
     expect(find.text(l10n.lockedBadge), findsOneWidget);
     expect(find.text('Thirty'), findsOneWidget);

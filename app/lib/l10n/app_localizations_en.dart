@@ -54,6 +54,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String campaignDaysRemainingCta(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '+$count days ahead',
+      one: '+1 day ahead',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String dayNotYetRevealedLabel(int index) {
+    return 'Day $index: not yet revealed';
+  }
+
+  @override
   String get outcomeDone => 'Done';
 
   @override

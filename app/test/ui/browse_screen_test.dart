@@ -82,6 +82,7 @@ void main() {
             ),
           ],
           onOpen: (_) {},
+          onPurchase: (_) {},
         ),
       ),
     );
@@ -106,6 +107,7 @@ void main() {
             ),
           ],
           onOpen: (_) {},
+          onPurchase: (_) {},
         ),
       ),
     );

@@ -185,6 +185,9 @@ void main() {
         onOpen: (campaign) {
           debugPrint('opened ${campaign.title}');
         },
+        onPurchase: (pack) {
+          debugPrint('purchase ${pack.title}');
+        },
       ),
     ),
   );

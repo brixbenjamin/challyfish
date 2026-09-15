@@ -114,4 +114,116 @@ void main() {
 
     expect(find.text(l10n.campaignDaysHeading), findsNothing);
   });
+
+  group('a long campaign fogs its tail (ADR-0037)', () {
+    const longCampaign = Campaign(
+      id: 'c-2',
+      packId: 'p-1',
+      key: 'long',
+      title: 'Long Haul',
+      introMd: 'intro text',
+      lengthDays: 12,
+    );
+
+    List<DaySpec> longDays({String? day6ArchetypeId, String? day10ArchetypeId}) => [
+      for (var i = 1; i <= 12; i++)
+        DaySpec(
+          id: 'd-$i',
+          campaignId: 'c-2',
+          dayIndex: i,
+          title: 'Day title $i',
+          primaryArchetypeId: switch (i) {
+            6 => day6ArchetypeId,
+            10 => day10ArchetypeId,
+            _ => null,
+          },
+        ),
+    ];
+
+    Widget buildLongScreen(List<DaySpec> days, Map<String, Archetype> archetypesById) =>
+        CampaignDetailScreen(
+          campaign: longCampaign,
+          targets: const [],
+          missAllowance: 1,
+          days: days,
+          archetypesById: archetypesById,
+          isUnlocked: true,
+          hasActiveRun: false,
+          onStart: () {},
+          onUnlock: () {},
+        );
+
+    testWidgets(
+      'only the first 5 days render up front; the rest collapse behind a count',
+      (tester) async {
+        await tester.pumpWidget(wrap(buildLongScreen(longDays(), const {})));
+
+        for (var i = 1; i <= 5; i++) {
+          expect(find.text(l10n.dayPreviewNumber(i)), findsOneWidget);
+        }
+        for (var i = 6; i <= 12; i++) {
+          expect(find.text(l10n.dayPreviewNumber(i)), findsNothing);
+        }
+        expect(find.text(l10n.campaignDaysRemainingCta(7)), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'expanding reveals the tail: non-landmark days blur and drop their tag, '
+      'every-5th-day landmarks stay sharp',
+      (tester) async {
+        await tester.pumpWidget(
+          wrap(
+            buildLongScreen(
+              longDays(day6ArchetypeId: 'a-killer', day10ArchetypeId: 'a-alchemist'),
+              const {'a-killer': killer, 'a-alchemist': alchemist},
+            ),
+          ),
+        );
+
+        await tester.tap(find.text(l10n.campaignDaysRemainingCta(7)));
+        await tester.pump();
+
+        // Day 6: fogged. Number stays plain; title is present in the tree
+        // but blurred, and its drive tag is withheld despite having one.
+        expect(find.text(l10n.dayPreviewNumber(6)), findsOneWidget);
+        expect(
+          find.ancestor(
+            of: find.text('Day title 6'),
+            matching: find.byType(ImageFiltered),
+          ),
+          findsOneWidget,
+        );
+
+        // Day 10: an every-5th-day landmark past the window, so it stays
+        // sharp — title unblurred, drive tag shown.
+        expect(
+          find.ancestor(
+            of: find.text('Day title 10'),
+            matching: find.byType(ImageFiltered),
+          ),
+          findsNothing,
+        );
+
+        // targets is empty, so the only ArchetypeTag possible is day 10's —
+        // day 6's archetype never reaches one while fogged.
+        expect(find.byType(ArchetypeTag), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      "a fogged day's semantics name it without leaking its title",
+      (tester) async {
+        await tester.pumpWidget(wrap(buildLongScreen(longDays(), const {})));
+
+        await tester.tap(find.text(l10n.campaignDaysRemainingCta(7)));
+        await tester.pump();
+
+        expect(
+          find.bySemanticsLabel(l10n.dayNotYetRevealedLabel(6)),
+          findsOneWidget,
+        );
+      },
+    );
+  });
 }

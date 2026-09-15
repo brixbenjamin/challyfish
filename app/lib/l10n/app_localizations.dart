@@ -160,6 +160,18 @@ abstract class AppLocalizations {
   /// **'Day {index}'**
   String dayPreviewNumber(int index);
 
+  /// Tap target collapsing the tail of a long campaign's day preview list (ADR-0037), replacing the days beyond the reveal window until tapped. Keeps a 30-day campaign's detail screen from growing endlessly tall.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{+1 day ahead} other{+{count} days ahead}}'**
+  String campaignDaysRemainingCta(int count);
+
+  /// Screen-reader label for a fogged day row (ADR-0037) — stands in for the day's title, which is withheld visually behind a blur, so assistive tech never speaks a spoiler the sighted UI is deliberately hiding.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {index}: not yet revealed'**
+  String dayNotYetRevealedLabel(int index);
+
   /// Report option.
   ///
   /// In en, this message translates to:
