@@ -799,7 +799,12 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     required bool isUnlocked,
   }) async {
     final progress = ref.read(progressRepositoryProvider);
+    final content = ref.read(contentRepositoryProvider);
     final targets = await _archetypesFor(campaign.id);
+    // Public regardless of lock state, the same Teaser boundary the glossary
+    // already draws: each day's title and primary drive, never its body.
+    final days = await content.daysFor(campaign.id);
+    final archetypesById = await content.archetypesById();
     final hasActiveRun =
         await progress.activeRun(ref.read(userIdProvider)) != null;
     if (!mounted) return;
@@ -818,6 +823,8 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
             campaign: campaign,
             targets: targets,
             missAllowance: progress.engine.missAllowance(campaign.lengthDays),
+            days: days,
+            archetypesById: archetypesById,
             isUnlocked: unlocked,
             hasActiveRun: hasActiveRun,
             onStart: () async {

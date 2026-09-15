@@ -84,6 +84,8 @@ void main() {
           campaign: paid,
           targets: const [killer],
           missAllowance: 3,
+          days: const [],
+          archetypesById: const {},
           isUnlocked: false,
           hasActiveRun: false,
           onStart: () => started++,

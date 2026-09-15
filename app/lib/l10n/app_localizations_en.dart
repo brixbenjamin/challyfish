@@ -43,6 +43,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get campaignDaysHeading => 'Days';
+
+  @override
+  String get archetypeListSeparator => ', ';
+
+  @override
+  String dayPreviewNumber(int index) {
+    return 'Day $index';
+  }
+
+  @override
   String get outcomeDone => 'Done';
 
   @override

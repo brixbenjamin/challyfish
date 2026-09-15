@@ -1,12 +1,10 @@
-import 'dart:math';
-
-import 'package:feral/src/ui/theme/archetype_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/l10n_ext.dart';
 import '../../domain/archetype.dart';
 import '../../domain/campaign.dart';
 import '../../domain/pack.dart';
+import '../theme/archetype_tag.dart';
 import '../theme/theme_context.dart';
 
 class PackView {
@@ -236,7 +234,7 @@ class _CampaignRow extends StatelessWidget {
                 ),
                 if (tags != null) ...[
                   SizedBox(width: tokens.sp12),
-                  _ArchetypeTag(archetypes: tags),
+                  ArchetypeTag(archetypes: tags),
                 ],
               ],
             ),
@@ -244,70 +242,5 @@ class _CampaignRow extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _ArchetypeTag extends StatelessWidget {
-  const _ArchetypeTag({required this.archetypes});
-
-  final List<Archetype> archetypes;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final theme = Theme.of(context);
-    final palette = context.archetypePalette;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CustomPaint(
-          size: Size.square(tokens.sp8),
-          painter: _ArchetypeDots(archetypes: archetypes, palette: palette),
-        ),
-
-        SizedBox(width: tokens.sp4),
-        Text(
-          archetypes.map((a) => a.name).join(", "),
-          style: theme.textTheme.labelMedium?.copyWith(color: tokens.mutedInk),
-        ),
-      ],
-    );
-  }
-}
-
-class _ArchetypeDots extends CustomPainter {
-  final List<Archetype> archetypes;
-  final ArchetypePalette palette;
-  _ArchetypeDots({required this.archetypes, required this.palette});
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.width != size.height) {
-      throw Exception("Width and height have to be the same.");
-    }
-
-    // get colors
-    final colors = archetypes.map((a) => palette.forSort(a.sort)).toList();
-    final center = Offset(size.width / 2, size.width / 2);
-    final radius = size.width / 2;
-
-    final parts = colors.length;
-    var startAngle = pi / 2;
-    final sweepAngle = 2 * pi / parts;
-    for (var i = 0; i < parts; i++) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        true,
-        Paint()..color = colors[i],
-      );
-      startAngle += sweepAngle;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
   }
 }

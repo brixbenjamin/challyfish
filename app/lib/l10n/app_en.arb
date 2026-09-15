@@ -58,6 +58,23 @@
       }
     }
   },
+  "campaignDaysHeading": "Days",
+  "@campaignDaysHeading": {
+    "description": "Section heading on the campaign detail screen, above the day-by-day preview strip."
+  },
+  "archetypeListSeparator": ", ",
+  "@archetypeListSeparator": {
+    "description": "Joins archetype names when a campaign or day names more than one drive at once, e.g. the campaign header's target list."
+  },
+  "dayPreviewNumber": "Day {index}",
+  "@dayPreviewNumber": {
+    "description": "A single day's position within the campaign detail screen's day preview list, next to that day's title. Not the dashboard's dayOfLength — no total here, since the campaign length is already stated once, above the list.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
   "outcomeDone": "Done",
   "@outcomeDone": {
     "description": "Report option."

@@ -142,6 +142,24 @@ abstract class AppLocalizations {
   /// **'{days} days'**
   String lengthInDays(int days);
 
+  /// Section heading on the campaign detail screen, above the day-by-day preview strip.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get campaignDaysHeading;
+
+  /// Joins archetype names when a campaign or day names more than one drive at once, e.g. the campaign header's target list.
+  ///
+  /// In en, this message translates to:
+  /// **', '**
+  String get archetypeListSeparator;
+
+  /// A single day's position within the campaign detail screen's day preview list, next to that day's title. Not the dashboard's dayOfLength — no total here, since the campaign length is already stated once, above the list.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {index}'**
+  String dayPreviewNumber(int index);
+
   /// Report option.
   ///
   /// In en, this message translates to:
