@@ -247,6 +247,11 @@ void main() {
 
   testWidgets('the radar is below the action, never above it', (tester) async {
     await pump(tester, committed());
+    await tester.scrollUntilVisible(
+      find.byType(ArchetypeRadar),
+      200,
+      scrollable: find.byType(Scrollable),
+    );
 
     final actionY = tester.getTopLeft(find.text('Do not explain yourself')).dy;
     final radarY = tester.getTopLeft(find.byType(ArchetypeRadar)).dy;
@@ -530,6 +535,194 @@ void main() {
 
       await pump(tester, committed());
       expect(find.text(l10n.runPointsTotal), findsOneWidget);
+    });
+  });
+
+  group('the day panel', () {
+    testWidgets('carries the day title, which appears nowhere else', (
+      tester,
+    ) async {
+      await pump(tester, committed());
+
+      expect(find.text(l10n.dayFraming), findsOneWidget);
+      expect(find.text(dayWithOptional.title), findsOneWidget);
+    });
+
+    testWidgets('is collapsed by default', (tester) async {
+      await pump(tester, committed());
+
+      expect(
+        find.text(dayWithOptional.bodyMd!),
+        findsNothing,
+        reason: 'the user read it seconds ago; it is a reference now',
+      );
+    });
+
+    testWidgets('sits below the day line and above the mandatory action', (
+      tester,
+    ) async {
+      await pump(tester, committed());
+
+      final misses = tester.getTopLeft(find.text('0 of 1 misses used')).dy;
+      final panel = tester.getTopLeft(find.text(l10n.dayFraming)).dy;
+      final mandatory = tester.getTopLeft(find.text(action.title)).dy;
+
+      expect(panel, greaterThan(misses));
+      expect(
+        panel,
+        lessThan(mandatory),
+        reason:
+            "today's action comes first, and nothing is parked open above it",
+      );
+    });
+
+    testWidgets('expands and collapses in place', (tester) async {
+      await pump(tester, committed());
+
+      await tester.tap(find.text(l10n.dayFraming));
+      await tester.pumpAndSettle();
+      expect(find.text(dayWithOptional.bodyMd!), findsOneWidget);
+
+      await tester.tap(find.text(l10n.dayFraming));
+      await tester.pumpAndSettle();
+      expect(find.text(dayWithOptional.bodyMd!), findsNothing);
+    });
+
+    testWidgets('the expansion survives a tick', (tester) async {
+      await pump(tester, committed());
+      await tester.tap(find.text(l10n.dayFraming));
+      await tester.pumpAndSettle();
+      expect(find.text(dayWithOptional.bodyMd!), findsOneWidget);
+
+      // _reloadHome() rebuilds this screen from a freshly derived state after
+      // every tick. A panel that closed itself each time would be unusable,
+      // and a later refactor that loses the preserved State would break it
+      // silently.
+      await pump(tester, committed(ticks: const {'optional-3'}));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(dayWithOptional.bodyMd!),
+        findsOneWidget,
+        reason: "the expansion is the user's, not the run's",
+      );
+    });
+
+    testWidgets('announces shown and hidden, not just a chevron', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester, committed());
+
+      expect(
+        find.bySemanticsLabel(
+          l10n.dayFramingSemantic(
+            dayWithOptional.title,
+            l10n.dayFramingStateHidden,
+          ),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text(l10n.dayFraming));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.bySemanticsLabel(
+          l10n.dayFramingSemantic(
+            dayWithOptional.title,
+            l10n.dayFramingStateShown,
+          ),
+        ),
+        findsOneWidget,
+      );
+      handle.dispose();
+    });
+
+    testWidgets('the whole row is the target and it clears 44 pixels', (
+      tester,
+    ) async {
+      await pump(tester, committed());
+
+      final row = tester.getSize(
+        find.ancestor(
+          of: find.text(l10n.dayFraming),
+          matching: find.byType(InkWell),
+        ),
+      );
+      final screen = tester.getSize(find.byType(DashboardScreen));
+
+      expect(row.height, greaterThanOrEqualTo(44));
+      expect(row.width, greaterThan(screen.width / 2));
+    });
+
+    testWidgets('stays present and expandable once the day is reported', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        committed(outcome: Outcome.done, ticks: const {'action-3'}),
+      );
+
+      await tester.tap(find.text(l10n.dayFraming));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(dayWithOptional.bodyMd!),
+        findsOneWidget,
+        reason: 'read-only ticks do not make the framing copy less readable',
+      );
+    });
+
+    testWidgets(
+      'an unavailable body opens on the recoverable wording, not a blank',
+      (tester) async {
+        const bodyless = DaySpec(
+          id: 'day-3',
+          campaignId: 'campaign-1',
+          dayIndex: 3,
+          title: 'The day you stop hedging',
+          actions: [action],
+        );
+
+        await pump(tester, committed(today: bodyless));
+        await tester.tap(find.text(l10n.dayFraming));
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Content unavailable'), findsOneWidget);
+      },
+    );
+
+    testWidgets('a long day title holds at 200% beside the action', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      // 63 characters, past the 60 the brief's accessibility bar names.
+      const hostile = DaySpec(
+        id: 'day-3',
+        campaignId: 'campaign-1',
+        dayIndex: 3,
+        title:
+            'The day you stop hedging and say the plain thing right out loud',
+        bodyMd:
+            'Say it once, in the fewest words that carry it, and then stop '
+            'talking. The silence afterwards is not yours to fill.',
+        actions: [action, optional],
+      );
+
+      await pumpWith(tester, committed(today: hostile), textScale: 2.0);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      await tester.ensureVisible(find.text(l10n.dayFraming));
+      await tester.tap(find.text(l10n.dayFraming));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(hostile.title), findsOneWidget);
     });
   });
 

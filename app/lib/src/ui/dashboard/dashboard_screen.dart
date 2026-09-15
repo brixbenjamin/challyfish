@@ -7,6 +7,7 @@ import '../../domain/campaign.dart';
 import '../outcome_label.dart';
 import '../theme/theme_context.dart';
 import 'archetype_radar.dart';
+import 'day_panel.dart';
 import 'report_sheet.dart';
 
 /// One screen in two phases. Before the commit it answers "what is today, and
@@ -213,6 +214,12 @@ class DashboardScreen extends StatelessWidget {
     }
 
     return [
+      // The day title appears nowhere else in this phase, and the body is a
+      // reference now rather than the content — so it opens collapsed, in
+      // place, and never above today's action.
+      DayPanel(title: today.title, bodyMd: today.bodyMd),
+      SizedBox(height: tokens.sp24),
+
       // Today's action comes first. Anything competing with it for the top of
       // the screen is wrong.
       _MandatoryAction(

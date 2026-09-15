@@ -220,6 +220,18 @@ abstract class AppLocalizations {
   /// **'Locked'**
   String get lockedBadge;
 
+  /// Status reading on the core (free) pack in the browse list — it costs nothing and never did.
+  ///
+  /// In en, this message translates to:
+  /// **'Included'**
+  String get includedLabel;
+
+  /// Status reading on a paid pack the user has already unlocked, in the browse list. Same size and weight as the price it replaces (design principle 10) — no celebration colour, just the fact.
+  ///
+  /// In en, this message translates to:
+  /// **'Owned'**
+  String get ownedLabel;
+
   /// Opens the purchase sheet for a locked pack.
   ///
   /// In en, this message translates to:
@@ -945,6 +957,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Optional'**
   String get optionalAction;
+
+  /// [niche] Label on the collapsed panel that reopens the day's body copy once the day is committed. Names what the row holds, so the day title beside it is not mistaken for an action title. German compounds are the length stress case (ADR-0022) — the row wraps, it never truncates.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s framing'**
+  String get dayFraming;
+
+  /// Screen-reader description of the day-framing disclosure row: the day title, what the row is, and whether the body is currently shown. Mirrors actionSemanticMandatory's shape so the only audible difference is the part that matters.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}. Today\'s framing. {state}'**
+  String dayFramingSemantic(String title, String state);
+
+  /// Screen-reader state of the day-framing row when the body is expanded. Expanded and collapsed are announced in words, never left to the chevron alone.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown.'**
+  String get dayFramingStateShown;
+
+  /// [niche] Screen-reader state of the day-framing row when the body is collapsed. Flat and unpressured — a collapsed body is a reference put away, not something outstanding.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden.'**
+  String get dayFramingStateHidden;
 
   /// [niche] Shown in the report sheet before confirming, so the user sees what is about to be recorded. The outcome is derived from the ticks, not chosen. Announced to screen readers before Report is activated.
   ///

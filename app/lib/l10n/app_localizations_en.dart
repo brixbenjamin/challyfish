@@ -85,6 +85,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lockedBadge => 'Locked';
 
   @override
+  String get includedLabel => 'Included';
+
+  @override
+  String get ownedLabel => 'Owned';
+
+  @override
   String get unlockButton => 'Unlock';
 
   @override
@@ -538,6 +544,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get optionalAction => 'Optional';
+
+  @override
+  String get dayFraming => 'Today\'s framing';
+
+  @override
+  String dayFramingSemantic(String title, String state) {
+    return '$title. Today\'s framing. $state';
+  }
+
+  @override
+  String get dayFramingStateShown => 'Shown.';
+
+  @override
+  String get dayFramingStateHidden => 'Hidden.';
 
   @override
   String willRecord(String outcome) {
