@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -17,8 +18,8 @@ void main() {
   setUp(() => db = FeralDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  test('schemaVersion is 8', () {
-    expect(db.schemaVersion, 8);
+  test('schemaVersion is 10', () {
+    expect(db.schemaVersion, 10);
   });
 
   test('the new content tables exist and are empty', () async {
@@ -38,8 +39,7 @@ void main() {
             id: 'dr-1',
             userId: 'user-1',
             takenAt: DateTime.utc(2026, 6, 1, 9),
-            scores:
-                '{"psycho":0.25,"killer":0.75,"trickster":0.5,"beast":0.5}',
+            scores: '{"psycho":0.25,"killer":0.75,"trickster":0.5,"beast":0.5}',
             weakestArchetypeId: 'arch-psycho',
             recommendedCampaignId: 'campaign-1',
             updatedAt: DateTime.utc(2026, 6, 1, 9),
@@ -48,7 +48,59 @@ void main() {
 
     final stored = await db.select(db.diagnosticResults).getSingle();
     expect(stored.weakestArchetypeId, 'arch-psycho');
-    expect(stored.dirty, isTrue);
+  });
+
+  test('the upgrade turns unsent dirty rows into queue entries', () async {
+    // The worst thing this upgrade could do quietly. `dirty` was the only record
+    // that the server had not seen a row; dropping the column without draining it
+    // would leave the rows in place and nothing to say they were still owed, so
+    // the user's last offline day would never be sent and nothing would report it.
+    final dir = await Directory.systemTemp.createTemp(
+      'feral-migration-v3-owed',
+    );
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/feral.sqlite');
+
+    await _writeLegacyDatabase(file, tables: _v3Tables, version: 3);
+
+    final migrated = FeralDatabase(NativeDatabase(file));
+    addTearDown(migrated.close);
+
+    final owed = await (migrated.select(
+      migrated.outbox,
+    )..orderBy([(o) => OrderingTerm.asc(o.id)])).get();
+
+    expect(
+      owed.map((o) => o.remoteTable),
+      ['campaign_runs', 'day_logs'],
+      reason: 'the run before the day log, as the foreign keys require',
+    );
+    expect(owed.map((o) => o.rowKey), ['legacy-run', 'legacy-run:1']);
+
+    // The day log is keyed on (run_id, day_index), never the uuid.
+    final log = owed.last;
+    expect(jsonDecode(log.payload), containsPair('id', 'legacy-log'));
+  });
+
+  test('a row the server had already seen is not queued', () async {
+    final dir = await Directory.systemTemp.createTemp('feral-migration-clean');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/feral.sqlite');
+
+    await _writeLegacyDatabase(
+      file,
+      tables: _v3Tables,
+      version: 3,
+      dirty: false,
+    );
+
+    final migrated = FeralDatabase(NativeDatabase(file));
+    addTearDown(migrated.close);
+
+    // Queueing every row regardless would re-upload a user's whole history on
+    // upgrade, for nothing.
+    expect(await migrated.select(migrated.outbox).get(), isEmpty);
+    expect(await migrated.select(migrated.campaignRuns).get(), hasLength(1));
   });
 
   test('two options cannot occupy the same side of a question', () async {
@@ -153,6 +205,7 @@ Future<void> _writeLegacyDatabase(
   File file, {
   required Set<String> tables,
   required int version,
+  bool dirty = true,
 }) async {
   final ddl = await _schemaStatementsFor(tables);
 
@@ -161,16 +214,43 @@ Future<void> _writeLegacyDatabase(
     for (final statement in ddl) {
       raw.execute(statement);
     }
+
+    // Two things the current schema can no longer describe, which a genuine file
+    // at this version certainly had. Taking the DDL from drift keeps the probe
+    // honest about everything that still exists; these are what v10 removed, so
+    // they have to be put back by hand or the fixture is not the file it claims
+    // to be -- and the v10 step would have nothing to migrate.
+    for (final table in const [
+      'campaign_runs',
+      'day_logs',
+      'day_log_actions',
+      'diagnostic_results',
+      'profiles',
+    ]) {
+      if (!tables.contains(table)) continue;
+      raw.execute(
+        'ALTER TABLE $table ADD COLUMN dirty INTEGER NOT NULL DEFAULT 1',
+      );
+    }
+    if (tables.contains('sync_state')) {
+      raw.execute(
+        'CREATE TABLE sync_state (table_name TEXT NOT NULL PRIMARY KEY, '
+        'watermark INTEGER NULL, last_pulled_at INTEGER NULL)',
+      );
+    }
+
     final at = DateTime.utc(2026, 6, 1, 9).millisecondsSinceEpoch ~/ 1000;
     raw.execute(
       'INSERT INTO campaign_runs '
       '(id, user_id, campaign_id, status, is_hardened, started_at, updated_at, dirty) '
-      "VALUES ('legacy-run', 'user-1', 'campaign-1', 'active', 0, $at, $at, 1)",
+      "VALUES ('legacy-run', 'user-1', 'campaign-1', 'active', 0, $at, $at, "
+      '${dirty ? 1 : 0})',
     );
     raw.execute(
       'INSERT INTO day_logs '
       '(id, user_id, run_id, day_index, action_id, updated_at, dirty) '
-      "VALUES ('legacy-log', 'user-1', 'legacy-run', 1, 'action-1', $at, 1)",
+      "VALUES ('legacy-log', 'user-1', 'legacy-run', 1, 'action-1', $at, "
+      '${dirty ? 1 : 0})',
     );
     raw.execute('PRAGMA user_version = $version');
   } finally {

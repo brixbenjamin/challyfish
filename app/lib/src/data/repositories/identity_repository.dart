@@ -202,10 +202,20 @@ class IdentityRepository {
 /// Clear this device's user state so the signed-in account's record can be
 /// pulled cleanly.
 ///
-/// Content tables are deliberately untouched -- they are user-agnostic, and
-/// re-downloading the library after a sign-in would be a pointless round trip
-/// on a connection we already know is working -- with the single exception of
-/// action_bodies, explained below.
+/// Content tables are deliberately untouched. They are user-agnostic, and
+/// re-downloading the library after a sign-in would be a pointless round trip on
+/// a connection we already know is working.
+///
+/// The two body tables are no longer purged here, because they no longer need to
+/// be: the cached content version is dropped below, which turns the next
+/// ordinary refresh into a full one, and that replaces both tables with exactly
+/// what row-level security returns for whoever is now signed in.
+///
+/// This is a sign-in, not a refund. The difference is timing: a sign-in is
+/// immediately followed by a boot that refreshes content, so the gap is a
+/// moment; a refund arrives during a background sync with no such follow-up,
+/// which is why revocation still deletes the rows itself
+/// (see SyncRepository._revokeUnentitledContent, ADR-0025, ADR-0034).
 ///
 /// The discarded rows are NOT pushed first. Uploading records the user just
 /// agreed to discard would be worse than discarding them.
@@ -228,71 +238,14 @@ Future<void> replaceLocalUserState(FeralDatabase db) async {
     // about is exactly the bug plan 3's tests were written to prevent.
     await db.delete(db.entitlements).go();
 
-    // Content is normally left alone across a sign-in, and for every other
-    // content table that is still right. The two body tables are the exception:
-    // they are the tables whose visible rows depend on *who is asking*, so rows
-    // the previous account could read are not rows this one may keep (ADR-0025,
-    // ADR-0034). The core pack is kept because it is free to everyone, which
-    // also means a sign-in never leaves the app with nothing to show.
-    final paidRows =
-        db.selectOnly(db.actions).join([
-            innerJoin(db.days, db.days.id.equalsExp(db.actions.dayId)),
-            innerJoin(
-              db.campaigns,
-              db.campaigns.id.equalsExp(db.days.campaignId),
-            ),
-            innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
-          ])
-          ..addColumns([db.actions.id, db.days.id])
-          ..where(db.packs.isCore.equals(false));
-    final rows = await paidRows.get();
-    final actionIds = rows.map((r) => r.read(db.actions.id)!).toList();
-    if (actionIds.isNotEmpty) {
-      await (db.delete(
-        db.actionBodies,
-      )..where((b) => b.actionId.isIn(actionIds))).go();
-    }
+    // The cached content version. This is what turns the next ordinary,
+    // version-gated refresh into a full one, which is how the body tables get
+    // re-filtered for whoever is now signed in.
+    await db.delete(db.clientState).go();
 
-    // Days are reached independently of actions: a paid day whose actions have
-    // not been pulled yet still has a body the previous account could read, and
-    // a join through `actions` would leave exactly that row behind.
-    final paidDayIds =
-        db.selectOnly(db.days).join([
-            innerJoin(
-              db.campaigns,
-              db.campaigns.id.equalsExp(db.days.campaignId),
-            ),
-            innerJoin(db.packs, db.packs.id.equalsExp(db.campaigns.packId)),
-          ])
-          ..addColumns([db.days.id])
-          ..where(db.packs.isCore.equals(false));
-    final dayIds = (await paidDayIds.get())
-        .map((r) => r.read(db.days.id)!)
-        .toList();
-    if (dayIds.isNotEmpty) {
-      await (db.delete(
-        db.dayBodies,
-      )..where((b) => b.dayId.isIn(dayIds))).go();
-    }
-
-    // User-table watermarks, plus both body tables. Every other content
-    // watermark is left alone -- resetting one would force a full library
-    // re-download for no reason -- but a body table's visible row set is per
-    // user while its mark is per device, so a stale mark would hide a
-    // newly-signed-in account's own pack behind an `updated_at >` filter it can
-    // never satisfy.
-    for (final table in [
-      'profiles',
-      'campaign_runs',
-      'day_logs',
-      'diagnostic_results',
-      'entitlements',
-      'action_bodies',
-      'day_bodies',
-    ]) {
-      await (db.delete(
-        db.syncState,
-      )..where((s) => s.syncTable.equals(table))).go();
-    }
+    // Everything this device still owed the previous account. Sending it now
+    // would write the account the user left into the account they just joined,
+    // and these are rows they have already agreed to discard.
+    await db.delete(db.outbox).go();
   });
 }

@@ -2,7 +2,7 @@ import 'package:feral/src/app/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test/test.dart';
 
-import '../data/identity_repository_test.dart' show FakeAuthGateway;
+import '../support/fake_auth_gateway.dart';
 
 void main() {
   test('the user id is read from the session, not from launch', () {

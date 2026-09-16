@@ -21,18 +21,19 @@ class SeedSnapshotLoader {
            readSnapshot ??
            (() => rootBundle.loadString('assets/seed/core_content.json'));
 
-  /// Tables the snapshot carries a deliberate subset of. Their rows are applied
-  /// like any other, but they establish no high-water mark: a mark taken from
-  /// the free pack's bodies sits above every paid body's timestamp, and the
-  /// incremental pull would then filter out exactly what a purchase paid for
-  /// (ADR-0025). `day_bodies` walks into the identical trap (ADR-0034).
-  static const _partialTables = {'action_bodies', 'day_bodies'};
-
   final FeralDatabase db;
   final ContentRepository content;
   final Future<String> Function() _readSnapshot;
 
   /// Returns whether it seeded. Safe to call on every launch.
+  ///
+  /// No content version is recorded, deliberately. The snapshot is a subset — it
+  /// carries the free pack's bodies and none of the paid ones — so claiming the
+  /// server's version for it would make the first refresh decide there was
+  /// nothing to fetch. Leaving the version unset is what makes that first
+  /// refresh a full one, and it is why the watermark-priming this replaced had
+  /// to special-case the two body tables to avoid filtering out exactly what a
+  /// purchase paid for (ADR-0025, ADR-0034). There is no case to special-case now.
   Future<bool> loadIfEmpty() async {
     final existing = await db.select(db.campaigns).get();
     if (existing.isNotEmpty) return false;
@@ -44,17 +45,6 @@ class SeedSnapshotLoader {
     await db.transaction(() async {
       await content.applyRows(raw);
     });
-
-    for (final entry in raw.entries) {
-      if (_partialTables.contains(entry.key)) continue;
-      final rows = (entry.value as List).cast<Map<String, dynamic>>();
-      DateTime? high;
-      for (final row in rows) {
-        final updated = DateTime.parse(row['updated_at'] as String);
-        if (high == null || updated.isAfter(high)) high = updated;
-      }
-      if (high != null) await content.primeWatermark(entry.key, high);
-    }
 
     return true;
   }

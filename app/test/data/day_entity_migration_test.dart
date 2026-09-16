@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:feral/src/data/local/database.dart';
+import 'package:feral/src/data/remote/content_api.dart';
+import 'package:feral/src/data/repositories/content_repository.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
@@ -167,23 +169,28 @@ void main() {
       expect(await db.select(db.actionBodies).get(), isEmpty);
     });
 
-    test('the dropped tables lose their watermarks', () async {
-      // The half of this that is easy to forget and fatal to miss. The rows are
-      // older than the mark, so an incremental pull asks for nothing and the
-      // app sits on an empty library until it is reinstalled.
+    test('every content table is emptied, not just the rebuilt ones', () async {
+      // v9 stopped treating content as a store worth migrating. There is no
+      // per-table decision left about what to carry across: the cache is
+      // discarded whole and the next refresh refills it.
       final db = await migrated();
 
-      expect(await db.watermarkFor('actions'), isNull);
-      expect(await db.watermarkFor('action_archetypes'), isNull);
-      expect(await db.watermarkFor('action_bodies'), isNull);
+      expect(await db.select(db.campaigns).get(), isEmpty);
+      expect(await db.select(db.packs).get(), isEmpty);
+      expect(await db.select(db.archetypes).get(), isEmpty);
+      expect(await db.select(db.doctrineEntries).get(), isEmpty);
     });
 
-    test('untouched content keeps its watermark', () async {
-      // campaigns did not move, so re-downloading the library would be a
-      // pointless round trip on an upgrade that changed nothing about it.
+    test('the upgrade leaves no cached content version', () async {
+      // What the cleared watermarks used to be for, and the half that was easy
+      // to forget and fatal to miss: rows dropped by an upgrade sat below this
+      // device's mark, so an incremental pull asked for nothing and the app sat
+      // on an empty library until it was reinstalled. An absent version is what
+      // makes the next refresh a full one.
       final db = await migrated();
+      final content = ContentRepository(db: db, api: _NoopContentApi());
 
-      expect(await db.watermarkFor('campaigns'), isNotNull);
+      expect(await content.cachedVersion(), isNull);
     });
 
     test('a day can hold a mandatory action and an optional one', () async {
@@ -223,10 +230,18 @@ void main() {
             ),
           );
 
-      final onDayOne =
-          await (db.select(db.actions)..where((a) => a.dayId.equals('day-1')))
-              .get();
+      final onDayOne = await (db.select(
+        db.actions,
+      )..where((a) => a.dayId.equals('day-1'))).get();
       expect(onDayOne, hasLength(2));
     });
   });
+}
+
+class _NoopContentApi implements ContentApi {
+  @override
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async => const [];
+
+  @override
+  Future<int> fetchVersion() async => 1;
 }

@@ -94,18 +94,15 @@ void main() {
     expect(find.textContaining('intro text'), findsOneWidget);
   });
 
-  testWidgets(
-    'a day names its drive with a tag; a rest day carries none',
-    (tester) async {
-      await tester.pumpWidget(
-        wrap(buildScreen(days: const [day1, day2, day3])),
-      );
+  testWidgets('a day names its drive with a tag; a rest day carries none', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap(buildScreen(days: const [day1, day2, day3])));
 
-      // The header's own tag plus one per named day: three ArchetypeTags for
-      // two archetype-bearing days, none for the rest day in between.
-      expect(find.byType(ArchetypeTag), findsNWidgets(3));
-    },
-  );
+    // The header's own tag plus one per named day: three ArchetypeTags for
+    // two archetype-bearing days, none for the rest day in between.
+    expect(find.byType(ArchetypeTag), findsNWidgets(3));
+  });
 
   testWidgets('no days cached yet renders no preview section at all', (
     tester,
@@ -125,7 +122,10 @@ void main() {
       lengthDays: 12,
     );
 
-    List<DaySpec> longDays({String? day6ArchetypeId, String? day10ArchetypeId}) => [
+    List<DaySpec> longDays({
+      String? day6ArchetypeId,
+      String? day10ArchetypeId,
+    }) => [
       for (var i = 1; i <= 12; i++)
         DaySpec(
           id: 'd-$i',
@@ -140,18 +140,20 @@ void main() {
         ),
     ];
 
-    Widget buildLongScreen(List<DaySpec> days, Map<String, Archetype> archetypesById) =>
-        CampaignDetailScreen(
-          campaign: longCampaign,
-          targets: const [],
-          missAllowance: 1,
-          days: days,
-          archetypesById: archetypesById,
-          isUnlocked: true,
-          hasActiveRun: false,
-          onStart: () {},
-          onUnlock: () {},
-        );
+    Widget buildLongScreen(
+      List<DaySpec> days,
+      Map<String, Archetype> archetypesById,
+    ) => CampaignDetailScreen(
+      campaign: longCampaign,
+      targets: const [],
+      missAllowance: 1,
+      days: days,
+      archetypesById: archetypesById,
+      isUnlocked: true,
+      hasActiveRun: false,
+      onStart: () {},
+      onUnlock: () {},
+    );
 
     testWidgets(
       'only the first 5 days render up front; the rest collapse behind a count',
@@ -175,7 +177,10 @@ void main() {
         await tester.pumpWidget(
           wrap(
             buildLongScreen(
-              longDays(day6ArchetypeId: 'a-killer', day10ArchetypeId: 'a-trickster'),
+              longDays(
+                day6ArchetypeId: 'a-killer',
+                day10ArchetypeId: 'a-trickster',
+              ),
               const {'a-killer': killer, 'a-trickster': trickster},
             ),
           ),
@@ -211,19 +216,18 @@ void main() {
       },
     );
 
-    testWidgets(
-      "a fogged day's semantics name it without leaking its title",
-      (tester) async {
-        await tester.pumpWidget(wrap(buildLongScreen(longDays(), const {})));
+    testWidgets("a fogged day's semantics name it without leaking its title", (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrap(buildLongScreen(longDays(), const {})));
 
-        await tester.tap(find.text(l10n.campaignDaysRemainingCta(7)));
-        await tester.pump();
+      await tester.tap(find.text(l10n.campaignDaysRemainingCta(7)));
+      await tester.pump();
 
-        expect(
-          find.bySemanticsLabel(l10n.dayNotYetRevealedLabel(6)),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(
+        find.bySemanticsLabel(l10n.dayNotYetRevealedLabel(6)),
+        findsOneWidget,
+      );
+    });
   });
 }

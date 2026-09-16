@@ -163,7 +163,10 @@ void main() {
         isNot(contains('q1')),
         reason: 'answers are never stored (ADR-0009)',
       );
-      expect(row.dirty, isTrue);
+      final queued = await (db.select(
+        db.outbox,
+      )..where((o) => o.remoteTable.equals('diagnostic_results'))).getSingle();
+      expect(queued.rowKey, row.id);
     },
   );
 
@@ -259,8 +262,8 @@ void main() {
 
 class _NoopApi implements ContentApi {
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async => [];
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async => [];
+
+  @override
+  Future<int> fetchVersion() async => 1;
 }

@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:feral/src/data/local/database.dart';
+import 'package:feral/src/data/remote/content_api.dart';
+import 'package:feral/src/data/repositories/content_repository.dart';
 import 'package:feral/src/data/repositories/identity_repository.dart';
 import 'package:test/test.dart';
 
@@ -12,7 +14,7 @@ import 'package:test/test.dart';
 /// this be asserted against a real database rather than a mock, which matters
 /// here because the whole claim is about which rows remain.
 void main() {
-  test('signing in clears paid bodies and the body watermark', () async {
+  test('signing in makes the next content refresh a full one', () async {
     final db = FeralDatabase(NativeDatabase.memory());
     addTearDown(db.close);
 
@@ -104,20 +106,20 @@ void main() {
             ),
           );
     }
-    await db.setWatermark('action_bodies', DateTime.utc(2026, 9, 9));
+    final content = ContentRepository(db: db, api: _EmptyContentApi());
+    await content.primeVersion(7);
 
     await replaceLocalUserState(db);
 
-    final remaining = await db.select(db.actionBodies).get();
+    // The wipe no longer deletes body rows itself. Both body tables are replaced
+    // by the refresh with exactly what row-level security returns for whoever is
+    // now signed in, so the previous account's paid copy goes then — and the
+    // dropped version is what guarantees that refresh actually runs rather than
+    // being talked out of it by a library that did not change.
     expect(
-      remaining.map((b) => b.actionId),
-      ['aCore'],
-      reason: 'the free pack survives; the previous account\'s pack does not',
-    );
-    expect(
-      await db.watermarkFor('action_bodies'),
+      await content.cachedVersion(),
       isNull,
-      reason: 'the next pull must be able to see rows older than the old mark',
+      reason: 'a surviving version would let the new account read the old copy',
     );
   });
 
@@ -170,4 +172,12 @@ void main() {
     expect(await db.select(db.dayLogActions).get(), isEmpty);
     expect(await db.select(db.dayLogs).get(), isEmpty);
   });
+}
+
+class _EmptyContentApi implements ContentApi {
+  @override
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async => const [];
+
+  @override
+  Future<int> fetchVersion() async => 1;
 }

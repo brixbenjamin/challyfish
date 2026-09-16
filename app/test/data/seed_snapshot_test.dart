@@ -87,23 +87,15 @@ void main() {
     expect(await db.select(db.campaigns).get(), hasLength(1));
   });
 
-  test('primes each table watermark from the snapshot', () async {
+  test('records no content version, so the first refresh is a full one', () async {
     await loader.loadIfEmpty();
 
-    // Set too low and the first pull re-downloads the library; too high and
-    // genuine edits are missed forever.
-    expect(
-      await content.watermarkFor('archetypes'),
-      DateTime.parse('2026-06-01T09:00:00Z'),
-    );
-    expect(
-      await content.watermarkFor('packs'),
-      DateTime.parse('2026-06-02T09:00:00Z'),
-    );
-    expect(
-      await content.watermarkFor('campaigns'),
-      DateTime.parse('2026-06-03T09:00:00Z'),
-    );
+    // The snapshot is a subset: it carries the free pack's bodies and none of the
+    // paid ones. Claiming the server's version for it would make the first
+    // refresh decide there was nothing to fetch, and a purchase would deliver
+    // nothing. This replaced per-table watermark priming, which had to
+    // special-case both body tables for exactly that reason (ADR-0025, ADR-0034).
+    expect(await content.cachedVersion(), isNull);
   });
 
   test('a malformed snapshot fails loudly rather than half-seeding', () async {
@@ -196,8 +188,8 @@ void main() {
 
 class _NoopApi implements ContentApi {
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async => [];
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async => [];
+
+  @override
+  Future<int> fetchVersion() async => 1;
 }

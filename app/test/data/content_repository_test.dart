@@ -1,31 +1,12 @@
-import 'package:drift/native.dart';
+import 'dart:io';
+
 import 'package:feral/src/data/local/database.dart';
-import 'package:feral/src/data/remote/content_api.dart';
 import 'package:feral/src/data/repositories/content_repository.dart';
 import 'package:feral/src/domain/day.dart';
 import 'package:test/test.dart';
 
-class FakeContentApi implements ContentApi {
-  FakeContentApi(this.rows);
-
-  final Map<String, List<Map<String, dynamic>>> rows;
-  final List<({String table, DateTime? since})> calls = [];
-
-  @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async {
-    calls.add((table: table, since: since));
-    final all = rows[table] ?? const [];
-    if (since == null) return all;
-    return all
-        .where(
-          (row) => DateTime.parse(row['updated_at'] as String).isAfter(since),
-        )
-        .toList();
-  }
-}
+import '../support/database.dart';
+import '../support/fake_content_api.dart';
 
 Map<String, dynamic> archetypeRow(String id, String key, String updatedAt) => {
   'id': id,
@@ -88,7 +69,7 @@ Map<String, dynamic> actionArchetypeRow(
 void main() {
   late FeralDatabase db;
 
-  setUp(() => db = FeralDatabase(NativeDatabase.memory()));
+  setUp(() => db = memoryDatabase());
   tearDown(() => db.close());
 
   test('a first pull fetches everything and stores it', () async {
@@ -99,25 +80,44 @@ void main() {
     });
     final repo = ContentRepository(db: db, api: api);
 
-    await repo.pull();
+    await repo.refresh();
 
     expect(await db.select(db.archetypes).get(), hasLength(1));
     expect(await db.select(db.actions).get(), hasLength(1));
-    expect(api.calls.every((call) => call.since == null), isTrue);
   });
 
-  test('a second pull asks only for rows newer than the watermark', () async {
+  test('a second refresh at the same version fetches nothing', () async {
     final api = FakeContentApi({
       'archetypes': [archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z')],
     });
     final repo = ContentRepository(db: db, api: api);
 
-    await repo.pull();
-    api.calls.clear();
-    await repo.pull();
+    expect(await repo.refresh(), isTrue);
+    api.fetched.clear();
 
-    final archetypeCall = api.calls.firstWhere((c) => c.table == 'archetypes');
-    expect(archetypeCall.since, DateTime.parse('2026-06-01T09:00:00Z'));
+    // The whole point of the version: a launch that finds the library unchanged
+    // costs one integer, not the library.
+    expect(await repo.refresh(), isFalse);
+    expect(api.fetched, isEmpty);
+  });
+
+  test('a moved version refetches, and force ignores the gate', () async {
+    final api = FakeContentApi({
+      'archetypes': [archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z')],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.refresh();
+
+    api.version = 2;
+    api.fetched.clear();
+    expect(await repo.refresh(), isTrue);
+    expect(api.fetched, isNotEmpty);
+
+    // A purchase and a sign-in change who may read the body tables without
+    // changing the library, so they force past the gate (ADR-0025, ADR-0034).
+    api.fetched.clear();
+    expect(await repo.refresh(force: true), isTrue);
+    expect(api.fetched, isNotEmpty);
   });
 
   test(
@@ -129,12 +129,13 @@ void main() {
         ],
       });
       final repo = ContentRepository(db: db, api: api);
-      await repo.pull();
+      await repo.refresh();
 
       api.rows['archetypes'] = [
         archetypeRow('arch-1', 'renamed', '2026-06-02T09:00:00Z'),
       ];
-      await repo.pull();
+      api.version = 2;
+      await repo.refresh();
 
       final stored = await db.select(db.archetypes).get();
       expect(stored, hasLength(1));
@@ -157,7 +158,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     final action = (await repo.dayFor('campaign-1', 2))?.mandatory;
     expect(action?.id, 'action-2');
@@ -186,7 +187,7 @@ void main() {
         ],
       });
       final repo = ContentRepository(db: db, api: api);
-      await repo.pull();
+      await repo.refresh();
 
       final action = (await repo.dayFor('campaign-1', 1))?.mandatory;
       expect(action?.archetypeWeights, {'arch-1': 2 / 3, 'arch-2': 1 / 3});
@@ -204,20 +205,22 @@ void main() {
         'actions': [actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z')],
       });
       final repo = ContentRepository(db: db, api: api);
-      await repo.pull();
+      await repo.refresh();
 
       final action = (await repo.dayFor('campaign-1', 1))?.mandatory;
       expect(action?.archetypeWeights, isEmpty);
     },
   );
 
-  test('a pull covers every content table', () async {
-    final api = FakeContentApi(const {});
+  test('a refresh covers every content table', () async {
+    final api = FakeContentApi({
+      'archetypes': [archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z')],
+    });
     final repo = ContentRepository(db: db, api: api);
 
-    await repo.pull();
+    await repo.refresh();
 
-    expect(api.calls.map((c) => c.table).toSet(), {
+    expect(api.fetched.toSet(), {
       'archetypes',
       'packs',
       'campaigns',
@@ -232,6 +235,91 @@ void main() {
       'diagnostic_questions',
       'diagnostic_options',
     });
+  });
+
+  test('a row deleted on the server disappears from the cache', () async {
+    final api = FakeContentApi({
+      'archetypes': [
+        archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z'),
+        archetypeRow('arch-2', 'psycho', '2026-06-01T09:00:00Z'),
+      ],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.refresh();
+    expect(await db.select(db.archetypes).get(), hasLength(2));
+
+    // The reason this repository stopped merging. A deleted row carries no newer
+    // `updated_at`, so the incremental pull this replaced could never see it go:
+    // the row sat below the watermark and survived until the app was reinstalled.
+    api.rows['archetypes'] = [
+      archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z'),
+    ];
+    api.version = 2;
+    await repo.refresh();
+
+    final stored = await db.select(db.archetypes).get();
+    expect(stored, hasLength(1));
+    expect(stored.single.id, 'arch-1');
+  });
+
+  test('a fetch that fails part way through leaves the cache intact', () async {
+    final api = FakeContentApi({
+      'archetypes': [archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z')],
+      'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.refresh();
+
+    // A throw is "we did not find out", never "the library is empty" (ADR-0025).
+    // Deleting first and fetching second would have emptied the app instead.
+    api.rows['archetypes'] = [
+      archetypeRow('arch-1', 'renamed', '2026-06-02T09:00:00Z'),
+    ];
+    api.version = 2;
+    api.failTable['actions'] = const SocketException('offline');
+
+    await expectLater(repo.refresh(), throwsA(isA<SocketException>()));
+
+    final stored = await db.select(db.archetypes).get();
+    expect(stored.single.key, 'killer', reason: 'the old cache survives');
+    expect(await db.select(db.days).get(), hasLength(1));
+    expect(
+      await repo.cachedVersion(),
+      1,
+      reason: 'a version recorded here would skip the refetch still owed',
+    );
+  });
+
+  test('a server with no library at all leaves the cache alone', () async {
+    final api = FakeContentApi({
+      'archetypes': [archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z')],
+    });
+    final repo = ContentRepository(db: db, api: api);
+    await repo.refresh();
+
+    // Distinct from a deletion: every table empty is an empty server, not a
+    // library that lost a row. Wiping the bundled snapshot on that answer would
+    // leave a fresh install with nothing to show.
+    api.rows.clear();
+    api.version = 2;
+    expect(await repo.refresh(), isFalse);
+    expect(await db.select(db.archetypes).get(), hasLength(1));
+  });
+
+  test('both body tables are fetched whole, never incrementally', () async {
+    final api = FakeContentApi({
+      'archetypes': [archetypeRow('arch-1', 'killer', '2026-06-01T09:00:00Z')],
+    });
+    final repo = ContentRepository(db: db, api: api);
+
+    await repo.refresh();
+
+    // What the watermark-priming trap used to be about: a mark taken from the
+    // free pack's bodies sat above every paid body's timestamp, so a purchase
+    // delivered nothing (ADR-0025, ADR-0034). A whole-table fetch has no mark to
+    // get wrong, and row-level security decides what comes back.
+    expect(api.fetched, contains('action_bodies'));
+    expect(api.fetched, contains('day_bodies'));
   });
 
   test('doctrine entries come back grouped and ordered', () async {
@@ -267,7 +355,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     expect((await repo.doctrineGroups()).single.title, 'The Zoo');
     expect(
@@ -307,7 +395,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     final questions = await repo.diagnosticQuestions();
     expect(questions, hasLength(1));
@@ -329,7 +417,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     expect(await repo.archetypeIdsFor('campaign-1'), ['arch-killer']);
   });
@@ -355,7 +443,7 @@ void main() {
           'actions': [actionRow('server-id', 'day-1', '2026-06-02T09:00:00Z')],
         }),
       );
-      await repo.pull();
+      await repo.refresh();
 
       final rows = await db.select(db.actions).get();
       expect(
@@ -385,7 +473,7 @@ void main() {
         'actions': [actionRow('action-1', 'day-2', '2026-06-02T09:00:00Z')],
       }),
     );
-    await repo.pull();
+    await repo.refresh();
 
     final rows = await db.select(db.actions).get();
     expect(rows.map((r) => (r.id, r.dayId)), [('action-1', 'day-2')]);
@@ -397,27 +485,34 @@ void main() {
   /// day_index) refuses it, and the whole pull dies there -- taking `actions`
   /// and everything after it with it, silently, for as long as the app is
   /// installed.
-  test('a day re-issued under a new id replaces the row it identifies', () async {
-    final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
-    await seeded.applyRows({
-      'days': [dayRow('bundled-day', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
-    });
+  test(
+    'a day re-issued under a new id replaces the row it identifies',
+    () async {
+      final seeded = ContentRepository(db: db, api: FakeContentApi(const {}));
+      await seeded.applyRows({
+        'days': [
+          dayRow('bundled-day', 'campaign-1', 1, '2026-06-01T09:00:00Z'),
+        ],
+      });
 
-    final repo = ContentRepository(
-      db: db,
-      api: FakeContentApi({
-        'days': [dayRow('server-day', 'campaign-1', 1, '2026-06-02T09:00:00Z')],
-      }),
-    );
-    await repo.pull();
+      final repo = ContentRepository(
+        db: db,
+        api: FakeContentApi({
+          'days': [
+            dayRow('server-day', 'campaign-1', 1, '2026-06-02T09:00:00Z'),
+          ],
+        }),
+      );
+      await repo.refresh();
 
-    final rows = await db.select(db.days).get();
-    expect(
-      rows.map((r) => r.id),
-      ['server-day'],
-      reason: 'one day of one campaign is one row, whatever it is called',
-    );
-  });
+      final rows = await db.select(db.days).get();
+      expect(
+        rows.map((r) => r.id),
+        ['server-day'],
+        reason: 'one day of one campaign is one row, whatever it is called',
+      );
+    },
+  );
 
   /// The other direction, which the natural key alone would miss: the id is
   /// stable and the day moved to another position in the campaign.
@@ -433,7 +528,7 @@ void main() {
         'days': [dayRow('day-1', 'campaign-1', 2, '2026-06-02T09:00:00Z')],
       }),
     );
-    await repo.pull();
+    await repo.refresh();
 
     final rows = await db.select(db.days).get();
     expect(rows.map((r) => (r.id, r.dayIndex)), [('day-1', 2)]);
@@ -474,7 +569,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     final day = await repo.dayFor('campaign-1', 1);
     expect(day?.title, 'Day 1');
@@ -489,12 +584,15 @@ void main() {
     expect(day?.optionals.map((a) => a.id), ['a-optional-1', 'a-optional-2']);
   });
 
-  test('dayFor returns null rather than throwing for an uncached day', () async {
-    // The surface must degrade to a recoverable "content unavailable" state.
-    final repo = ContentRepository(db: db, api: FakeContentApi(const {}));
-    await repo.pull();
-    expect(await repo.dayFor('campaign-1', 1), isNull);
-  });
+  test(
+    'dayFor returns null rather than throwing for an uncached day',
+    () async {
+      // The surface must degrade to a recoverable "content unavailable" state.
+      final repo = ContentRepository(db: db, api: FakeContentApi(const {}));
+      await repo.refresh();
+      expect(await repo.dayFor('campaign-1', 1), isNull);
+    },
+  );
 
   test('a day whose body has not arrived is a day, not a failure', () async {
     // A locked pack, or an owned pack mid-pull. Exactly the state ActionSpec
@@ -503,7 +601,7 @@ void main() {
       'days': [dayRow('day-1', 'campaign-1', 1, '2026-06-01T09:00:00Z')],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     final day = await repo.dayFor('campaign-1', 1);
     expect(day, isNotNull);
@@ -519,7 +617,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     expect((await repo.dayFor('campaign-1', 1))?.kind, DayKind.rest);
   });
@@ -539,7 +637,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     expect((await repo.dayFor('campaign-1', 1))?.kind, DayKind.standard);
   });
@@ -553,7 +651,7 @@ void main() {
       ],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     expect(
       (await repo.daysFor('campaign-1')).map((d) => d.dayIndex),
@@ -570,7 +668,7 @@ void main() {
       'actions': [actionRow('action-1', 'day-1', '2026-06-01T09:00:00Z')],
     });
     final repo = ContentRepository(db: db, api: api);
-    await repo.pull();
+    await repo.refresh();
 
     expect(
       await db.select(db.actions).get(),

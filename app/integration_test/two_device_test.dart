@@ -34,14 +34,24 @@ class Device {
   late final SyncRepository sync;
   late final ProgressRepository progress;
 
-  /// The action for a given day, which ProgressRepository.report requires.
-  /// Read from the server rather than guessed.
+  /// The day's mandatory action, which ProgressRepository.report requires.
+  ///
+  /// Two hops, because an action no longer carries a campaign or a day index: it
+  /// hangs off `day_id` and the day owns both (ADR-0034). This helper queried the
+  /// dropped columns until now, which nothing noticed because CI has never had a
+  /// device to run these tests on.
   Future<String> actionIdFor(String campaignId, int dayIndex) async {
-    final rows = await client
-        .from('actions')
+    final days = await client
+        .from('days')
         .select('id')
         .eq('campaign_id', campaignId)
         .eq('day_index', dayIndex)
+        .limit(1);
+    final rows = await client
+        .from('actions')
+        .select('id')
+        .eq('day_id', days.first['id'] as String)
+        .eq('is_optional', false)
         .limit(1);
     return rows.first['id'] as String;
   }
@@ -135,7 +145,10 @@ void main() {
     expect(logs, hasLength(1));
     expect(logs.single.outcome, 'done');
     expect(logs.single.note, 'did it');
-    expect(logs.single.dirty, isFalse);
+
+    // Nothing is owed any more: the flush removed the entry when the server
+    // acknowledged it, and the refresh brought back the server's own row.
+    expect(await b.db.select(b.db.outbox).get(), isEmpty);
   });
 
   testWidgets('the later of two conflicting reports wins on both devices', (
@@ -195,9 +208,14 @@ void main() {
     },
   );
 
-  testWidgets('two offline campaign starts converge on the earlier run', (
+  testWidgets('two offline starts converge on whichever reached the server', (
     tester,
   ) async {
+    // A is deliberately the *earlier* run, and B is deliberately the one that
+    // syncs first. The old rule kept the earlier `started_at` and needed two
+    // devices that cannot talk to agree on it; the rule now is simply that the
+    // run already on the server keeps the slot. This is the case where the two
+    // answers differ, which is what makes it worth asserting.
     final runA = await a.progress.startRun(
       userId: userId,
       campaignId: campaignId,
@@ -210,18 +228,22 @@ void main() {
       isUnlocked: true,
     );
 
-    await a.sync.sync(userId);
-    final outcome = await b.sync.sync(userId);
+    await b.sync.sync(userId);
+    final outcome = await a.sync.sync(userId);
 
     // The rejection is expected and is resolved, not failed.
     expect(outcome.push.succeeded, isTrue);
 
-    final bRuns = await b.db.select(b.db.campaignRuns).get();
-    expect(bRuns.firstWhere((r) => r.id == runB.id).status, 'abandoned');
-    expect(bRuns.where((r) => r.status == 'active').single.id, runA.id);
+    final aRuns = await a.db.select(a.db.campaignRuns).get();
+    expect(
+      aRuns.firstWhere((r) => r.id == runA.id).status,
+      'abandoned',
+      reason: 'started earlier, but arrived second',
+    );
+    expect(aRuns.where((r) => r.status == 'active').single.id, runB.id);
 
-    // And B told the user.
-    expect(b.sync.pendingNotices, isNotEmpty);
+    // And the device that lost the slot told the user.
+    expect(a.sync.pendingNotices, isNotEmpty);
   });
 
   testWidgets("neither device loses the abandoned run's day logs", (
@@ -245,9 +267,22 @@ void main() {
     await b.sync.sync(userId);
 
     // The abandoned run is closed, but its honest record survives. Nothing in
-    // this product deletes a day the user reported.
+    // this product deletes a day the user reported (ADR-0003) -- and the queue
+    // is what carries that: B's rejected run is rewritten as abandoned rather
+    // than dropped, so the run and its day log both still reach the server.
     final logs = await b.db.select(b.db.dayLogs).get();
     expect(logs.where((l) => l.runId == runB.id), hasLength(1));
+
+    final onServer = await client
+        .from('day_logs')
+        .select('run_id')
+        .eq('user_id', userId)
+        .eq('run_id', runB.id);
+    expect(
+      onServer,
+      hasLength(1),
+      reason: "the losing run's effort reaches the server too",
+    );
   });
 
   testWidgets('a pull after a reinstall rebuilds the record from nothing', (

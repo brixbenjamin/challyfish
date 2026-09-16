@@ -55,11 +55,10 @@ void main() {
     expect(ticks.single.completed, isTrue);
     expect(ticks.single.runId, 'run-1');
     expect(ticks.single.dayIndex, 1);
-    expect(
-      ticks.single.dirty,
-      isTrue,
-      reason: 'a backfilled row pushes like any other local write',
-    );
+    // Whether a backfilled tick reaches the server is the v10 step's business,
+    // not this one's: at v6 the row is marked by the `dirty` column's on-disk
+    // default, and v10 turns whatever is still marked into a queue entry. That
+    // handover is covered in database_migration_test.dart.
   });
 
   test('a partial day is backfilled too', () async {

@@ -10,6 +10,7 @@ import '../../domain/outcome.dart';
 import '../../domain/run.dart';
 import '../../engine/run_engine.dart';
 import '../local/database.dart';
+import 'outbox.dart';
 
 /// Thrown when a run is started on a campaign in a pack the user does not own.
 ///
@@ -29,8 +30,14 @@ class PackLocked implements Exception {
 /// The only writer of user state.
 ///
 /// Every method here writes to Drift and returns. Nothing awaits the network —
-/// that is what makes the daily loop independent of connectivity. Rows are
-/// marked dirty for the push worker, which arrives in Plan 3.
+/// that is what makes the daily loop independent of connectivity.
+///
+/// Each write does two things in one transaction: it updates this device's cache
+/// of the record, and it queues what it just wrote for the server. Both or
+/// neither. A cache updated without a queue entry is a day the user reported that
+/// never leaves the phone; a queue entry without the cache is a day they cannot
+/// see. The transaction is also what the read-then-write in [_upsertLog] and
+/// [setActionCompleted] always needed and never had.
 class ProgressRepository {
   // Fields are public (not `_db`/`_clock`/`_zone`/`_engine`) so the constructor
   // can use initializing formals — see ContentRepository for the same
@@ -47,6 +54,8 @@ class ProgressRepository {
   final Clock clock;
   final tz.Location zone;
   final RunEngine engine;
+
+  late final OutboxQueue _outbox = OutboxQueue(db: db, clock: clock.nowUtc);
 
   // Not derived from the clock: an id is not a timestamp, and DateTime.now()
   // here would violate the rule that the clock is the only source of "now".
@@ -74,18 +83,21 @@ class ProgressRepository {
       startedAt: now,
     );
 
-    await db
-        .into(db.campaignRuns)
-        .insert(
-          CampaignRunsCompanion.insert(
-            id: run.id,
-            userId: run.userId,
-            campaignId: run.campaignId,
-            status: run.status.key,
-            startedAt: run.startedAt,
-            updatedAt: now,
-          ),
-        );
+    await db.transaction(() async {
+      await db
+          .into(db.campaignRuns)
+          .insert(
+            CampaignRunsCompanion.insert(
+              id: run.id,
+              userId: run.userId,
+              campaignId: run.campaignId,
+              status: run.status.key,
+              startedAt: run.startedAt,
+              updatedAt: now,
+            ),
+          );
+      await _queueRun(run.id);
+    });
 
     return run;
   }
@@ -104,13 +116,17 @@ class ProgressRepository {
   /// Abandoning is permanent and preserves every day already logged. It is the
   /// only destructive action in the product, and it deletes nothing.
   Future<void> abandonRun(String runId) async {
-    await (db.update(db.campaignRuns)..where((r) => r.id.equals(runId))).write(
-      CampaignRunsCompanion(
-        status: Value(RunStatus.abandoned.key),
-        updatedAt: Value(clock.nowUtc()),
-        dirty: const Value(true),
-      ),
-    );
+    await db.transaction(() async {
+      await (db.update(
+        db.campaignRuns,
+      )..where((r) => r.id.equals(runId))).write(
+        CampaignRunsCompanion(
+          status: Value(RunStatus.abandoned.key),
+          updatedAt: Value(clock.nowUtc()),
+        ),
+      );
+      await _queueRun(runId);
+    });
   }
 
   /// Every run the user has, in any status. The balance and the marks both
@@ -197,47 +213,51 @@ class ProgressRepository {
   }) async {
     final now = clock.nowUtc();
 
-    await _upsertLog(run: run, dayIndex: dayIndex, actionId: mandatoryActionId);
+    await db.transaction(() async {
+      // The day log first, and inside the same transaction: the server's foreign
+      // keys require the parent, and the queue sends in the order it was written.
+      await _upsertLog(
+        run: run,
+        dayIndex: dayIndex,
+        actionId: mandatoryActionId,
+      );
 
-    final existing =
-        await (db.select(db.dayLogActions)..where(
-              (t) =>
-                  t.runId.equals(run.id) &
-                  t.dayIndex.equals(dayIndex) &
-                  t.actionId.equals(actionId),
-            ))
-            .getSingleOrNull();
+      final existing =
+          await (db.select(db.dayLogActions)..where(
+                (t) =>
+                    t.runId.equals(run.id) &
+                    t.dayIndex.equals(dayIndex) &
+                    t.actionId.equals(actionId),
+              ))
+              .getSingleOrNull();
 
-    if (existing == null) {
-      await db
-          .into(db.dayLogActions)
-          .insert(
-            DayLogActionsCompanion.insert(
-              id: _newId(),
-              userId: run.userId,
-              runId: run.id,
-              dayIndex: dayIndex,
-              actionId: actionId,
-              completed: Value(completed),
-              updatedAt: now,
-              // Explicit for the same reason the day log's flag is: the push
-              // worker drains purely on it, and a silently changed default
-              // must never make a first write invisible to sync.
-              dirty: const Value(true),
-            ),
-          );
-      return;
-    }
+      if (existing == null) {
+        await db
+            .into(db.dayLogActions)
+            .insert(
+              DayLogActionsCompanion.insert(
+                id: _newId(),
+                userId: run.userId,
+                runId: run.id,
+                dayIndex: dayIndex,
+                actionId: actionId,
+                completed: Value(completed),
+                updatedAt: now,
+              ),
+            );
+      } else {
+        await (db.update(
+          db.dayLogActions,
+        )..where((t) => t.id.equals(existing.id))).write(
+          DayLogActionsCompanion(
+            completed: Value(completed),
+            updatedAt: Value(now),
+          ),
+        );
+      }
 
-    await (db.update(
-      db.dayLogActions,
-    )..where((t) => t.id.equals(existing.id))).write(
-      DayLogActionsCompanion(
-        completed: Value(completed),
-        updatedAt: Value(now),
-        dirty: const Value(true),
-      ),
-    );
+      await _queueTick(run.id, dayIndex, actionId);
+    });
   }
 
   /// Records the outcome derived from the day's ticks.
@@ -343,24 +363,22 @@ class ProgressRepository {
               outcome: outcome,
               note: note,
               updatedAt: now,
-              // Explicit, not left to the schema default: the push worker
-              // (Plan 3) drains purely on this flag, so a silently changed
-              // default must never make a first write invisible to sync.
-              dirty: const Value(true),
             ),
           );
-      return;
+    } else {
+      await (db.update(
+        db.dayLogs,
+      )..where((l) => l.id.equals(existing.id))).write(
+        DayLogsCompanion(
+          committedAt: committedAt,
+          outcome: outcome,
+          note: note,
+          updatedAt: Value(now),
+        ),
+      );
     }
 
-    await (db.update(db.dayLogs)..where((l) => l.id.equals(existing.id))).write(
-      DayLogsCompanion(
-        committedAt: committedAt,
-        outcome: outcome,
-        note: note,
-        updatedAt: Value(now),
-        dirty: const Value(true),
-      ),
-    );
+    await _queueDayLog(run.id, dayIndex);
   }
 
   /// Completes the run if its final day has both elapsed and been resolved.
@@ -401,19 +419,56 @@ class ProgressRepository {
     final grade = engine.grade(logs, lengthDays: campaign.lengthDays);
     final now = clock.nowUtc();
 
-    await (db.update(
-      db.campaignRuns,
-    )..where((r) => r.id.equals(stored.id))).write(
-      CampaignRunsCompanion(
-        status: Value(RunStatus.completed.key),
-        completedAt: Value(now),
-        grade: Value(grade.key),
-        updatedAt: Value(now),
-        dirty: const Value(true),
-      ),
-    );
+    await db.transaction(() async {
+      await (db.update(
+        db.campaignRuns,
+      )..where((r) => r.id.equals(stored.id))).write(
+        CampaignRunsCompanion(
+          status: Value(RunStatus.completed.key),
+          completedAt: Value(now),
+          grade: Value(grade.key),
+          updatedAt: Value(now),
+        ),
+      );
+      await _queueRun(stored.id);
+    });
 
     return grade;
+  }
+
+  // ------------------------------------------------------------------ queue
+
+  // Each of these re-reads the row it just wrote and queues that. Serialising
+  // from storage rather than from the arguments means what is queued is, by
+  // construction, what is stored -- there is no second place for the shape of a
+  // payload to drift from the shape of a row.
+
+  Future<void> _queueRun(String runId) async {
+    final row = await (db.select(
+      db.campaignRuns,
+    )..where((r) => r.id.equals(runId))).getSingleOrNull();
+    if (row != null) await _outbox.add(entryForRun(row));
+  }
+
+  Future<void> _queueDayLog(String runId, int dayIndex) async {
+    final row =
+        await (db.select(db.dayLogs)..where(
+              (l) => l.runId.equals(runId) & l.dayIndex.equals(dayIndex),
+            ))
+            .getSingleOrNull();
+    if (row != null) await _outbox.add(entryForDayLog(row));
+  }
+
+  Future<void> _queueTick(String runId, int dayIndex, String actionId) async {
+    final row =
+        await (db.select(db.dayLogActions)..where(
+              (t) =>
+                  t.runId.equals(runId) &
+                  t.dayIndex.equals(dayIndex) &
+                  t.actionId.equals(actionId),
+            ))
+            .getSingleOrNull();
+    if (row != null) await _outbox.add(entryForTick(row));
   }
 
   Future<CampaignRun?> runById(String id) async {

@@ -7,6 +7,7 @@ import '../../core/clock.dart';
 import '../../domain/diagnostic.dart';
 import '../../engine/diagnostic_scorer.dart';
 import '../local/database.dart';
+import 'outbox.dart';
 import 'content_repository.dart';
 
 class StoredDiagnostic {
@@ -106,19 +107,34 @@ class DiagnosticRepository {
           archetypes[entry.key]!.key: entry.value,
     };
 
-    await db
-        .into(db.diagnosticResults)
-        .insert(
-          DiagnosticResultsCompanion.insert(
-            id: _uuid.v4(),
-            userId: userId,
-            takenAt: now,
-            scores: jsonEncode(byKey),
-            weakestArchetypeId: outcome.weakestArchetypeId,
-            recommendedCampaignId: recommended,
-            updatedAt: now,
-          ),
-        );
+    final id = _uuid.v4();
+
+    // Cache and queue together, as in ProgressRepository: a sitting stored
+    // without being queued is a diagnostic the account never receives, and the
+    // router routes a returning user on whether the account has one.
+    await db.transaction(() async {
+      await db
+          .into(db.diagnosticResults)
+          .insert(
+            DiagnosticResultsCompanion.insert(
+              id: id,
+              userId: userId,
+              takenAt: now,
+              scores: jsonEncode(byKey),
+              weakestArchetypeId: outcome.weakestArchetypeId,
+              recommendedCampaignId: recommended,
+              updatedAt: now,
+            ),
+          );
+
+      final row = await (db.select(
+        db.diagnosticResults,
+      )..where((d) => d.id.equals(id))).getSingle();
+      await OutboxQueue(
+        db: db,
+        clock: clock.nowUtc,
+      ).add(entryForDiagnostic(row));
+    });
 
     return StoredDiagnostic(
       scores: byKey,

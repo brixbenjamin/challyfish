@@ -5513,26 +5513,12 @@ class $ProfilesTable extends Profiles
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
-  @override
-  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
-    'dirty',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("dirty" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     userId,
     displayName,
     onboardedAt,
     updatedAt,
-    dirty,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5580,12 +5566,6 @@ class $ProfilesTable extends Profiles
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
-    if (data.containsKey('dirty')) {
-      context.handle(
-        _dirtyMeta,
-        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
-      );
-    }
     return context;
   }
 
@@ -5611,10 +5591,6 @@ class $ProfilesTable extends Profiles
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
-      dirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}dirty'],
-      )!,
     );
   }
 
@@ -5629,13 +5605,11 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
   final String? displayName;
   final DateTime? onboardedAt;
   final DateTime updatedAt;
-  final bool dirty;
   const ProfileRow({
     required this.userId,
     this.displayName,
     this.onboardedAt,
     required this.updatedAt,
-    required this.dirty,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5648,7 +5622,6 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
       map['onboarded_at'] = Variable<DateTime>(onboardedAt);
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['dirty'] = Variable<bool>(dirty);
     return map;
   }
 
@@ -5662,7 +5635,6 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
           ? const Value.absent()
           : Value(onboardedAt),
       updatedAt: Value(updatedAt),
-      dirty: Value(dirty),
     );
   }
 
@@ -5676,7 +5648,6 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
       displayName: serializer.fromJson<String?>(json['displayName']),
       onboardedAt: serializer.fromJson<DateTime?>(json['onboardedAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      dirty: serializer.fromJson<bool>(json['dirty']),
     );
   }
   @override
@@ -5687,7 +5658,6 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
       'displayName': serializer.toJson<String?>(displayName),
       'onboardedAt': serializer.toJson<DateTime?>(onboardedAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'dirty': serializer.toJson<bool>(dirty),
     };
   }
 
@@ -5696,13 +5666,11 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
     Value<String?> displayName = const Value.absent(),
     Value<DateTime?> onboardedAt = const Value.absent(),
     DateTime? updatedAt,
-    bool? dirty,
   }) => ProfileRow(
     userId: userId ?? this.userId,
     displayName: displayName.present ? displayName.value : this.displayName,
     onboardedAt: onboardedAt.present ? onboardedAt.value : this.onboardedAt,
     updatedAt: updatedAt ?? this.updatedAt,
-    dirty: dirty ?? this.dirty,
   );
   ProfileRow copyWithCompanion(ProfilesCompanion data) {
     return ProfileRow(
@@ -5714,7 +5682,6 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
           ? data.onboardedAt.value
           : this.onboardedAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      dirty: data.dirty.present ? data.dirty.value : this.dirty,
     );
   }
 
@@ -5724,15 +5691,13 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
           ..write('userId: $userId, ')
           ..write('displayName: $displayName, ')
           ..write('onboardedAt: $onboardedAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(userId, displayName, onboardedAt, updatedAt, dirty);
+  int get hashCode => Object.hash(userId, displayName, onboardedAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5740,8 +5705,7 @@ class ProfileRow extends DataClass implements Insertable<ProfileRow> {
           other.userId == this.userId &&
           other.displayName == this.displayName &&
           other.onboardedAt == this.onboardedAt &&
-          other.updatedAt == this.updatedAt &&
-          other.dirty == this.dirty);
+          other.updatedAt == this.updatedAt);
 }
 
 class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
@@ -5749,14 +5713,12 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
   final Value<String?> displayName;
   final Value<DateTime?> onboardedAt;
   final Value<DateTime> updatedAt;
-  final Value<bool> dirty;
   final Value<int> rowid;
   const ProfilesCompanion({
     this.userId = const Value.absent(),
     this.displayName = const Value.absent(),
     this.onboardedAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProfilesCompanion.insert({
@@ -5764,7 +5726,6 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
     this.displayName = const Value.absent(),
     this.onboardedAt = const Value.absent(),
     required DateTime updatedAt,
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : userId = Value(userId),
        updatedAt = Value(updatedAt);
@@ -5773,7 +5734,6 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
     Expression<String>? displayName,
     Expression<DateTime>? onboardedAt,
     Expression<DateTime>? updatedAt,
-    Expression<bool>? dirty,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5781,7 +5741,6 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
       if (displayName != null) 'display_name': displayName,
       if (onboardedAt != null) 'onboarded_at': onboardedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (dirty != null) 'dirty': dirty,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5791,7 +5750,6 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
     Value<String?>? displayName,
     Value<DateTime?>? onboardedAt,
     Value<DateTime>? updatedAt,
-    Value<bool>? dirty,
     Value<int>? rowid,
   }) {
     return ProfilesCompanion(
@@ -5799,7 +5757,6 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
       displayName: displayName ?? this.displayName,
       onboardedAt: onboardedAt ?? this.onboardedAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      dirty: dirty ?? this.dirty,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5819,9 +5776,6 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (dirty.present) {
-      map['dirty'] = Variable<bool>(dirty.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5835,7 +5789,6 @@ class ProfilesCompanion extends UpdateCompanion<ProfileRow> {
           ..write('displayName: $displayName, ')
           ..write('onboardedAt: $onboardedAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5943,19 +5896,6 @@ class $CampaignRunsTable extends CampaignRuns
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
-  @override
-  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
-    'dirty',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("dirty" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5967,7 +5907,6 @@ class $CampaignRunsTable extends CampaignRuns
     completedAt,
     grade,
     updatedAt,
-    dirty,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6047,12 +5986,6 @@ class $CampaignRunsTable extends CampaignRuns
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
-    if (data.containsKey('dirty')) {
-      context.handle(
-        _dirtyMeta,
-        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
-      );
-    }
     return context;
   }
 
@@ -6098,10 +6031,6 @@ class $CampaignRunsTable extends CampaignRuns
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
-      dirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}dirty'],
-      )!,
     );
   }
 
@@ -6123,9 +6052,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
   /// Materialized once at completion only. Null while the run is active.
   final String? grade;
   final DateTime updatedAt;
-
-  /// Written locally and not yet pushed. The push worker is Plan 3.
-  final bool dirty;
   const CampaignRunRow({
     required this.id,
     required this.userId,
@@ -6136,7 +6062,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     this.completedAt,
     this.grade,
     required this.updatedAt,
-    required this.dirty,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6154,7 +6079,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
       map['grade'] = Variable<String>(grade);
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['dirty'] = Variable<bool>(dirty);
     return map;
   }
 
@@ -6173,7 +6097,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
           ? const Value.absent()
           : Value(grade),
       updatedAt: Value(updatedAt),
-      dirty: Value(dirty),
     );
   }
 
@@ -6192,7 +6115,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       grade: serializer.fromJson<String?>(json['grade']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      dirty: serializer.fromJson<bool>(json['dirty']),
     );
   }
   @override
@@ -6208,7 +6130,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'grade': serializer.toJson<String?>(grade),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'dirty': serializer.toJson<bool>(dirty),
     };
   }
 
@@ -6222,7 +6143,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     Value<DateTime?> completedAt = const Value.absent(),
     Value<String?> grade = const Value.absent(),
     DateTime? updatedAt,
-    bool? dirty,
   }) => CampaignRunRow(
     id: id ?? this.id,
     userId: userId ?? this.userId,
@@ -6233,7 +6153,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     completedAt: completedAt.present ? completedAt.value : this.completedAt,
     grade: grade.present ? grade.value : this.grade,
     updatedAt: updatedAt ?? this.updatedAt,
-    dirty: dirty ?? this.dirty,
   );
   CampaignRunRow copyWithCompanion(CampaignRunsCompanion data) {
     return CampaignRunRow(
@@ -6252,7 +6171,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
           : this.completedAt,
       grade: data.grade.present ? data.grade.value : this.grade,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      dirty: data.dirty.present ? data.dirty.value : this.dirty,
     );
   }
 
@@ -6267,8 +6185,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('grade: $grade, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -6284,7 +6201,6 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     completedAt,
     grade,
     updatedAt,
-    dirty,
   );
   @override
   bool operator ==(Object other) =>
@@ -6298,8 +6214,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
           other.startedAt == this.startedAt &&
           other.completedAt == this.completedAt &&
           other.grade == this.grade &&
-          other.updatedAt == this.updatedAt &&
-          other.dirty == this.dirty);
+          other.updatedAt == this.updatedAt);
 }
 
 class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
@@ -6312,7 +6227,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
   final Value<DateTime?> completedAt;
   final Value<String?> grade;
   final Value<DateTime> updatedAt;
-  final Value<bool> dirty;
   final Value<int> rowid;
   const CampaignRunsCompanion({
     this.id = const Value.absent(),
@@ -6324,7 +6238,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     this.completedAt = const Value.absent(),
     this.grade = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CampaignRunsCompanion.insert({
@@ -6337,7 +6250,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     this.completedAt = const Value.absent(),
     this.grade = const Value.absent(),
     required DateTime updatedAt,
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
@@ -6355,7 +6267,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     Expression<DateTime>? completedAt,
     Expression<String>? grade,
     Expression<DateTime>? updatedAt,
-    Expression<bool>? dirty,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -6368,7 +6279,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
       if (completedAt != null) 'completed_at': completedAt,
       if (grade != null) 'grade': grade,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (dirty != null) 'dirty': dirty,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -6383,7 +6293,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     Value<DateTime?>? completedAt,
     Value<String?>? grade,
     Value<DateTime>? updatedAt,
-    Value<bool>? dirty,
     Value<int>? rowid,
   }) {
     return CampaignRunsCompanion(
@@ -6396,7 +6305,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
       completedAt: completedAt ?? this.completedAt,
       grade: grade ?? this.grade,
       updatedAt: updatedAt ?? this.updatedAt,
-      dirty: dirty ?? this.dirty,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -6431,9 +6339,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (dirty.present) {
-      map['dirty'] = Variable<bool>(dirty.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -6452,7 +6357,6 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
           ..write('completedAt: $completedAt, ')
           ..write('grade: $grade, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6555,19 +6459,6 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
-  @override
-  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
-    'dirty',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("dirty" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -6579,7 +6470,6 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
     outcome,
     note,
     updatedAt,
-    dirty,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6659,12 +6549,6 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
-    if (data.containsKey('dirty')) {
-      context.handle(
-        _dirtyMeta,
-        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
-      );
-    }
     return context;
   }
 
@@ -6714,10 +6598,6 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
-      dirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}dirty'],
-      )!,
     );
   }
 
@@ -6737,7 +6617,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
   final String? outcome;
   final String? note;
   final DateTime updatedAt;
-  final bool dirty;
   const DayLogRow({
     required this.id,
     required this.userId,
@@ -6748,7 +6627,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     this.outcome,
     this.note,
     required this.updatedAt,
-    required this.dirty,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6768,7 +6646,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
       map['note'] = Variable<String>(note);
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['dirty'] = Variable<bool>(dirty);
     return map;
   }
 
@@ -6787,7 +6664,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
           : Value(outcome),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       updatedAt: Value(updatedAt),
-      dirty: Value(dirty),
     );
   }
 
@@ -6806,7 +6682,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
       outcome: serializer.fromJson<String?>(json['outcome']),
       note: serializer.fromJson<String?>(json['note']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      dirty: serializer.fromJson<bool>(json['dirty']),
     );
   }
   @override
@@ -6822,7 +6697,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
       'outcome': serializer.toJson<String?>(outcome),
       'note': serializer.toJson<String?>(note),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'dirty': serializer.toJson<bool>(dirty),
     };
   }
 
@@ -6836,7 +6710,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     Value<String?> outcome = const Value.absent(),
     Value<String?> note = const Value.absent(),
     DateTime? updatedAt,
-    bool? dirty,
   }) => DayLogRow(
     id: id ?? this.id,
     userId: userId ?? this.userId,
@@ -6847,7 +6720,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     outcome: outcome.present ? outcome.value : this.outcome,
     note: note.present ? note.value : this.note,
     updatedAt: updatedAt ?? this.updatedAt,
-    dirty: dirty ?? this.dirty,
   );
   DayLogRow copyWithCompanion(DayLogsCompanion data) {
     return DayLogRow(
@@ -6862,7 +6734,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
       outcome: data.outcome.present ? data.outcome.value : this.outcome,
       note: data.note.present ? data.note.value : this.note,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      dirty: data.dirty.present ? data.dirty.value : this.dirty,
     );
   }
 
@@ -6877,8 +6748,7 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
           ..write('committedAt: $committedAt, ')
           ..write('outcome: $outcome, ')
           ..write('note: $note, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -6894,7 +6764,6 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     outcome,
     note,
     updatedAt,
-    dirty,
   );
   @override
   bool operator ==(Object other) =>
@@ -6908,8 +6777,7 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
           other.committedAt == this.committedAt &&
           other.outcome == this.outcome &&
           other.note == this.note &&
-          other.updatedAt == this.updatedAt &&
-          other.dirty == this.dirty);
+          other.updatedAt == this.updatedAt);
 }
 
 class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
@@ -6922,7 +6790,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
   final Value<String?> outcome;
   final Value<String?> note;
   final Value<DateTime> updatedAt;
-  final Value<bool> dirty;
   final Value<int> rowid;
   const DayLogsCompanion({
     this.id = const Value.absent(),
@@ -6934,7 +6801,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     this.outcome = const Value.absent(),
     this.note = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DayLogsCompanion.insert({
@@ -6947,7 +6813,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     this.outcome = const Value.absent(),
     this.note = const Value.absent(),
     required DateTime updatedAt,
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
@@ -6965,7 +6830,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     Expression<String>? outcome,
     Expression<String>? note,
     Expression<DateTime>? updatedAt,
-    Expression<bool>? dirty,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -6978,7 +6842,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
       if (outcome != null) 'outcome': outcome,
       if (note != null) 'note': note,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (dirty != null) 'dirty': dirty,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -6993,7 +6856,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     Value<String?>? outcome,
     Value<String?>? note,
     Value<DateTime>? updatedAt,
-    Value<bool>? dirty,
     Value<int>? rowid,
   }) {
     return DayLogsCompanion(
@@ -7006,7 +6868,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
       outcome: outcome ?? this.outcome,
       note: note ?? this.note,
       updatedAt: updatedAt ?? this.updatedAt,
-      dirty: dirty ?? this.dirty,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -7041,9 +6902,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (dirty.present) {
-      map['dirty'] = Variable<bool>(dirty.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -7062,7 +6920,6 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
           ..write('outcome: $outcome, ')
           ..write('note: $note, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7150,19 +7007,6 @@ class $DayLogActionsTable extends DayLogActions
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
-  @override
-  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
-    'dirty',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("dirty" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -7172,7 +7016,6 @@ class $DayLogActionsTable extends DayLogActions
     actionId,
     completed,
     updatedAt,
-    dirty,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7237,12 +7080,6 @@ class $DayLogActionsTable extends DayLogActions
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
-    if (data.containsKey('dirty')) {
-      context.handle(
-        _dirtyMeta,
-        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
-      );
-    }
     return context;
   }
 
@@ -7284,10 +7121,6 @@ class $DayLogActionsTable extends DayLogActions
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
-      dirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}dirty'],
-      )!,
     );
   }
 
@@ -7305,7 +7138,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
   final String actionId;
   final bool completed;
   final DateTime updatedAt;
-  final bool dirty;
   const DayLogActionRow({
     required this.id,
     required this.userId,
@@ -7314,7 +7146,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
     required this.actionId,
     required this.completed,
     required this.updatedAt,
-    required this.dirty,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7326,7 +7157,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
     map['action_id'] = Variable<String>(actionId);
     map['completed'] = Variable<bool>(completed);
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['dirty'] = Variable<bool>(dirty);
     return map;
   }
 
@@ -7339,7 +7169,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
       actionId: Value(actionId),
       completed: Value(completed),
       updatedAt: Value(updatedAt),
-      dirty: Value(dirty),
     );
   }
 
@@ -7356,7 +7185,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
       actionId: serializer.fromJson<String>(json['actionId']),
       completed: serializer.fromJson<bool>(json['completed']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      dirty: serializer.fromJson<bool>(json['dirty']),
     );
   }
   @override
@@ -7370,7 +7198,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
       'actionId': serializer.toJson<String>(actionId),
       'completed': serializer.toJson<bool>(completed),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'dirty': serializer.toJson<bool>(dirty),
     };
   }
 
@@ -7382,7 +7209,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
     String? actionId,
     bool? completed,
     DateTime? updatedAt,
-    bool? dirty,
   }) => DayLogActionRow(
     id: id ?? this.id,
     userId: userId ?? this.userId,
@@ -7391,7 +7217,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
     actionId: actionId ?? this.actionId,
     completed: completed ?? this.completed,
     updatedAt: updatedAt ?? this.updatedAt,
-    dirty: dirty ?? this.dirty,
   );
   DayLogActionRow copyWithCompanion(DayLogActionsCompanion data) {
     return DayLogActionRow(
@@ -7402,7 +7227,6 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
       actionId: data.actionId.present ? data.actionId.value : this.actionId,
       completed: data.completed.present ? data.completed.value : this.completed,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      dirty: data.dirty.present ? data.dirty.value : this.dirty,
     );
   }
 
@@ -7415,23 +7239,14 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
           ..write('dayIndex: $dayIndex, ')
           ..write('actionId: $actionId, ')
           ..write('completed: $completed, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    userId,
-    runId,
-    dayIndex,
-    actionId,
-    completed,
-    updatedAt,
-    dirty,
-  );
+  int get hashCode =>
+      Object.hash(id, userId, runId, dayIndex, actionId, completed, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7442,8 +7257,7 @@ class DayLogActionRow extends DataClass implements Insertable<DayLogActionRow> {
           other.dayIndex == this.dayIndex &&
           other.actionId == this.actionId &&
           other.completed == this.completed &&
-          other.updatedAt == this.updatedAt &&
-          other.dirty == this.dirty);
+          other.updatedAt == this.updatedAt);
 }
 
 class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
@@ -7454,7 +7268,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
   final Value<String> actionId;
   final Value<bool> completed;
   final Value<DateTime> updatedAt;
-  final Value<bool> dirty;
   final Value<int> rowid;
   const DayLogActionsCompanion({
     this.id = const Value.absent(),
@@ -7464,7 +7277,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
     this.actionId = const Value.absent(),
     this.completed = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DayLogActionsCompanion.insert({
@@ -7475,7 +7287,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
     required String actionId,
     this.completed = const Value.absent(),
     required DateTime updatedAt,
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
@@ -7491,7 +7302,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
     Expression<String>? actionId,
     Expression<bool>? completed,
     Expression<DateTime>? updatedAt,
-    Expression<bool>? dirty,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -7502,7 +7312,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
       if (actionId != null) 'action_id': actionId,
       if (completed != null) 'completed': completed,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (dirty != null) 'dirty': dirty,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -7515,7 +7324,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
     Value<String>? actionId,
     Value<bool>? completed,
     Value<DateTime>? updatedAt,
-    Value<bool>? dirty,
     Value<int>? rowid,
   }) {
     return DayLogActionsCompanion(
@@ -7526,7 +7334,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
       actionId: actionId ?? this.actionId,
       completed: completed ?? this.completed,
       updatedAt: updatedAt ?? this.updatedAt,
-      dirty: dirty ?? this.dirty,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -7555,9 +7362,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (dirty.present) {
-      map['dirty'] = Variable<bool>(dirty.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -7574,7 +7378,6 @@ class DayLogActionsCompanion extends UpdateCompanion<DayLogActionRow> {
           ..write('actionId: $actionId, ')
           ..write('completed: $completed, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7658,19 +7461,6 @@ class $DiagnosticResultsTable extends DiagnosticResults
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
-  @override
-  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
-    'dirty',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("dirty" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -7680,7 +7470,6 @@ class $DiagnosticResultsTable extends DiagnosticResults
     weakestArchetypeId,
     recommendedCampaignId,
     updatedAt,
-    dirty,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7753,12 +7542,6 @@ class $DiagnosticResultsTable extends DiagnosticResults
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
-    if (data.containsKey('dirty')) {
-      context.handle(
-        _dirtyMeta,
-        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
-      );
-    }
     return context;
   }
 
@@ -7796,10 +7579,6 @@ class $DiagnosticResultsTable extends DiagnosticResults
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
-      dirty: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}dirty'],
-      )!,
     );
   }
 
@@ -7820,7 +7599,6 @@ class DiagnosticResultRow extends DataClass
   final String weakestArchetypeId;
   final String recommendedCampaignId;
   final DateTime updatedAt;
-  final bool dirty;
   const DiagnosticResultRow({
     required this.id,
     required this.userId,
@@ -7829,7 +7607,6 @@ class DiagnosticResultRow extends DataClass
     required this.weakestArchetypeId,
     required this.recommendedCampaignId,
     required this.updatedAt,
-    required this.dirty,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7841,7 +7618,6 @@ class DiagnosticResultRow extends DataClass
     map['weakest_archetype_id'] = Variable<String>(weakestArchetypeId);
     map['recommended_campaign_id'] = Variable<String>(recommendedCampaignId);
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['dirty'] = Variable<bool>(dirty);
     return map;
   }
 
@@ -7854,7 +7630,6 @@ class DiagnosticResultRow extends DataClass
       weakestArchetypeId: Value(weakestArchetypeId),
       recommendedCampaignId: Value(recommendedCampaignId),
       updatedAt: Value(updatedAt),
-      dirty: Value(dirty),
     );
   }
 
@@ -7875,7 +7650,6 @@ class DiagnosticResultRow extends DataClass
         json['recommendedCampaignId'],
       ),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      dirty: serializer.fromJson<bool>(json['dirty']),
     );
   }
   @override
@@ -7889,7 +7663,6 @@ class DiagnosticResultRow extends DataClass
       'weakestArchetypeId': serializer.toJson<String>(weakestArchetypeId),
       'recommendedCampaignId': serializer.toJson<String>(recommendedCampaignId),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'dirty': serializer.toJson<bool>(dirty),
     };
   }
 
@@ -7901,7 +7674,6 @@ class DiagnosticResultRow extends DataClass
     String? weakestArchetypeId,
     String? recommendedCampaignId,
     DateTime? updatedAt,
-    bool? dirty,
   }) => DiagnosticResultRow(
     id: id ?? this.id,
     userId: userId ?? this.userId,
@@ -7910,7 +7682,6 @@ class DiagnosticResultRow extends DataClass
     weakestArchetypeId: weakestArchetypeId ?? this.weakestArchetypeId,
     recommendedCampaignId: recommendedCampaignId ?? this.recommendedCampaignId,
     updatedAt: updatedAt ?? this.updatedAt,
-    dirty: dirty ?? this.dirty,
   );
   DiagnosticResultRow copyWithCompanion(DiagnosticResultsCompanion data) {
     return DiagnosticResultRow(
@@ -7925,7 +7696,6 @@ class DiagnosticResultRow extends DataClass
           ? data.recommendedCampaignId.value
           : this.recommendedCampaignId,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      dirty: data.dirty.present ? data.dirty.value : this.dirty,
     );
   }
 
@@ -7938,8 +7708,7 @@ class DiagnosticResultRow extends DataClass
           ..write('scores: $scores, ')
           ..write('weakestArchetypeId: $weakestArchetypeId, ')
           ..write('recommendedCampaignId: $recommendedCampaignId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -7953,7 +7722,6 @@ class DiagnosticResultRow extends DataClass
     weakestArchetypeId,
     recommendedCampaignId,
     updatedAt,
-    dirty,
   );
   @override
   bool operator ==(Object other) =>
@@ -7965,8 +7733,7 @@ class DiagnosticResultRow extends DataClass
           other.scores == this.scores &&
           other.weakestArchetypeId == this.weakestArchetypeId &&
           other.recommendedCampaignId == this.recommendedCampaignId &&
-          other.updatedAt == this.updatedAt &&
-          other.dirty == this.dirty);
+          other.updatedAt == this.updatedAt);
 }
 
 class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
@@ -7977,7 +7744,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
   final Value<String> weakestArchetypeId;
   final Value<String> recommendedCampaignId;
   final Value<DateTime> updatedAt;
-  final Value<bool> dirty;
   final Value<int> rowid;
   const DiagnosticResultsCompanion({
     this.id = const Value.absent(),
@@ -7987,7 +7753,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
     this.weakestArchetypeId = const Value.absent(),
     this.recommendedCampaignId = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DiagnosticResultsCompanion.insert({
@@ -7998,7 +7763,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
     required String weakestArchetypeId,
     required String recommendedCampaignId,
     required DateTime updatedAt,
-    this.dirty = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
@@ -8015,7 +7779,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
     Expression<String>? weakestArchetypeId,
     Expression<String>? recommendedCampaignId,
     Expression<DateTime>? updatedAt,
-    Expression<bool>? dirty,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -8028,7 +7791,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
       if (recommendedCampaignId != null)
         'recommended_campaign_id': recommendedCampaignId,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (dirty != null) 'dirty': dirty,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -8041,7 +7803,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
     Value<String>? weakestArchetypeId,
     Value<String>? recommendedCampaignId,
     Value<DateTime>? updatedAt,
-    Value<bool>? dirty,
     Value<int>? rowid,
   }) {
     return DiagnosticResultsCompanion(
@@ -8053,7 +7814,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
       recommendedCampaignId:
           recommendedCampaignId ?? this.recommendedCampaignId,
       updatedAt: updatedAt ?? this.updatedAt,
-      dirty: dirty ?? this.dirty,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8084,9 +7844,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (dirty.present) {
-      map['dirty'] = Variable<bool>(dirty.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -8103,7 +7860,6 @@ class DiagnosticResultsCompanion extends UpdateCompanion<DiagnosticResultRow> {
           ..write('weakestArchetypeId: $weakestArchetypeId, ')
           ..write('recommendedCampaignId: $recommendedCampaignId, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('dirty: $dirty, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8525,257 +8281,561 @@ class EntitlementsCompanion extends UpdateCompanion<EntitlementRow> {
   }
 }
 
-class $SyncStateTable extends SyncState
-    with TableInfo<$SyncStateTable, SyncStateRow> {
+class $OutboxTable extends Outbox with TableInfo<$OutboxTable, OutboxRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $SyncStateTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _syncTableMeta = const VerificationMeta(
-    'syncTable',
+  $OutboxTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _remoteTableMeta = const VerificationMeta(
+    'remoteTable',
   );
   @override
-  late final GeneratedColumn<String> syncTable = GeneratedColumn<String>(
+  late final GeneratedColumn<String> remoteTable = GeneratedColumn<String>(
     'table_name',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _watermarkMeta = const VerificationMeta(
-    'watermark',
-  );
+  static const VerificationMeta _rowKeyMeta = const VerificationMeta('rowKey');
   @override
-  late final GeneratedColumn<DateTime> watermark = GeneratedColumn<DateTime>(
-    'watermark',
+  late final GeneratedColumn<String> rowKey = GeneratedColumn<String>(
+    'row_key',
     aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
   );
-  static const VerificationMeta _lastPulledAtMeta = const VerificationMeta(
-    'lastPulledAt',
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
   );
   @override
-  late final GeneratedColumn<DateTime> lastPulledAt = GeneratedColumn<DateTime>(
-    'last_pulled_at',
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
     aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _queuedAtMeta = const VerificationMeta(
+    'queuedAt',
   );
   @override
-  List<GeneratedColumn> get $columns => [syncTable, watermark, lastPulledAt];
+  late final GeneratedColumn<DateTime> queuedAt = GeneratedColumn<DateTime>(
+    'queued_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    remoteTable,
+    rowKey,
+    payload,
+    queuedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'sync_state';
+  static const String $name = 'outbox';
   @override
   VerificationContext validateIntegrity(
-    Insertable<SyncStateRow> instance, {
+    Insertable<OutboxRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
     if (data.containsKey('table_name')) {
       context.handle(
-        _syncTableMeta,
-        syncTable.isAcceptableOrUnknown(data['table_name']!, _syncTableMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_syncTableMeta);
-    }
-    if (data.containsKey('watermark')) {
-      context.handle(
-        _watermarkMeta,
-        watermark.isAcceptableOrUnknown(data['watermark']!, _watermarkMeta),
-      );
-    }
-    if (data.containsKey('last_pulled_at')) {
-      context.handle(
-        _lastPulledAtMeta,
-        lastPulledAt.isAcceptableOrUnknown(
-          data['last_pulled_at']!,
-          _lastPulledAtMeta,
+        _remoteTableMeta,
+        remoteTable.isAcceptableOrUnknown(
+          data['table_name']!,
+          _remoteTableMeta,
         ),
       );
+    } else if (isInserting) {
+      context.missing(_remoteTableMeta);
+    }
+    if (data.containsKey('row_key')) {
+      context.handle(
+        _rowKeyMeta,
+        rowKey.isAcceptableOrUnknown(data['row_key']!, _rowKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rowKeyMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('queued_at')) {
+      context.handle(
+        _queuedAtMeta,
+        queuedAt.isAcceptableOrUnknown(data['queued_at']!, _queuedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_queuedAtMeta);
     }
     return context;
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {syncTable};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  SyncStateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {remoteTable, rowKey},
+  ];
+  @override
+  OutboxRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SyncStateRow(
-      syncTable: attachedDatabase.typeMapping.read(
+    return OutboxRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      remoteTable: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}table_name'],
       )!,
-      watermark: attachedDatabase.typeMapping.read(
+      rowKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}row_key'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      queuedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
-        data['${effectivePrefix}watermark'],
-      ),
-      lastPulledAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_pulled_at'],
-      ),
+        data['${effectivePrefix}queued_at'],
+      )!,
     );
   }
 
   @override
-  $SyncStateTable createAlias(String alias) {
-    return $SyncStateTable(attachedDatabase, alias);
+  $OutboxTable createAlias(String alias) {
+    return $OutboxTable(attachedDatabase, alias);
   }
 }
 
-class SyncStateRow extends DataClass implements Insertable<SyncStateRow> {
-  /// The remote table name, e.g. `campaigns` or `day_logs`.
+class OutboxRow extends DataClass implements Insertable<OutboxRow> {
+  final int id;
+
+  /// The remote table this row belongs to, e.g. `day_logs`.
   ///
-  /// Named `syncTable` in Dart because `tableName` is drift's own hook for
+  /// Named `remoteTable` in Dart because `tableName` is drift's own hook for
   /// overriding a table's SQL name; the column itself is still `table_name`.
-  final String syncTable;
+  final String remoteTable;
 
-  /// Newest `updated_at` committed locally. Null means "never pulled".
-  final DateTime? watermark;
+  /// The row's natural key — what identifies it on the server, which for
+  /// `day_logs` is `(run_id, day_index)` and never the client's uuid.
+  final String rowKey;
 
-  /// When the last successful pull for this table finished. Diagnostics only —
-  /// never used to decide what to fetch.
-  final DateTime? lastPulledAt;
-  const SyncStateRow({
-    required this.syncTable,
-    this.watermark,
-    this.lastPulledAt,
+  /// The complete row to upsert, as JSON.
+  final String payload;
+  final DateTime queuedAt;
+  const OutboxRow({
+    required this.id,
+    required this.remoteTable,
+    required this.rowKey,
+    required this.payload,
+    required this.queuedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['table_name'] = Variable<String>(syncTable);
-    if (!nullToAbsent || watermark != null) {
-      map['watermark'] = Variable<DateTime>(watermark);
-    }
-    if (!nullToAbsent || lastPulledAt != null) {
-      map['last_pulled_at'] = Variable<DateTime>(lastPulledAt);
-    }
+    map['id'] = Variable<int>(id);
+    map['table_name'] = Variable<String>(remoteTable);
+    map['row_key'] = Variable<String>(rowKey);
+    map['payload'] = Variable<String>(payload);
+    map['queued_at'] = Variable<DateTime>(queuedAt);
     return map;
   }
 
-  SyncStateCompanion toCompanion(bool nullToAbsent) {
-    return SyncStateCompanion(
-      syncTable: Value(syncTable),
-      watermark: watermark == null && nullToAbsent
-          ? const Value.absent()
-          : Value(watermark),
-      lastPulledAt: lastPulledAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastPulledAt),
+  OutboxCompanion toCompanion(bool nullToAbsent) {
+    return OutboxCompanion(
+      id: Value(id),
+      remoteTable: Value(remoteTable),
+      rowKey: Value(rowKey),
+      payload: Value(payload),
+      queuedAt: Value(queuedAt),
     );
   }
 
-  factory SyncStateRow.fromJson(
+  factory OutboxRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SyncStateRow(
-      syncTable: serializer.fromJson<String>(json['syncTable']),
-      watermark: serializer.fromJson<DateTime?>(json['watermark']),
-      lastPulledAt: serializer.fromJson<DateTime?>(json['lastPulledAt']),
+    return OutboxRow(
+      id: serializer.fromJson<int>(json['id']),
+      remoteTable: serializer.fromJson<String>(json['remoteTable']),
+      rowKey: serializer.fromJson<String>(json['rowKey']),
+      payload: serializer.fromJson<String>(json['payload']),
+      queuedAt: serializer.fromJson<DateTime>(json['queuedAt']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'syncTable': serializer.toJson<String>(syncTable),
-      'watermark': serializer.toJson<DateTime?>(watermark),
-      'lastPulledAt': serializer.toJson<DateTime?>(lastPulledAt),
+      'id': serializer.toJson<int>(id),
+      'remoteTable': serializer.toJson<String>(remoteTable),
+      'rowKey': serializer.toJson<String>(rowKey),
+      'payload': serializer.toJson<String>(payload),
+      'queuedAt': serializer.toJson<DateTime>(queuedAt),
     };
   }
 
-  SyncStateRow copyWith({
-    String? syncTable,
-    Value<DateTime?> watermark = const Value.absent(),
-    Value<DateTime?> lastPulledAt = const Value.absent(),
-  }) => SyncStateRow(
-    syncTable: syncTable ?? this.syncTable,
-    watermark: watermark.present ? watermark.value : this.watermark,
-    lastPulledAt: lastPulledAt.present ? lastPulledAt.value : this.lastPulledAt,
+  OutboxRow copyWith({
+    int? id,
+    String? remoteTable,
+    String? rowKey,
+    String? payload,
+    DateTime? queuedAt,
+  }) => OutboxRow(
+    id: id ?? this.id,
+    remoteTable: remoteTable ?? this.remoteTable,
+    rowKey: rowKey ?? this.rowKey,
+    payload: payload ?? this.payload,
+    queuedAt: queuedAt ?? this.queuedAt,
   );
-  SyncStateRow copyWithCompanion(SyncStateCompanion data) {
-    return SyncStateRow(
-      syncTable: data.syncTable.present ? data.syncTable.value : this.syncTable,
-      watermark: data.watermark.present ? data.watermark.value : this.watermark,
-      lastPulledAt: data.lastPulledAt.present
-          ? data.lastPulledAt.value
-          : this.lastPulledAt,
+  OutboxRow copyWithCompanion(OutboxCompanion data) {
+    return OutboxRow(
+      id: data.id.present ? data.id.value : this.id,
+      remoteTable: data.remoteTable.present
+          ? data.remoteTable.value
+          : this.remoteTable,
+      rowKey: data.rowKey.present ? data.rowKey.value : this.rowKey,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      queuedAt: data.queuedAt.present ? data.queuedAt.value : this.queuedAt,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('SyncStateRow(')
-          ..write('syncTable: $syncTable, ')
-          ..write('watermark: $watermark, ')
-          ..write('lastPulledAt: $lastPulledAt')
+    return (StringBuffer('OutboxRow(')
+          ..write('id: $id, ')
+          ..write('remoteTable: $remoteTable, ')
+          ..write('rowKey: $rowKey, ')
+          ..write('payload: $payload, ')
+          ..write('queuedAt: $queuedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(syncTable, watermark, lastPulledAt);
+  int get hashCode => Object.hash(id, remoteTable, rowKey, payload, queuedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is SyncStateRow &&
-          other.syncTable == this.syncTable &&
-          other.watermark == this.watermark &&
-          other.lastPulledAt == this.lastPulledAt);
+      (other is OutboxRow &&
+          other.id == this.id &&
+          other.remoteTable == this.remoteTable &&
+          other.rowKey == this.rowKey &&
+          other.payload == this.payload &&
+          other.queuedAt == this.queuedAt);
 }
 
-class SyncStateCompanion extends UpdateCompanion<SyncStateRow> {
-  final Value<String> syncTable;
-  final Value<DateTime?> watermark;
-  final Value<DateTime?> lastPulledAt;
+class OutboxCompanion extends UpdateCompanion<OutboxRow> {
+  final Value<int> id;
+  final Value<String> remoteTable;
+  final Value<String> rowKey;
+  final Value<String> payload;
+  final Value<DateTime> queuedAt;
+  const OutboxCompanion({
+    this.id = const Value.absent(),
+    this.remoteTable = const Value.absent(),
+    this.rowKey = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.queuedAt = const Value.absent(),
+  });
+  OutboxCompanion.insert({
+    this.id = const Value.absent(),
+    required String remoteTable,
+    required String rowKey,
+    required String payload,
+    required DateTime queuedAt,
+  }) : remoteTable = Value(remoteTable),
+       rowKey = Value(rowKey),
+       payload = Value(payload),
+       queuedAt = Value(queuedAt);
+  static Insertable<OutboxRow> custom({
+    Expression<int>? id,
+    Expression<String>? remoteTable,
+    Expression<String>? rowKey,
+    Expression<String>? payload,
+    Expression<DateTime>? queuedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (remoteTable != null) 'table_name': remoteTable,
+      if (rowKey != null) 'row_key': rowKey,
+      if (payload != null) 'payload': payload,
+      if (queuedAt != null) 'queued_at': queuedAt,
+    });
+  }
+
+  OutboxCompanion copyWith({
+    Value<int>? id,
+    Value<String>? remoteTable,
+    Value<String>? rowKey,
+    Value<String>? payload,
+    Value<DateTime>? queuedAt,
+  }) {
+    return OutboxCompanion(
+      id: id ?? this.id,
+      remoteTable: remoteTable ?? this.remoteTable,
+      rowKey: rowKey ?? this.rowKey,
+      payload: payload ?? this.payload,
+      queuedAt: queuedAt ?? this.queuedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (remoteTable.present) {
+      map['table_name'] = Variable<String>(remoteTable.value);
+    }
+    if (rowKey.present) {
+      map['row_key'] = Variable<String>(rowKey.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (queuedAt.present) {
+      map['queued_at'] = Variable<DateTime>(queuedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OutboxCompanion(')
+          ..write('id: $id, ')
+          ..write('remoteTable: $remoteTable, ')
+          ..write('rowKey: $rowKey, ')
+          ..write('payload: $payload, ')
+          ..write('queuedAt: $queuedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ClientStateTable extends ClientState
+    with TableInfo<$ClientStateTable, ClientStateRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClientStateTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [key, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'client_state';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ClientStateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  ClientStateRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ClientStateRow(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      ),
+    );
+  }
+
+  @override
+  $ClientStateTable createAlias(String alias) {
+    return $ClientStateTable(attachedDatabase, alias);
+  }
+}
+
+class ClientStateRow extends DataClass implements Insertable<ClientStateRow> {
+  final String key;
+  final String? value;
+  const ClientStateRow({required this.key, this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    if (!nullToAbsent || value != null) {
+      map['value'] = Variable<String>(value);
+    }
+    return map;
+  }
+
+  ClientStateCompanion toCompanion(bool nullToAbsent) {
+    return ClientStateCompanion(
+      key: Value(key),
+      value: value == null && nullToAbsent
+          ? const Value.absent()
+          : Value(value),
+    );
+  }
+
+  factory ClientStateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ClientStateRow(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String?>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String?>(value),
+    };
+  }
+
+  ClientStateRow copyWith({
+    String? key,
+    Value<String?> value = const Value.absent(),
+  }) => ClientStateRow(
+    key: key ?? this.key,
+    value: value.present ? value.value : this.value,
+  );
+  ClientStateRow copyWithCompanion(ClientStateCompanion data) {
+    return ClientStateRow(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClientStateRow(')
+          ..write('key: $key, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ClientStateRow &&
+          other.key == this.key &&
+          other.value == this.value);
+}
+
+class ClientStateCompanion extends UpdateCompanion<ClientStateRow> {
+  final Value<String> key;
+  final Value<String?> value;
   final Value<int> rowid;
-  const SyncStateCompanion({
-    this.syncTable = const Value.absent(),
-    this.watermark = const Value.absent(),
-    this.lastPulledAt = const Value.absent(),
+  const ClientStateCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  SyncStateCompanion.insert({
-    required String syncTable,
-    this.watermark = const Value.absent(),
-    this.lastPulledAt = const Value.absent(),
+  ClientStateCompanion.insert({
+    required String key,
+    this.value = const Value.absent(),
     this.rowid = const Value.absent(),
-  }) : syncTable = Value(syncTable);
-  static Insertable<SyncStateRow> custom({
-    Expression<String>? syncTable,
-    Expression<DateTime>? watermark,
-    Expression<DateTime>? lastPulledAt,
+  }) : key = Value(key);
+  static Insertable<ClientStateRow> custom({
+    Expression<String>? key,
+    Expression<String>? value,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (syncTable != null) 'table_name': syncTable,
-      if (watermark != null) 'watermark': watermark,
-      if (lastPulledAt != null) 'last_pulled_at': lastPulledAt,
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  SyncStateCompanion copyWith({
-    Value<String>? syncTable,
-    Value<DateTime?>? watermark,
-    Value<DateTime?>? lastPulledAt,
+  ClientStateCompanion copyWith({
+    Value<String>? key,
+    Value<String?>? value,
     Value<int>? rowid,
   }) {
-    return SyncStateCompanion(
-      syncTable: syncTable ?? this.syncTable,
-      watermark: watermark ?? this.watermark,
-      lastPulledAt: lastPulledAt ?? this.lastPulledAt,
+    return ClientStateCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8783,14 +8843,11 @@ class SyncStateCompanion extends UpdateCompanion<SyncStateRow> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (syncTable.present) {
-      map['table_name'] = Variable<String>(syncTable.value);
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
     }
-    if (watermark.present) {
-      map['watermark'] = Variable<DateTime>(watermark.value);
-    }
-    if (lastPulledAt.present) {
-      map['last_pulled_at'] = Variable<DateTime>(lastPulledAt.value);
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -8800,10 +8857,9 @@ class SyncStateCompanion extends UpdateCompanion<SyncStateRow> {
 
   @override
   String toString() {
-    return (StringBuffer('SyncStateCompanion(')
-          ..write('syncTable: $syncTable, ')
-          ..write('watermark: $watermark, ')
-          ..write('lastPulledAt: $lastPulledAt, ')
+    return (StringBuffer('ClientStateCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8840,7 +8896,8 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
   late final $DiagnosticResultsTable diagnosticResults =
       $DiagnosticResultsTable(this);
   late final $EntitlementsTable entitlements = $EntitlementsTable(this);
-  late final $SyncStateTable syncState = $SyncStateTable(this);
+  late final $OutboxTable outbox = $OutboxTable(this);
+  late final $ClientStateTable clientState = $ClientStateTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8865,7 +8922,8 @@ abstract class _$FeralDatabase extends GeneratedDatabase {
     dayLogActions,
     diagnosticResults,
     entitlements,
-    syncState,
+    outbox,
+    clientState,
   ];
 }
 
@@ -11821,7 +11879,6 @@ typedef $$ProfilesTableCreateCompanionBuilder =
       Value<String?> displayName,
       Value<DateTime?> onboardedAt,
       required DateTime updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 typedef $$ProfilesTableUpdateCompanionBuilder =
@@ -11830,7 +11887,6 @@ typedef $$ProfilesTableUpdateCompanionBuilder =
       Value<String?> displayName,
       Value<DateTime?> onboardedAt,
       Value<DateTime> updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 
@@ -11860,11 +11916,6 @@ class $$ProfilesTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -11897,11 +11948,6 @@ class $$ProfilesTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$ProfilesTableAnnotationComposer
@@ -11928,9 +11974,6 @@ class $$ProfilesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirty =>
-      $composableBuilder(column: $table.dirty, builder: (column) => column);
 }
 
 class $$ProfilesTableTableManager
@@ -11968,14 +12011,12 @@ class $$ProfilesTableTableManager
                 Value<String?> displayName = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProfilesCompanion(
                 userId: userId,
                 displayName: displayName,
                 onboardedAt: onboardedAt,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -11984,14 +12025,12 @@ class $$ProfilesTableTableManager
                 Value<String?> displayName = const Value.absent(),
                 Value<DateTime?> onboardedAt = const Value.absent(),
                 required DateTime updatedAt,
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProfilesCompanion.insert(
                 userId: userId,
                 displayName: displayName,
                 onboardedAt: onboardedAt,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -12027,7 +12066,6 @@ typedef $$CampaignRunsTableCreateCompanionBuilder =
       Value<DateTime?> completedAt,
       Value<String?> grade,
       required DateTime updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 typedef $$CampaignRunsTableUpdateCompanionBuilder =
@@ -12041,7 +12079,6 @@ typedef $$CampaignRunsTableUpdateCompanionBuilder =
       Value<DateTime?> completedAt,
       Value<String?> grade,
       Value<DateTime> updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 
@@ -12096,11 +12133,6 @@ class $$CampaignRunsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -12158,11 +12190,6 @@ class $$CampaignRunsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$CampaignRunsTableAnnotationComposer
@@ -12206,9 +12233,6 @@ class $$CampaignRunsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirty =>
-      $composableBuilder(column: $table.dirty, builder: (column) => column);
 }
 
 class $$CampaignRunsTableTableManager
@@ -12251,7 +12275,6 @@ class $$CampaignRunsTableTableManager
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<String?> grade = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CampaignRunsCompanion(
                 id: id,
@@ -12263,7 +12286,6 @@ class $$CampaignRunsTableTableManager
                 completedAt: completedAt,
                 grade: grade,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -12277,7 +12299,6 @@ class $$CampaignRunsTableTableManager
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<String?> grade = const Value.absent(),
                 required DateTime updatedAt,
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CampaignRunsCompanion.insert(
                 id: id,
@@ -12289,7 +12310,6 @@ class $$CampaignRunsTableTableManager
                 completedAt: completedAt,
                 grade: grade,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -12328,7 +12348,6 @@ typedef $$DayLogsTableCreateCompanionBuilder =
       Value<String?> outcome,
       Value<String?> note,
       required DateTime updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 typedef $$DayLogsTableUpdateCompanionBuilder =
@@ -12342,7 +12361,6 @@ typedef $$DayLogsTableUpdateCompanionBuilder =
       Value<String?> outcome,
       Value<String?> note,
       Value<DateTime> updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 
@@ -12397,11 +12415,6 @@ class $$DayLogsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -12459,11 +12472,6 @@ class $$DayLogsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$DayLogsTableAnnotationComposer
@@ -12503,9 +12511,6 @@ class $$DayLogsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirty =>
-      $composableBuilder(column: $table.dirty, builder: (column) => column);
 }
 
 class $$DayLogsTableTableManager
@@ -12548,7 +12553,6 @@ class $$DayLogsTableTableManager
                 Value<String?> outcome = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DayLogsCompanion(
                 id: id,
@@ -12560,7 +12564,6 @@ class $$DayLogsTableTableManager
                 outcome: outcome,
                 note: note,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -12574,7 +12577,6 @@ class $$DayLogsTableTableManager
                 Value<String?> outcome = const Value.absent(),
                 Value<String?> note = const Value.absent(),
                 required DateTime updatedAt,
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DayLogsCompanion.insert(
                 id: id,
@@ -12586,7 +12588,6 @@ class $$DayLogsTableTableManager
                 outcome: outcome,
                 note: note,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -12620,7 +12621,6 @@ typedef $$DayLogActionsTableCreateCompanionBuilder =
       required String actionId,
       Value<bool> completed,
       required DateTime updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 typedef $$DayLogActionsTableUpdateCompanionBuilder =
@@ -12632,7 +12632,6 @@ typedef $$DayLogActionsTableUpdateCompanionBuilder =
       Value<String> actionId,
       Value<bool> completed,
       Value<DateTime> updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 
@@ -12677,11 +12676,6 @@ class $$DayLogActionsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -12729,11 +12723,6 @@ class $$DayLogActionsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$DayLogActionsTableAnnotationComposer
@@ -12765,9 +12754,6 @@ class $$DayLogActionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirty =>
-      $composableBuilder(column: $table.dirty, builder: (column) => column);
 }
 
 class $$DayLogActionsTableTableManager
@@ -12814,7 +12800,6 @@ class $$DayLogActionsTableTableManager
                 Value<String> actionId = const Value.absent(),
                 Value<bool> completed = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DayLogActionsCompanion(
                 id: id,
@@ -12824,7 +12809,6 @@ class $$DayLogActionsTableTableManager
                 actionId: actionId,
                 completed: completed,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -12836,7 +12820,6 @@ class $$DayLogActionsTableTableManager
                 required String actionId,
                 Value<bool> completed = const Value.absent(),
                 required DateTime updatedAt,
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DayLogActionsCompanion.insert(
                 id: id,
@@ -12846,7 +12829,6 @@ class $$DayLogActionsTableTableManager
                 actionId: actionId,
                 completed: completed,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -12883,7 +12865,6 @@ typedef $$DiagnosticResultsTableCreateCompanionBuilder =
       required String weakestArchetypeId,
       required String recommendedCampaignId,
       required DateTime updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 typedef $$DiagnosticResultsTableUpdateCompanionBuilder =
@@ -12895,7 +12876,6 @@ typedef $$DiagnosticResultsTableUpdateCompanionBuilder =
       Value<String> weakestArchetypeId,
       Value<String> recommendedCampaignId,
       Value<DateTime> updatedAt,
-      Value<bool> dirty,
       Value<int> rowid,
     });
 
@@ -12940,11 +12920,6 @@ class $$DiagnosticResultsTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -12992,11 +12967,6 @@ class $$DiagnosticResultsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get dirty => $composableBuilder(
-    column: $table.dirty,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$DiagnosticResultsTableAnnotationComposer
@@ -13032,9 +13002,6 @@ class $$DiagnosticResultsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get dirty =>
-      $composableBuilder(column: $table.dirty, builder: (column) => column);
 }
 
 class $$DiagnosticResultsTableTableManager
@@ -13084,7 +13051,6 @@ class $$DiagnosticResultsTableTableManager
                 Value<String> weakestArchetypeId = const Value.absent(),
                 Value<String> recommendedCampaignId = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DiagnosticResultsCompanion(
                 id: id,
@@ -13094,7 +13060,6 @@ class $$DiagnosticResultsTableTableManager
                 weakestArchetypeId: weakestArchetypeId,
                 recommendedCampaignId: recommendedCampaignId,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -13106,7 +13071,6 @@ class $$DiagnosticResultsTableTableManager
                 required String weakestArchetypeId,
                 required String recommendedCampaignId,
                 required DateTime updatedAt,
-                Value<bool> dirty = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DiagnosticResultsCompanion.insert(
                 id: id,
@@ -13116,7 +13080,6 @@ class $$DiagnosticResultsTableTableManager
                 weakestArchetypeId: weakestArchetypeId,
                 recommendedCampaignId: recommendedCampaignId,
                 updatedAt: updatedAt,
-                dirty: dirty,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -13369,143 +13332,308 @@ typedef $$EntitlementsTableProcessedTableManager =
       EntitlementRow,
       PrefetchHooks Function()
     >;
-typedef $$SyncStateTableCreateCompanionBuilder =
-    SyncStateCompanion Function({
-      required String syncTable,
-      Value<DateTime?> watermark,
-      Value<DateTime?> lastPulledAt,
-      Value<int> rowid,
+typedef $$OutboxTableCreateCompanionBuilder =
+    OutboxCompanion Function({
+      Value<int> id,
+      required String remoteTable,
+      required String rowKey,
+      required String payload,
+      required DateTime queuedAt,
     });
-typedef $$SyncStateTableUpdateCompanionBuilder =
-    SyncStateCompanion Function({
-      Value<String> syncTable,
-      Value<DateTime?> watermark,
-      Value<DateTime?> lastPulledAt,
-      Value<int> rowid,
+typedef $$OutboxTableUpdateCompanionBuilder =
+    OutboxCompanion Function({
+      Value<int> id,
+      Value<String> remoteTable,
+      Value<String> rowKey,
+      Value<String> payload,
+      Value<DateTime> queuedAt,
     });
 
-class $$SyncStateTableFilterComposer
-    extends Composer<_$FeralDatabase, $SyncStateTable> {
-  $$SyncStateTableFilterComposer({
+class $$OutboxTableFilterComposer
+    extends Composer<_$FeralDatabase, $OutboxTable> {
+  $$OutboxTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get syncTable => $composableBuilder(
-    column: $table.syncTable,
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get watermark => $composableBuilder(
-    column: $table.watermark,
+  ColumnFilters<String> get remoteTable => $composableBuilder(
+    column: $table.remoteTable,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get lastPulledAt => $composableBuilder(
-    column: $table.lastPulledAt,
+  ColumnFilters<String> get rowKey => $composableBuilder(
+    column: $table.rowKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get queuedAt => $composableBuilder(
+    column: $table.queuedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
 
-class $$SyncStateTableOrderingComposer
-    extends Composer<_$FeralDatabase, $SyncStateTable> {
-  $$SyncStateTableOrderingComposer({
+class $$OutboxTableOrderingComposer
+    extends Composer<_$FeralDatabase, $OutboxTable> {
+  $$OutboxTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get syncTable => $composableBuilder(
-    column: $table.syncTable,
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get watermark => $composableBuilder(
-    column: $table.watermark,
+  ColumnOrderings<String> get remoteTable => $composableBuilder(
+    column: $table.remoteTable,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get lastPulledAt => $composableBuilder(
-    column: $table.lastPulledAt,
+  ColumnOrderings<String> get rowKey => $composableBuilder(
+    column: $table.rowKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get queuedAt => $composableBuilder(
+    column: $table.queuedAt,
     builder: (column) => ColumnOrderings(column),
   );
 }
 
-class $$SyncStateTableAnnotationComposer
-    extends Composer<_$FeralDatabase, $SyncStateTable> {
-  $$SyncStateTableAnnotationComposer({
+class $$OutboxTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $OutboxTable> {
+  $$OutboxTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get syncTable =>
-      $composableBuilder(column: $table.syncTable, builder: (column) => column);
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get watermark =>
-      $composableBuilder(column: $table.watermark, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastPulledAt => $composableBuilder(
-    column: $table.lastPulledAt,
+  GeneratedColumn<String> get remoteTable => $composableBuilder(
+    column: $table.remoteTable,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get rowKey =>
+      $composableBuilder(column: $table.rowKey, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get queuedAt =>
+      $composableBuilder(column: $table.queuedAt, builder: (column) => column);
 }
 
-class $$SyncStateTableTableManager
+class $$OutboxTableTableManager
     extends
         RootTableManager<
           _$FeralDatabase,
-          $SyncStateTable,
-          SyncStateRow,
-          $$SyncStateTableFilterComposer,
-          $$SyncStateTableOrderingComposer,
-          $$SyncStateTableAnnotationComposer,
-          $$SyncStateTableCreateCompanionBuilder,
-          $$SyncStateTableUpdateCompanionBuilder,
-          (
-            SyncStateRow,
-            BaseReferences<_$FeralDatabase, $SyncStateTable, SyncStateRow>,
-          ),
-          SyncStateRow,
+          $OutboxTable,
+          OutboxRow,
+          $$OutboxTableFilterComposer,
+          $$OutboxTableOrderingComposer,
+          $$OutboxTableAnnotationComposer,
+          $$OutboxTableCreateCompanionBuilder,
+          $$OutboxTableUpdateCompanionBuilder,
+          (OutboxRow, BaseReferences<_$FeralDatabase, $OutboxTable, OutboxRow>),
+          OutboxRow,
           PrefetchHooks Function()
         > {
-  $$SyncStateTableTableManager(_$FeralDatabase db, $SyncStateTable table)
+  $$OutboxTableTableManager(_$FeralDatabase db, $OutboxTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$SyncStateTableFilterComposer($db: db, $table: table),
+              $$OutboxTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$SyncStateTableOrderingComposer($db: db, $table: table),
+              $$OutboxTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$SyncStateTableAnnotationComposer($db: db, $table: table),
+              $$OutboxTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<String> syncTable = const Value.absent(),
-                Value<DateTime?> watermark = const Value.absent(),
-                Value<DateTime?> lastPulledAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => SyncStateCompanion(
-                syncTable: syncTable,
-                watermark: watermark,
-                lastPulledAt: lastPulledAt,
-                rowid: rowid,
+                Value<int> id = const Value.absent(),
+                Value<String> remoteTable = const Value.absent(),
+                Value<String> rowKey = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<DateTime> queuedAt = const Value.absent(),
+              }) => OutboxCompanion(
+                id: id,
+                remoteTable: remoteTable,
+                rowKey: rowKey,
+                payload: payload,
+                queuedAt: queuedAt,
               ),
           createCompanionCallback:
               ({
-                required String syncTable,
-                Value<DateTime?> watermark = const Value.absent(),
-                Value<DateTime?> lastPulledAt = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                required String remoteTable,
+                required String rowKey,
+                required String payload,
+                required DateTime queuedAt,
+              }) => OutboxCompanion.insert(
+                id: id,
+                remoteTable: remoteTable,
+                rowKey: rowKey,
+                payload: payload,
+                queuedAt: queuedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OutboxTableProcessedTableManager =
+    ProcessedTableManager<
+      _$FeralDatabase,
+      $OutboxTable,
+      OutboxRow,
+      $$OutboxTableFilterComposer,
+      $$OutboxTableOrderingComposer,
+      $$OutboxTableAnnotationComposer,
+      $$OutboxTableCreateCompanionBuilder,
+      $$OutboxTableUpdateCompanionBuilder,
+      (OutboxRow, BaseReferences<_$FeralDatabase, $OutboxTable, OutboxRow>),
+      OutboxRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ClientStateTableCreateCompanionBuilder =
+    ClientStateCompanion Function({
+      required String key,
+      Value<String?> value,
+      Value<int> rowid,
+    });
+typedef $$ClientStateTableUpdateCompanionBuilder =
+    ClientStateCompanion Function({
+      Value<String> key,
+      Value<String?> value,
+      Value<int> rowid,
+    });
+
+class $$ClientStateTableFilterComposer
+    extends Composer<_$FeralDatabase, $ClientStateTable> {
+  $$ClientStateTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ClientStateTableOrderingComposer
+    extends Composer<_$FeralDatabase, $ClientStateTable> {
+  $$ClientStateTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ClientStateTableAnnotationComposer
+    extends Composer<_$FeralDatabase, $ClientStateTable> {
+  $$ClientStateTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$ClientStateTableTableManager
+    extends
+        RootTableManager<
+          _$FeralDatabase,
+          $ClientStateTable,
+          ClientStateRow,
+          $$ClientStateTableFilterComposer,
+          $$ClientStateTableOrderingComposer,
+          $$ClientStateTableAnnotationComposer,
+          $$ClientStateTableCreateCompanionBuilder,
+          $$ClientStateTableUpdateCompanionBuilder,
+          (
+            ClientStateRow,
+            BaseReferences<_$FeralDatabase, $ClientStateTable, ClientStateRow>,
+          ),
+          ClientStateRow,
+          PrefetchHooks Function()
+        > {
+  $$ClientStateTableTableManager(_$FeralDatabase db, $ClientStateTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ClientStateTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ClientStateTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ClientStateTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String?> value = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => SyncStateCompanion.insert(
-                syncTable: syncTable,
-                watermark: watermark,
-                lastPulledAt: lastPulledAt,
+              }) => ClientStateCompanion(key: key, value: value, rowid: rowid),
+          createCompanionCallback:
+              ({
+                required String key,
+                Value<String?> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ClientStateCompanion.insert(
+                key: key,
+                value: value,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -13516,21 +13644,21 @@ class $$SyncStateTableTableManager
       );
 }
 
-typedef $$SyncStateTableProcessedTableManager =
+typedef $$ClientStateTableProcessedTableManager =
     ProcessedTableManager<
       _$FeralDatabase,
-      $SyncStateTable,
-      SyncStateRow,
-      $$SyncStateTableFilterComposer,
-      $$SyncStateTableOrderingComposer,
-      $$SyncStateTableAnnotationComposer,
-      $$SyncStateTableCreateCompanionBuilder,
-      $$SyncStateTableUpdateCompanionBuilder,
+      $ClientStateTable,
+      ClientStateRow,
+      $$ClientStateTableFilterComposer,
+      $$ClientStateTableOrderingComposer,
+      $$ClientStateTableAnnotationComposer,
+      $$ClientStateTableCreateCompanionBuilder,
+      $$ClientStateTableUpdateCompanionBuilder,
       (
-        SyncStateRow,
-        BaseReferences<_$FeralDatabase, $SyncStateTable, SyncStateRow>,
+        ClientStateRow,
+        BaseReferences<_$FeralDatabase, $ClientStateTable, ClientStateRow>,
       ),
-      SyncStateRow,
+      ClientStateRow,
       PrefetchHooks Function()
     >;
 
@@ -13574,6 +13702,8 @@ class $FeralDatabaseManager {
       $$DiagnosticResultsTableTableManager(_db, _db.diagnosticResults);
   $$EntitlementsTableTableManager get entitlements =>
       $$EntitlementsTableTableManager(_db, _db.entitlements);
-  $$SyncStateTableTableManager get syncState =>
-      $$SyncStateTableTableManager(_db, _db.syncState);
+  $$OutboxTableTableManager get outbox =>
+      $$OutboxTableTableManager(_db, _db.outbox);
+  $$ClientStateTableTableManager get clientState =>
+      $$ClientStateTableTableManager(_db, _db.clientState);
 }

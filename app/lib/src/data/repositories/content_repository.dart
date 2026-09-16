@@ -266,47 +266,77 @@ class ContentRepository {
   static DateTime _at(Map<String, dynamic> row) =>
       DateTime.parse(row['updated_at'] as String);
 
-  Future<void> pull() async {
-    for (final table in _tables) {
-      final rows = await api.fetchSince(
-        table.name,
-        await _watermark(table.name),
-      );
-      if (rows.isEmpty) continue;
+  /// Every cached content table, for the wholesale delete a refresh performs.
+  ///
+  /// Listed explicitly rather than derived from [_tables] so the compiler checks
+  /// each one, and in reverse dependency order: drift declares no foreign keys
+  /// locally, but an order that reads like the schema is one a reader can check.
+  late final List<TableInfo<Table, dynamic>> _contentTables = [
+    db.diagnosticOptions,
+    db.diagnosticQuestions,
+    db.doctrineEntries,
+    db.doctrineGroups,
+    db.actionBodies,
+    db.actionArchetypes,
+    db.actions,
+    db.dayBodies,
+    db.days,
+    db.campaignArchetypes,
+    db.campaigns,
+    db.packs,
+    db.archetypes,
+  ];
 
-      await db.transaction(() async {
-        for (final row in rows) {
+  static const _versionKey = 'content_version';
+
+  /// Replaces the cached library with what the server currently holds.
+  ///
+  /// Replace, not merge. The incremental pull this succeeds asked each table for
+  /// rows newer than a per-device watermark, which structurally cannot observe a
+  /// deletion: a deleted row carries no newer `updated_at`, so a campaign removed
+  /// on the server stayed on the device until the app was reinstalled. Replacing
+  /// the set makes a deletion ordinary — the row simply is not in the answer.
+  ///
+  /// Returns whether anything was applied. [force] skips the version gate, for
+  /// the two cases where the *visible* rows change without the library changing:
+  /// a purchase and a sign-in both move what row-level security will return for
+  /// the body tables (ADR-0025, ADR-0034).
+  Future<bool> refresh({bool force = false}) async {
+    final remoteVersion = await api.fetchVersion();
+    if (!force && remoteVersion == await cachedVersion()) return false;
+
+    // Everything is fetched before anything local is touched, so a fetch that
+    // fails half way through leaves the cache exactly as it was. A throw is "we
+    // did not find out", never "the library is empty" — the same rule that keeps
+    // a failed entitlement fetch from revoking a pack (ADR-0025).
+    final fetched = <String, List<Map<String, dynamic>>>{};
+    for (final table in _tables) {
+      fetched[table.name] = await api.fetchAll(table.name);
+    }
+
+    // Nothing anywhere means the server holds no library yet. There is nothing
+    // to apply and nothing to complain about, and applying it would empty a cache
+    // the bundled snapshot may have filled.
+    if (fetched.values.every((rows) => rows.isEmpty)) return false;
+
+    await db.transaction(() async {
+      for (final table in _contentTables) {
+        await db.delete(table).go();
+      }
+      for (final table in _tables) {
+        for (final row in fetched[table.name]!) {
           await table.upsert(row);
         }
-      });
-
-      // Advanced only after the rows are committed, so an interrupted pull is
-      // retried rather than skipped.
-      await _advanceWatermark(table.name, rows);
-    }
-  }
-
-  /// Plan 2 kept these in a map on this object, which meant every cold start
-  /// re-downloaded the whole library. They are database state now.
-  Future<DateTime?> _watermark(String table) => db.watermarkFor(table);
-
-  Future<void> _advanceWatermark(
-    String table,
-    List<Map<String, dynamic>> rows,
-  ) async {
-    if (rows.isEmpty) return;
-    var high =
-        await db.watermarkFor(table) ??
-        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-    for (final row in rows) {
-      final updated = _at(row).toUtc();
-      if (updated.isAfter(high)) high = updated;
-    }
-    await db.setWatermark(table, high);
+      }
+      // Inside the transaction: a version recorded for rows that were not
+      // committed would make the next launch skip the refetch they need.
+      await primeVersion(remoteVersion);
+    });
+    return true;
   }
 
   /// Applies rows keyed by table name, using the same upserts as the network
-  /// pull, so the bundled snapshot and the wire can never diverge. Unknown
+  /// refresh, so the bundled snapshot and the wire can never diverge. Unknown
   /// table names are ignored; a malformed row throws.
   Future<void> applyRows(Map<String, dynamic> rowsByTable) async {
     for (final table in _tables) {
@@ -318,17 +348,21 @@ class ContentRepository {
     }
   }
 
-  /// Used by the seed snapshot loader to set the initial marks. Same storage
-  /// as a pull's own advance — there is only one watermark per table.
-  Future<void> primeWatermark(String table, DateTime value) =>
-      db.setWatermark(table, value);
+  /// The content version this device has cached, or null if it has never
+  /// refreshed. Null is what makes a bundled-snapshot install refetch once.
+  Future<int?> cachedVersion() async {
+    final row = await (db.select(
+      db.clientState,
+    )..where((r) => r.key.equals(_versionKey))).getSingleOrNull();
+    final raw = row?.value;
+    return raw == null ? null : int.tryParse(raw);
+  }
 
-  /// Read-only view, for tests and diagnostics.
-  Future<DateTime?> watermarkFor(String table) => db.watermarkFor(table);
-
-  /// Drops a table's high-water mark so the next pull re-asks for everything the
-  /// server is willing to give. Used when the answer to "who is asking" changes.
-  Future<void> clearWatermark(String table) => db.clearWatermark(table);
+  Future<void> primeVersion(int value) => db
+      .into(db.clientState)
+      .insertOnConflictUpdate(
+        ClientStateRow(key: _versionKey, value: '$value'),
+      );
 
   /// Whether day one of any campaign in [packId] is fully readable locally:
   /// its **day body** and its mandatory action's body.
@@ -462,11 +496,11 @@ class ContentRepository {
 
     final actionRows =
         await (db.select(db.actions).join([
-              leftOuterJoin(
-                db.actionBodies,
-                db.actionBodies.actionId.equalsExp(db.actions.id),
-              ),
-            ])
+                leftOuterJoin(
+                  db.actionBodies,
+                  db.actionBodies.actionId.equalsExp(db.actions.id),
+                ),
+              ])
               ..where(db.actions.dayId.isIn(ids))
               ..orderBy([
                 OrderingTerm(expression: db.actions.isOptional),

@@ -31,7 +31,9 @@ class ArchetypeTag extends StatelessWidget {
         ),
         SizedBox(width: tokens.sp4),
         Text(
-          archetypes.map((a) => a.name).join(context.l10n.archetypeListSeparator),
+          archetypes
+              .map((a) => a.name)
+              .join(context.l10n.archetypeListSeparator),
           style: theme.textTheme.labelMedium?.copyWith(color: tokens.mutedInk),
         ),
       ],

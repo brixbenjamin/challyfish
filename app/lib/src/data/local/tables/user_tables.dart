@@ -2,6 +2,10 @@ import 'package:drift/drift.dart';
 
 /// User state. Note what is absent: no currentDay, no missCount, no live grade.
 /// Those are derived by RunEngine every time they are needed.
+///
+/// Also absent, since the outbox replaced it: a `dirty` flag per row. What this
+/// device owes the server is a queue of writes, not a property of the rows the
+/// writes happened to touch.
 @DataClassName('CampaignRunRow')
 class CampaignRuns extends Table {
   TextColumn get id => text()();
@@ -15,9 +19,6 @@ class CampaignRuns extends Table {
   /// Materialized once at completion only. Null while the run is active.
   TextColumn get grade => text().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
-
-  /// Written locally and not yet pushed. The push worker is Plan 3.
-  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -34,13 +35,13 @@ class DayLogs extends Table {
   TextColumn get outcome => text().nullable()();
   TextColumn get note => text().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
-  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
 
-  /// Mirrors the Postgres unique constraint. This is what makes every future
-  /// sync merge an upsert rather than a duplicate.
+  /// Mirrors the Postgres unique constraint, and the key the outbox queues this
+  /// row under: two offline devices mint different uuids for the same day, so
+  /// the uuid was never what identified it.
   @override
   List<Set<Column<Object>>> get uniqueKeys => [
     {runId, dayIndex},
@@ -49,14 +50,14 @@ class DayLogs extends Table {
 
 /// Which actions the user ticked on a given day.
 ///
-/// Identified by (runId, dayIndex, actionId) rather than by a day log's id:
-/// the sync merge adopts the server's uuid for a day log by deleting and
-/// reinserting that row, and a child keyed on the surrogate id would not
-/// survive it.
+/// Identified by (runId, dayIndex, actionId) rather than by a day log's id,
+/// because that is what identifies the tick on the server too: two devices
+/// writing the same tick offline mint different uuids for it, so the uuid has
+/// never been the identity. It is also the key the outbox queues the row under.
 ///
-/// `completed` is a flag, never row presence. Nothing in this sync design
-/// carries tombstones, so a deleted tick would never reach a second device and
-/// the next pull would resurrect it.
+/// `completed` is a flag, never row presence. Unticking is something the user
+/// did, so it has to travel as a value the server can store — an absent row
+/// would say nothing at all.
 @DataClassName('DayLogActionRow')
 class DayLogActions extends Table {
   TextColumn get id => text()();
@@ -66,7 +67,6 @@ class DayLogActions extends Table {
   TextColumn get actionId => text()();
   BoolColumn get completed => boolean().withDefault(const Constant(true))();
   DateTimeColumn get updatedAt => dateTime()();
-  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -96,7 +96,6 @@ class DiagnosticResults extends Table {
   TextColumn get weakestArchetypeId => text()();
   TextColumn get recommendedCampaignId => text()();
   DateTimeColumn get updatedAt => dateTime()();
-  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -112,15 +111,14 @@ class Profiles extends Table {
   TextColumn get displayName => text().nullable()();
   DateTimeColumn get onboardedAt => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
-  BoolColumn get dirty => boolean().withDefault(const Constant(true))();
 
   @override
   Set<Column<Object>> get primaryKey => {userId};
 }
 
 /// A local copy of `public.entitlements`, which the client may read and never
-/// write (ADR-0017). Pulled read-only; there is deliberately no `dirty` column,
-/// because nothing here is ever pushed.
+/// write (ADR-0017). Refreshed read-only, and nothing here is ever queued for
+/// push — the webhook is the only writer of what anyone owns.
 @DataClassName('EntitlementRow')
 class Entitlements extends Table {
   TextColumn get userId => text()();

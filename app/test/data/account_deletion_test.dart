@@ -6,7 +6,7 @@ import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/repositories/identity_repository.dart';
 import 'package:test/test.dart';
 
-import 'identity_repository_test.dart' show FakeAuthGateway;
+import '../support/fake_auth_gateway.dart';
 
 import '../support/fake_purchase_gateway.dart';
 

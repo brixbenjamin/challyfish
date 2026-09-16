@@ -10,7 +10,7 @@ import '../support/fake_purchase_gateway.dart';
 // The fake auth gateway lives in plan 3's identity test rather than in
 // test/support, so it is imported from there — the same way the settings tests
 // share FakeScheduler.
-import 'identity_repository_test.dart' show FakeAuthGateway;
+import '../support/fake_auth_gateway.dart';
 
 void main() {
   late FeralDatabase db;
@@ -129,11 +129,10 @@ void main() {
     },
   );
 
-  test('the local wipe knows about entitlements and their watermark', () async {
+  test('the local wipe knows about entitlements', () async {
     // A user table the wipe does not know about is exactly the bug plan 3's
     // tests were written to prevent.
     await ownedRow('user-1');
-    await db.setWatermark('entitlements', DateTime.utc(2026, 5, 1));
 
     await repo.completeSignIn(
       provider: AuthProvider.apple,
@@ -141,10 +140,5 @@ void main() {
     );
 
     expect(await db.select(db.entitlements).get(), isEmpty);
-    expect(
-      await db.watermarkFor('entitlements'),
-      isNull,
-      reason: 'a stale watermark would skip the new account\'s rows',
-    );
   });
 }

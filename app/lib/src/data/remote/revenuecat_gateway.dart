@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:purchases_flutter/purchases_flutter.dart' as rc;
 import 'package:purchases_flutter/purchases_flutter.dart'
@@ -80,7 +81,9 @@ class RevenueCatGateway implements PurchaseGateway {
       return;
     }
 
-    await rc.Purchases.setLogLevel(rc.LogLevel.error);
+    await rc.Purchases.setLogLevel(
+      kDebugMode ? rc.LogLevel.debug : rc.LogLevel.error,
+    );
 
     // The app user id is the Supabase user id, always (ADR-0017). This single
     // line is what makes a pack bought anonymously survive identity linking:

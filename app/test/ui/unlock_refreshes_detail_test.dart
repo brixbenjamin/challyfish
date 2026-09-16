@@ -20,10 +20,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../app/app_sync_wiring_test.dart' show SilentContentApi, pumpUntil;
-import '../data/identity_repository_test.dart' show FakeAuthGateway;
+import '../support/fake_content_api.dart';
+import '../support/fake_auth_gateway.dart';
 import '../support/fake_purchase_gateway.dart';
-import '../sync/sync_scheduler_test.dart' show FakeGate;
+import '../support/fake_sync.dart';
 import 'settings_screen_test.dart' show FakeScheduler;
 
 import '../support/pump.dart';
@@ -35,9 +35,8 @@ class SilentProgressApi implements ProgressApi {
   Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {}
 
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
+  Future<List<Map<String, dynamic>>> fetchAllFor(
     String table,
-    DateTime? since,
     String userId,
   ) async => const [];
 }

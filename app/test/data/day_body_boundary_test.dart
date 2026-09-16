@@ -8,10 +8,10 @@ import 'package:test/test.dart';
 
 class EmptyContentApi implements ContentApi {
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async => const [];
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async => const [];
+
+  @override
+  Future<int> fetchVersion() async => 1;
 }
 
 /// day_bodies is the second table whose visible rows depend on who is asking
@@ -107,33 +107,38 @@ void main() {
     });
   }
 
-  test('a sign-in wipes paid day bodies and keeps the core ones', () async {
-    // The core pack is free to everyone, which also means a sign-in never
-    // leaves the app with nothing to show.
+  test('a sign-in drops the cached content version', () async {
+    // This is what re-filters both body tables for whoever is now signed in.
+    // The library did not change, so a version-gated refresh would decide there
+    // was nothing to fetch and the new account would go on reading the old
+    // account's paid copy. The wipe itself no longer deletes body rows — the
+    // refresh replaces them with what row-level security returns (ADR-0025,
+    // ADR-0034).
     await seed();
+    final content = ContentRepository(db: db, api: EmptyContentApi());
+    await content.primeVersion(7);
 
     await replaceLocalUserState(db);
 
-    final remaining = await db.select(db.dayBodies).get();
-    expect(remaining.map((b) => b.dayId), ['day-core']);
+    expect(await content.cachedVersion(), isNull);
   });
 
-  test('a sign-in clears the day_bodies watermark', () async {
-    // The mark is per device while the visible row set is per user. A stale
-    // mark hides the newly signed-in account's own pack behind an
-    // `updated_at >` filter it can never satisfy.
+  test('a sign-in clears what this device still owed', () async {
     await seed();
-    await db.setWatermark('day_bodies', DateTime.utc(2026, 9, 9));
-    await db.setWatermark('campaigns', DateTime.utc(2026, 9, 9));
+    await db
+        .into(db.outbox)
+        .insert(
+          OutboxCompanion.insert(
+            remoteTable: 'day_logs',
+            rowKey: 'run-1:1',
+            payload: '{}',
+            queuedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
 
     await replaceLocalUserState(db);
 
-    expect(await db.watermarkFor('day_bodies'), isNull);
-    expect(
-      await db.watermarkFor('campaigns'),
-      isNotNull,
-      reason: 'every other content mark is left alone',
-    );
+    expect(await db.select(db.outbox).get(), isEmpty);
   });
 
   test('hasBodyForFirstDay is false with no day body', () async {

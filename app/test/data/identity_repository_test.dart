@@ -1,81 +1,14 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:feral/src/data/local/database.dart';
-import 'package:feral/src/data/remote/auth_gateway.dart';
 import 'package:feral/src/data/repositories/entitlement_repository.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/repositories/identity_repository.dart';
 import 'package:feral/src/domain/identity.dart';
 import 'package:test/test.dart';
 
+import '../support/fake_auth_gateway.dart';
 import '../support/fake_purchase_gateway.dart';
-
-class FakeAuthGateway implements AuthGateway {
-  String? userId = 'anon-user';
-  LinkedIdentity? identity;
-  bool identityTaken = false;
-  final List<String> calls = [];
-
-  @override
-  String? get currentUserId => userId;
-
-  @override
-  LinkedIdentity? get linkedIdentity => identity;
-
-  @override
-  Future<void> linkIdentity(AuthProvider provider, Object credential) async {
-    calls.add('link:${provider.name}');
-    if (identityTaken) {
-      throw const IdentityAlreadyAttached(
-        'that identity belongs to another account',
-      );
-    }
-    identity = LinkedIdentity(provider: provider, label: 'you@example.com');
-  }
-
-  @override
-  Future<String> signIn(AuthProvider provider, Object credential) async {
-    calls.add('signIn:${provider.name}');
-    userId = 'existing-user';
-    identity = LinkedIdentity(provider: provider, label: 'you@example.com');
-    return userId!;
-  }
-
-  /// The address belongs to another account. Only the linking branch can see
-  /// this, exactly as GoTrue only refuses an email *change* to a taken address.
-  bool addressTaken = false;
-  bool codeIsWrong = false;
-
-  @override
-  Future<void> sendEmailCode(String email, {required bool link}) async {
-    calls.add('sendCode:$email:link=$link');
-    if (link && addressTaken) {
-      throw const IdentityAlreadyAttached(
-        'that address belongs to another account',
-      );
-    }
-  }
-
-  @override
-  Future<String> verifyEmailCode({
-    required String email,
-    required String code,
-    required bool link,
-  }) async {
-    calls.add('verify:$code:link=$link');
-    if (codeIsWrong) throw Exception('token has expired or is invalid');
-    identity = LinkedIdentity(provider: AuthProvider.email, label: email);
-    if (!link) userId = 'existing-user';
-    return userId!;
-  }
-
-  @override
-  Future<void> signInAnonymously() async {
-    calls.add('anon');
-    userId = 'fresh-anon';
-    identity = null;
-  }
-}
 
 void main() {
   late FeralDatabase db;
@@ -236,32 +169,27 @@ void main() {
     );
   });
 
-  test(
-    'a sign-in resets the user watermarks but not the content ones',
-    () async {
-      await seedLocalProgress();
-      await db.setWatermark('day_logs', DateTime.utc(2026, 6, 4));
-      await db.setWatermark('campaigns', DateTime.utc(2026, 6, 1));
-      auth.identityTaken = true;
-      await identity.attach(provider: AuthProvider.google, credential: 'g');
+  test('a sign-in drops the cached content version but keeps content', () async {
+    await seedLocalProgress();
+    auth.identityTaken = true;
+    await identity.attach(provider: AuthProvider.google, credential: 'g');
 
-      await identity.completeSignIn(
-        provider: AuthProvider.google,
-        credential: 'g',
-      );
+    await identity.completeSignIn(
+      provider: AuthProvider.google,
+      credential: 'g',
+    );
 
-      expect(
-        await db.watermarkFor('day_logs'),
-        isNull,
-        reason: 'the new account must pull its record in full',
-      );
-      expect(
-        await db.watermarkFor('campaigns'),
-        DateTime.utc(2026, 6, 1),
-        reason: "the library is not the new account's business to re-download",
-      );
-    },
-  );
+    // There are no per-table watermarks to reset any more: the record is fetched
+    // as a complete set, and the library is fetched whole when its version moves.
+    // Dropping the version is what forces the one refresh that matters here,
+    // because it re-filters the body tables for whoever is now signed in.
+    expect(await db.select(db.clientState).get(), isEmpty);
+    expect(
+      await db.select(db.campaigns).get(),
+      isNotEmpty,
+      reason: "the library is not the new account's business to re-download",
+    );
+  });
 
   test('the rows are gone before any sync could pick them up', () async {
     await seedLocalProgress();
@@ -273,17 +201,16 @@ void main() {
       credential: 'g',
     );
 
-    // Nothing is left dirty, because nothing is left. Uploading records the
-    // user just agreed to discard would be worse than discarding them, and the
-    // only way to guarantee that is for the wipe to leave no queue behind.
-    final dirtyRuns = await (db.select(
-      db.campaignRuns,
-    )..where((r) => r.dirty.equals(true))).get();
-    final dirtyLogs = await (db.select(
-      db.dayLogs,
-    )..where((l) => l.dirty.equals(true))).get();
-    expect(dirtyRuns, isEmpty);
-    expect(dirtyLogs, isEmpty);
+    // Nothing is owed, because nothing is left. Uploading records the user just
+    // agreed to discard would be worse than discarding them, and the only way to
+    // guarantee that is for the wipe to leave no queue behind.
+    expect(await db.select(db.campaignRuns).get(), isEmpty);
+    expect(await db.select(db.dayLogs).get(), isEmpty);
+    expect(
+      await db.select(db.outbox).get(),
+      isEmpty,
+      reason: "a queued write would be sent as the account they just joined",
+    );
   });
 
   test('a cancelled link leaves the anonymous session untouched', () async {

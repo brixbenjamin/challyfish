@@ -12,17 +12,14 @@ class FakeProgressApi implements ProgressApi {
 
   final Map<String, List<Map<String, dynamic>>> rows;
   final List<String> fetched = [];
-  final List<DateTime?> fetchedSince = [];
   final List<String> upserted = [];
 
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
+  Future<List<Map<String, dynamic>>> fetchAllFor(
     String table,
-    DateTime? since,
     String userId,
   ) async {
     fetched.add(table);
-    fetchedSince.add(since);
     return rows[table] ?? const [];
   }
 
@@ -60,7 +57,7 @@ void main() {
     final api = FakeProgressApi({
       'entitlements': [entitlementRow()],
     });
-    final result = await repoWith(api).pull('user-1');
+    final result = await repoWith(api).refresh('user-1');
 
     expect(result.succeeded, isTrue);
     expect(api.fetched, contains('entitlements'));
@@ -87,7 +84,7 @@ void main() {
     final api = FakeProgressApi({
       'entitlements': [entitlementRow()],
     });
-    await repoWith(api).pull('user-1');
+    await repoWith(api).refresh('user-1');
 
     final rows = await db.select(db.entitlements).get();
     expect(rows, hasLength(1), reason: 'keyed on (user_id, pack_id)');
@@ -117,7 +114,7 @@ void main() {
       final api = FakeProgressApi({
         'entitlements': [entitlementRow(source: 'grant')],
       });
-      await repoWith(api).pull('user-1');
+      await repoWith(api).refresh('user-1');
 
       final row = await db.select(db.entitlements).getSingle();
       expect(
@@ -128,48 +125,24 @@ void main() {
     },
   );
 
-  test(
-    'entitlements keep no watermark, because a refund has no timestamp',
-    () async {
-      // Deliberately not the incremental contract this test used to assert. A
-      // refund deletes the server row, and a deleted row carries no newer
-      // updated_at, so a watermark would make revocation unobservable forever
-      // (ADR-0025). The set is fetched whole every time instead: one row per
-      // owned pack, and a user owns one.
-      final api = FakeProgressApi({
-        'entitlements': [entitlementRow()],
-      });
-      await repoWith(api).pull('user-1');
-
-      expect(await db.watermarkFor('entitlements'), isNull);
-      expect(
-        api.fetchedSince[api.fetched.indexOf('entitlements')],
-        isNull,
-        reason: 'a complete set is asked for unconditionally',
-      );
-    },
-  );
-
   test('entitlements are never pushed', () async {
     final api = FakeProgressApi(const {});
-    await repoWith(api).push('user-1');
+    // Nothing is queued for them, so a flush has nothing to send: the client
+    // cannot write this table and row-level security would reject it anyway.
+    await repoWith(api).flush('user-1');
 
-    expect(
-      api.upserted,
-      isNot(contains('entitlements')),
-      reason: 'the client cannot write this table; RLS would reject it',
-    );
-    expect(SyncRepository.pushOrder, isNot(contains('entitlements')));
+    expect(api.upserted, isNot(contains('entitlements')));
+    expect(await db.select(db.outbox).get(), isEmpty);
   });
 
-  test('entitlements are pulled last, outside the incremental order', () async {
+  test('entitlements are refreshed last', () async {
     final api = FakeProgressApi(const {});
-    await repoWith(api).pull('user-1');
+    await repoWith(api).refresh('user-1');
 
-    // Still last -- nothing references an entitlement, and the purge it drives
-    // must see the rest of the pull's result. But it is no longer a member of
-    // pullOrder, which is the incremental path it cannot use (ADR-0025).
-    expect(SyncRepository.pullOrder, isNot(contains('entitlements')));
+    // Still last -- nothing references an entitlement, and the run abandonment it
+    // drives must see the rest of the refresh's result. It is not a member of
+    // refreshOrder, because it is reconciled as a complete set of its own.
+    expect(SyncRepository.refreshOrder, isNot(contains('entitlements')));
     expect(api.fetched.last, 'entitlements');
   });
 }

@@ -100,19 +100,14 @@ class CampaignDetailScreen extends StatelessWidget {
               SizedBox(height: tokens.sp32),
               Text(
                 l10n.campaignDaysHeading,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: tokens.ink,
-                ),
+                style: theme.textTheme.titleMedium?.copyWith(color: tokens.ink),
               ),
               SizedBox(height: tokens.sp8),
               _DayPreviewList(days: days, archetypesById: archetypesById),
             ],
             SizedBox(height: tokens.sp32),
             if (!isUnlocked)
-              FilledButton(
-                onPressed: onUnlock,
-                child: Text(l10n.unlockButton),
-              )
+              FilledButton(onPressed: onUnlock, child: Text(l10n.unlockButton))
             else ...[
               if (hasActiveRun)
                 // Abandoning is the only destructive action in the product. Say

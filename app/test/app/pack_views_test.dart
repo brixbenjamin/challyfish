@@ -116,9 +116,7 @@ void main() {
   });
 
   test('an unpriced locked pack has no price label', () {
-    final locked = views({
-      'p-core',
-    }).firstWhere((v) => v.pack.id == 'p-edge');
+    final locked = views({'p-core'}).firstWhere((v) => v.pack.id == 'p-edge');
     expect(locked.priceLabel, isNull);
   });
 

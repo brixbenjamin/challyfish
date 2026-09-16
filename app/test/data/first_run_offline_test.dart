@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/local/database.dart';
-import 'package:feral/src/data/remote/content_api.dart';
 import 'package:feral/src/data/remote/seed_snapshot.dart';
 import 'package:feral/src/data/repositories/content_repository.dart';
 import 'package:feral/src/data/repositories/diagnostic_repository.dart';
@@ -15,20 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Stands in for a phone in airplane mode: every call fails the way a real one
-/// does, rather than quietly returning nothing.
-class OfflineContentApi implements ContentApi {
-  int attempts = 0;
-
-  @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async {
-    attempts++;
-    throw const SocketException('offline');
-  }
-}
+import '../support/fake_content_api.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -62,10 +48,10 @@ void main() {
 
   tearDown(() => db.close());
 
-  test('a failed pull is never fatal', () async {
+  test('a failed refresh is never fatal', () async {
     // The router wraps this; the point here is that it really does throw, so
     // the wrapping is load-bearing rather than decorative.
-    await expectLater(content.pull(), throwsA(isA<SocketException>()));
+    await expectLater(content.refresh(), throwsA(isA<SocketException>()));
     expect(api.attempts, greaterThan(0));
     expect(await content.campaigns(), isNotEmpty);
   });

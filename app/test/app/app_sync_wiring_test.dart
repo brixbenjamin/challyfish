@@ -2,7 +2,6 @@ import 'package:drift/native.dart';
 import 'package:feral/src/app/providers.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/local/database.dart';
-import 'package:feral/src/data/remote/content_api.dart';
 import 'package:feral/src/data/repositories/content_repository.dart';
 import 'package:feral/src/sync/sync_scheduler.dart';
 import 'package:feral/src/ui/home_router.dart';
@@ -11,40 +10,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../data/identity_repository_test.dart' show FakeAuthGateway;
+import '../support/fake_auth_gateway.dart';
 import '../support/fake_purchase_gateway.dart';
-import '../sync/sync_scheduler_test.dart' show FakeGate, FakeSync;
+import '../support/fake_sync.dart';
 
+import '../support/fake_content_api.dart';
 import '../support/pump.dart';
-
-/// Content the app cannot reach. Launch must not depend on it, and neither
-/// must this test.
-class SilentContentApi implements ContentApi {
-  @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async => const [];
-}
-
-/// Pumps until [done], or gives up.
-///
-/// Two things make this less obvious than it looks. `pumpAndSettle` cannot be
-/// used at all: the loading screen holds a spinner that never stops scheduling
-/// frames, so it would wait forever. And pumping alone is not enough either —
-/// boot reads the bundled snapshot off disk and opens sqlite, which is real I/O
-/// that a widget test's fake clock does not drive. `runAsync` is what lets that
-/// work actually happen; the pump that follows it is what lets the widget tree
-/// react. Without the pair, boot never finishes and the test reports the app as
-/// never syncing, which is a lie about a bug rather than the truth about one.
-Future<void> pumpUntil(WidgetTester tester, bool Function() done) async {
-  for (var frame = 0; frame < 100 && !done(); frame++) {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 10)),
-    );
-    await tester.pump();
-  }
-}
 
 /// The wiring test the sync engine never had.
 ///

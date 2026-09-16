@@ -57,11 +57,17 @@ class NoStoreGateway implements PurchaseGateway {
 /// Every network call fails the way a phone in airplane mode does.
 class OfflineApi implements ContentApi, ProgressApi {
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table, [
-    DateTime? since,
-    String? userId,
-  ]) async => throw const SocketException('offline');
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async =>
+      throw const SocketException('offline');
+
+  @override
+  Future<int> fetchVersion() async => throw const SocketException('offline');
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchAllFor(
+    String table,
+    String userId,
+  ) async => throw const SocketException('offline');
 
   @override
   Future<void> upsert(String table, List<Map<String, dynamic>> rows) async =>
@@ -98,16 +104,28 @@ class Device {
   late final ProgressRepository progress;
   late final EntitlementRepository entitlements;
 
-  Future<void> pullContent() => content.pull();
+  Future<void> pullContent() => content.refresh(force: true);
 
-  Future<void> syncNow() => sync.pull(userId);
+  Future<void> syncNow() => sync.refresh(userId);
 
+  /// The day's mandatory action, which ProgressRepository.report requires.
+  ///
+  /// Two hops, because an action no longer carries a campaign or a day index: it
+  /// hangs off `day_id` and the day owns both (ADR-0034). This helper queried the
+  /// dropped columns until now, which nothing noticed because CI has never had a
+  /// device to run these tests on.
   Future<String> actionIdFor(String campaignId, int dayIndex) async {
-    final rows = await client
-        .from('actions')
+    final days = await client
+        .from('days')
         .select('id')
         .eq('campaign_id', campaignId)
         .eq('day_index', dayIndex)
+        .limit(1);
+    final rows = await client
+        .from('actions')
+        .select('id')
+        .eq('day_id', days.first['id'] as String)
+        .eq('is_optional', false)
         .limit(1);
     return rows.first['id'] as String;
   }
@@ -266,7 +284,7 @@ void main() {
       api: offline,
       clock: FixedClock(DateTime.utc(2026, 6, 10, 9)),
     );
-    final pull = await offlineSync.pull(userId);
+    final pull = await offlineSync.refresh(userId);
     expect(
       pull.succeeded,
       isFalse,
@@ -325,7 +343,8 @@ void main() {
     expect(
       await device.entitlements.isUnlocked(userId: userId, pack: paid),
       isFalse,
-      reason: 'the complete-set fetch sees the deletion an incremental one '
+      reason:
+          'the complete-set fetch sees the deletion an incremental one '
           'could not',
     );
   });

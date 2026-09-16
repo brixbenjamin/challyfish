@@ -172,7 +172,10 @@ void main() {
       // rather than the index. A day handed over in the wrong order still
       // cannot bury the one action the grade depends on.
       final state = stateWith(
-        actions: [action('o1', isOptional: true, sort: 1), action('m', sort: 5)],
+        actions: [
+          action('o1', isOptional: true, sort: 1),
+          action('m', sort: 5),
+        ],
       );
 
       expect(state.mandatoryToday?.id, 'm');

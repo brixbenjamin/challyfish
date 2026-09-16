@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:drift/native.dart';
 import 'package:feral/src/core/clock.dart';
 import 'package:feral/src/data/local/database.dart';
@@ -34,8 +35,11 @@ void main() {
     expect(run.startedAt, day1);
 
     final stored = await db.select(db.campaignRuns).getSingle();
-    expect(stored.dirty, isTrue);
     expect(stored.grade, isNull, reason: 'an active run carries no grade');
+
+    final queued = await db.select(db.outbox).getSingle();
+    expect(queued.remoteTable, 'campaign_runs');
+    expect(queued.rowKey, run.id);
   });
 
   test('activeRun returns the run; abandoning it clears the slot', () async {
@@ -129,10 +133,16 @@ void main() {
     await repo.commitToday(run: run, dayIndex: 1, actionId: 'action-1');
 
     final stored = await db.select(db.dayLogs).getSingle();
-    expect(stored.dirty, isTrue);
+    expect(stored.committedAt, isNotNull);
+
+    // Queued under the natural key, not the uuid this device happened to mint.
+    final queued = await (db.select(
+      db.outbox,
+    )..where((o) => o.remoteTable.equals('day_logs'))).getSingle();
+    expect(queued.rowKey, '${run.id}:1');
   });
 
-  test('reporting after committing keeps the day log dirty', () async {
+  test('reporting after committing leaves one entry, not two', () async {
     final repo = repoAt(day1);
     final run = await repo.startRun(
       userId: 'user-1',
@@ -149,7 +159,15 @@ void main() {
     );
 
     final stored = await db.select(db.dayLogs).getSingle();
-    expect(stored.dirty, isTrue);
+    expect(stored.outcome, Outcome.done.key);
+
+    // Committing then reporting touches the same row twice. One entry carrying
+    // the final state, not two carrying a sequence: the queue replaces a pending
+    // entry for a row rather than appending beside it.
+    final queued = await (db.select(
+      db.outbox,
+    )..where((o) => o.remoteTable.equals('day_logs'))).get();
+    expect(queued, hasLength(1));
   });
 
   test(
@@ -293,18 +311,17 @@ void main() {
         completed: false,
       );
 
-      // The row must survive: nothing in this sync design carries tombstones,
-      // so a deleted tick would never reach a second device.
+      // The row must survive. Unticking is something the user did, so it has to
+      // travel as a value the server can store; an absent row says nothing.
       final rows = await db.select(db.dayLogActions).get();
       expect(rows, hasLength(1));
       expect(rows.single.completed, isFalse);
-      expect(rows.single.dirty, isTrue);
 
       final logs = await repo.logsFor(run.id);
       expect(logs.single.completedActionIds, isEmpty);
     });
 
-    test('a fresh tick is dirty for later sync', () async {
+    test('a fresh tick is queued for the server', () async {
       final repo = repoAt(day1);
       final run = await startRun(repo);
 
@@ -316,7 +333,35 @@ void main() {
         completed: true,
       );
 
-      expect((await db.select(db.dayLogActions).getSingle()).dirty, isTrue);
+      final queued = await (db.select(
+        db.outbox,
+      )..where((o) => o.remoteTable.equals('day_log_actions'))).getSingle();
+      expect(queued.rowKey, '${run.id}:1:action-1');
+    });
+
+    test('a run is queued before the ticks under it', () async {
+      final repo = repoAt(day1);
+      final run = await startRun(repo);
+
+      await repo.setActionCompleted(
+        run: run,
+        dayIndex: 1,
+        mandatoryActionId: 'action-1',
+        actionId: 'action-1',
+        completed: true,
+      );
+
+      // Ascending id is the only push order there is, and the server's foreign
+      // keys depend on it: a day log sent before its run is rejected, and the
+      // retry is rejected identically forever.
+      final queued = await (db.select(
+        db.outbox,
+      )..orderBy([(o) => OrderingTerm.asc(o.id)])).get();
+      expect(queued.map((q) => q.remoteTable), [
+        'campaign_runs',
+        'day_logs',
+        'day_log_actions',
+      ]);
     });
 
     test('several ticks on one day all come back on the log', () async {

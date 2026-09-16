@@ -41,10 +41,10 @@ const unpriced = Pack(
 
 class _SilentContentApi implements ContentApi {
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async => const [];
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async => const [];
+
+  @override
+  Future<int> fetchVersion() async => 1;
 }
 
 class _SilentProgressApi implements ProgressApi {
@@ -52,9 +52,8 @@ class _SilentProgressApi implements ProgressApi {
   Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {}
 
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
+  Future<List<Map<String, dynamic>>> fetchAllFor(
     String table,
-    DateTime? since,
     String userId,
   ) async => const [];
 }

@@ -80,7 +80,11 @@ select results_eq(
 
 select results_eq(
   $$ select array_agg(key order by key) from public.archetypes $$,
-  $$ select array['trickster', 'beast', 'killer', 'psycho'] $$,
+  -- Alphabetical, because the query above aggregates `order by key`. The
+  -- pre-rename keys were alphabetical by luck, so this literal could be written
+  -- in conceptual order and still pass; renaming to trickster and beast broke
+  -- that coincidence.
+  $$ select array['beast', 'killer', 'psycho', 'trickster'] $$,
   'the four archetype keys are exactly the fixed set'
 );
 

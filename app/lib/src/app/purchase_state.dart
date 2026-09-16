@@ -169,25 +169,19 @@ class PurchaseController {
     }
   }
 
-  /// Pulls until the pack's first body is actually present, or gives up in a way
-  /// the user can act on.
+  /// Refreshes until the pack's first body is actually present, or gives up in a
+  /// way the user can act on.
   ///
-  /// The watermark is cleared first because the rows being waited for are older
-  /// than this device's mark — they existed all along and were merely invisible,
-  /// so an incremental pull would filter out exactly what was just paid for
-  /// (ADR-0025).
+  /// The refresh is forced rather than version-gated. What changed is not the
+  /// library but *who is asking*: the body rows existed all along and were merely
+  /// invisible to this user, so the content version has not moved and a gated
+  /// refresh would decide there was nothing to do (ADR-0025, ADR-0034).
   Future<PurchaseUiState> _deliver(
     String userId,
     Pack pack,
     void Function(PurchaseUiState)? onProgress,
   ) async {
     onProgress?.call(PurchaseDelivering(pack.id));
-    // Both body tables, for one reason: the rows being waited for are older
-    // than this device's marks -- they existed all along and were merely
-    // invisible -- so an incremental pull would filter out exactly what was
-    // just paid for (ADR-0025, ADR-0034).
-    await content.clearWatermark('action_bodies');
-    await content.clearWatermark('day_bodies');
 
     const backoff = [
       Duration(seconds: 1),
@@ -202,7 +196,7 @@ class PurchaseController {
       // way, so a failed attempt costs a retry rather than the pack.
       try {
         await sync.reconcileEntitlements(userId);
-        await content.pull();
+        await content.refresh(force: true);
       } catch (_) {}
       if (await content.hasBodyForFirstDay(pack.id)) {
         return PurchaseComplete(pack.id);

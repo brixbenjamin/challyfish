@@ -17,18 +17,17 @@ class FakeProgressApi implements ProgressApi {
 
   final List<String> packIds;
   final bool throws;
-  final List<(String, DateTime?)> asked = [];
+  final List<String> asked = [];
 
   @override
   Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {}
 
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
+  Future<List<Map<String, dynamic>>> fetchAllFor(
     String table,
-    DateTime? since,
     String userId,
   ) async {
-    asked.add((table, since));
+    asked.add(table);
     if (throws) throw StateError('the network is not evidence');
     if (table != 'entitlements') return const [];
     return [
@@ -210,33 +209,32 @@ Future<Harness> seededHarness({
 }
 
 void main() {
-  test(
-    'a server set without the pack purges its bodies and abandons the run',
-    () async {
-      final h = await seededHarness(); // core + paid pack, bodies for both,
-      addTearDown(h.db.close); // an active run on the paid campaign
+  test('a server set without the pack abandons the run on it', () async {
+    final h = await seededHarness(); // core + paid pack, bodies for both,
+    addTearDown(h.db.close); // an active run on the paid campaign
 
-      await h.sync.reconcileEntitlements('u1'); // server returns [] — refunded
+    await h.sync.reconcileEntitlements('u1'); // server returns [] — refunded
 
-      final bodies = await h.db.select(h.db.actionBodies).get();
-      expect(bodies.map((b) => b.actionId), [
-        'aCore',
-      ], reason: 'the free pack is never purged');
+    final bodies = await h.db.select(h.db.actionBodies).get();
+    expect(bodies.map((b) => b.actionId), [
+      'aCore',
+    ], reason: 'the free pack is never revoked');
 
-      final run = await (h.db.select(
-        h.db.campaignRuns,
-      )..where((r) => r.id.equals('run1'))).getSingle();
-      expect(run.status, RunStatus.abandoned.key);
-      expect(
-        run.dirty,
-        isTrue,
-        reason: 'the abandonment must reach the server',
-      );
+    final run = await (h.db.select(
+      h.db.campaignRuns,
+    )..where((r) => r.id.equals('run1'))).getSingle();
+    expect(run.status, RunStatus.abandoned.key);
 
-      final logs = await h.db.select(h.db.dayLogs).get();
-      expect(logs, hasLength(2), reason: 'effort is never erased (ADR-0003)');
-    },
-  );
+    // Queued, not flagged: the abandonment still has to reach the server.
+    final queued = await (h.db.select(
+      h.db.outbox,
+    )..where((o) => o.remoteTable.equals('campaign_runs'))).getSingle();
+    expect(queued.rowKey, 'run1');
+    expect(queued.payload, contains('abandoned'));
+
+    final logs = await h.db.select(h.db.dayLogs).get();
+    expect(logs, hasLength(2), reason: 'effort is never erased (ADR-0003)');
+  });
 
   test('a failed pull purges nothing', () async {
     final h = await seededHarness(apiThrows: true);
@@ -283,22 +281,27 @@ void main() {
 
     await h.sync.reconcileEntitlements('u1');
 
-    expect(h.api.asked, [('entitlements', null)]);
+    expect(h.api.asked, ['entitlements']);
   });
 
-  test('a refund takes the paid day bodies with the action bodies', () async {
-    // The day body is gated by the same entitlement (ADR-0034). Leaving it on
-    // the device after the server has revoked the pack is the same leak the
-    // action-body purge exists to close.
+  test('a refund takes both body tables back promptly', () async {
+    // Not left to the next content refresh. A refund changes who may read a row
+    // without changing any row, so the content version does not move and a
+    // version-gated refresh decides there is nothing to fetch -- the copy would
+    // stay readable until something else forced a full one (ADR-0025, ADR-0034).
     final h = await seededHarness(serverReturns: const []);
+    addTearDown(h.db.close);
 
     await h.sync.reconcileEntitlements('user-1');
 
-    final bodies = await h.db.select(h.db.dayBodies).get();
     expect(
-      bodies.map((b) => b.dayId),
+      (await h.db.select(h.db.dayBodies).get()).map((b) => b.dayId),
       ['dCore'],
       reason: 'the free pack keeps its copy; the revoked pack does not',
+    );
+    expect(
+      (await h.db.select(h.db.actionBodies).get()).map((b) => b.actionId),
+      ['aCore'],
     );
   });
 }

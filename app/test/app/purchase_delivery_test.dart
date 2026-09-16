@@ -26,23 +26,87 @@ const paidPackFixture = Pack(
 
 /// Serves the pack's day-one body only from the nth pull onward, standing in
 /// for a webhook that has not landed yet. Every other table is empty.
+/// A server holding the paid pack's teasers all along, and its copy only once
+/// the webhook has landed.
+///
+/// It serves the whole library rather than just the bodies, because a refresh
+/// replaces every content table with what the server returns: a fake that
+/// answered only for `action_bodies` would delete the very campaign the purchase
+/// is meant to deliver.
 class DelayedBodyContentApi implements ContentApi {
   DelayedBodyContentApi({required this.bodyPresentAfterPulls, this.onPull});
+
+  static const _at = '2026-09-09T00:00:00Z';
 
   final int? bodyPresentAfterPulls;
   final void Function()? onPull;
   int pulls = 0;
 
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
-    String table,
-    DateTime? since,
-  ) async {
+  Future<int> fetchVersion() async => 1;
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchAll(String table) async {
     if (table == 'archetypes') {
-      // First table of each pull: count the round trip once, not once per table.
+      // First table of each refresh: count the round trip once, not once per
+      // table. The delivery loop forces every refresh, so the version gate never
+      // short-circuits the count.
       pulls++;
       onPull?.call();
     }
+
+    // The teaser is always readable; only the copy is gated (ADR-0025).
+    switch (table) {
+      case 'packs':
+        return [
+          {
+            'id': 'paid',
+            'key': 'paid',
+            'title': 'Paid',
+            'description': 'd',
+            'is_core': false,
+            'store_product_id': 'pack.paid',
+            'sort': 2,
+            'updated_at': _at,
+          },
+        ];
+      case 'campaigns':
+        return [
+          {
+            'id': 'cPaid',
+            'pack_id': 'paid',
+            'key': 'k2',
+            'title': 'Paid',
+            'intro_md': 'i',
+            'length_days': 1,
+            'sort': 2,
+            'updated_at': _at,
+          },
+        ];
+      case 'days':
+        return [
+          {
+            'id': 'dPaid',
+            'campaign_id': 'cPaid',
+            'day_index': 1,
+            'title': 'Day one',
+            'updated_at': _at,
+          },
+        ];
+      case 'actions':
+        return [
+          {
+            'id': 'aPaid',
+            'day_id': 'dPaid',
+            'title': 't',
+            'sort': 1,
+            'effort': 1,
+            'is_optional': false,
+            'updated_at': _at,
+          },
+        ];
+    }
+
     // Both body tables, since ADR-0034: a purchase is delivered only once day
     // one is readable in full, so a fake that withheld one of them would report
     // a delivery that never happened.
@@ -52,18 +116,14 @@ class DelayedBodyContentApi implements ContentApi {
     }
     if (table == 'day_bodies') {
       return [
-        {
-          'day_id': 'dPaid',
-          'body_md': 'what the day asks',
-          'updated_at': '2026-09-09T00:00:00Z',
-        },
+        {'day_id': 'dPaid', 'body_md': 'what the day asks', 'updated_at': _at},
       ];
     }
     return [
       {
         'action_id': 'aPaid',
         'body_md': 'the copy they paid for',
-        'updated_at': '2026-09-09T00:00:00Z',
+        'updated_at': _at,
       },
     ];
   }
@@ -74,9 +134,8 @@ class SilentProgressApi implements ProgressApi {
   Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {}
 
   @override
-  Future<List<Map<String, dynamic>>> fetchSince(
+  Future<List<Map<String, dynamic>>> fetchAllFor(
     String table,
-    DateTime? since,
     String userId,
   ) async => const [];
 }

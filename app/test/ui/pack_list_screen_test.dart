@@ -66,48 +66,48 @@ void main() {
     l10n = await AppLocalizations.delegate.load(const Locale('en'));
   });
 
-  Widget buildScreen({required void Function(Pack pack) onPurchase}) =>
-      wrap(
-        PackListScreen(
-          packs: const [
-            PackView(
-              pack: _core,
-              campaigns: [_c1],
-              isUnlocked: true,
-              priceLabel: null,
-              archetypesByCampaign: {},
-            ),
-            PackView(
-              pack: _edge,
-              campaigns: [_c2],
-              isUnlocked: false,
-              priceLabel: r'$6.99',
-              archetypesByCampaign: {},
-            ),
-            PackView(
-              pack: _owned,
-              campaigns: [_c3],
-              isUnlocked: true,
-              priceLabel: null,
-              archetypesByCampaign: {},
-            ),
-          ],
-          onOpen: (_) {},
-          onPurchase: onPurchase,
+  Widget buildScreen({required void Function(Pack pack) onPurchase}) => wrap(
+    PackListScreen(
+      packs: const [
+        PackView(
+          pack: _core,
+          campaigns: [_c1],
+          isUnlocked: true,
+          priceLabel: null,
+          archetypesByCampaign: {},
         ),
-      );
+        PackView(
+          pack: _edge,
+          campaigns: [_c2],
+          isUnlocked: false,
+          priceLabel: r'$6.99',
+          archetypesByCampaign: {},
+        ),
+        PackView(
+          pack: _owned,
+          campaigns: [_c3],
+          isUnlocked: true,
+          priceLabel: null,
+          archetypesByCampaign: {},
+        ),
+      ],
+      onOpen: (_) {},
+      onPurchase: onPurchase,
+    ),
+  );
 
   testWidgets('a locked pack shows a purchase CTA, unlocked packs do not', (
     tester,
   ) async {
     await tester.pumpWidget(buildScreen(onPurchase: (_) {}));
 
-    expect(find.widgetWithText(FilledButton, l10n.unlockButton), findsOneWidget);
+    expect(
+      find.widgetWithText(FilledButton, l10n.unlockButton),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('tapping the CTA reports the pack it belongs to', (
-    tester,
-  ) async {
+  testWidgets('tapping the CTA reports the pack it belongs to', (tester) async {
     Pack? purchased;
     await tester.pumpWidget(
       buildScreen(onPurchase: (pack) => purchased = pack),

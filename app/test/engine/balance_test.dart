@@ -1,4 +1,3 @@
-
 import 'package:feral/src/domain/campaign.dart';
 import 'package:feral/src/domain/day_log.dart';
 import 'package:feral/src/domain/outcome.dart';

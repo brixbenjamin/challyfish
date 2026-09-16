@@ -45,7 +45,6 @@ void main() {
     expect(logs, hasLength(1));
     expect(logs.single.dayIndex, 1);
     expect(logs.single.outcome, isNull);
-    expect(logs.single.dirty, isTrue, reason: 'local writes start dirty');
   });
 
   test(

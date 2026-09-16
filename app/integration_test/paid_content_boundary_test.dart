@@ -90,9 +90,9 @@ class Device {
   late final ProgressRepository progress;
   late final EntitlementRepository entitlements;
 
-  Future<void> pullContent() => content.pull();
+  Future<void> pullContent() => content.refresh(force: true);
 
-  Future<void> syncNow() => sync.pull(userId);
+  Future<void> syncNow() => sync.refresh(userId);
 
   Future<void> close() => db.close();
 }
@@ -218,10 +218,9 @@ void main() {
 
     await webhookGrants(paid);
 
-    // The rows now readable are older than this device's watermark: they
-    // existed all along and were merely invisible. Without clearing the mark
-    // the pull filters out exactly what was paid for (ADR-0025).
-    await device.content.clearWatermark('action_bodies');
+    // The rows now readable were invisible to this device a moment ago, and no
+    // row's `updated_at` moved to say so — the reader changed, not the library.
+    // A forced refresh is what crosses that gap (ADR-0025).
     await device.syncNow();
     await device.pullContent();
 
@@ -242,7 +241,6 @@ void main() {
     final campaign = (await device.content.campaignsFor(paid.id)).first;
 
     await webhookGrants(paid);
-    await device.content.clearWatermark('action_bodies');
     await device.syncNow();
     await device.pullContent();
     expect(await device.content.hasBodyForFirstDay(paid.id), isTrue);

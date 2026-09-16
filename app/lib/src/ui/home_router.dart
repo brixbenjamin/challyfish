@@ -46,7 +46,7 @@ enum _Step { loading, restoring, intro, privacy, diagnostic, result, home }
 ///
 /// **Every network await here is wrapped and non-fatal.** A first launch with
 /// no signal must still reach a started campaign, so the bundled snapshot is
-/// applied before any pull is attempted and a failed pull changes nothing.
+/// applied before any refresh is attempted and a failed refresh changes nothing.
 class HomeRouter extends ConsumerStatefulWidget {
   const HomeRouter({super.key});
 
@@ -62,7 +62,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     with WidgetsBindingObserver {
   _Step _step = _Step.loading;
 
-  /// Whether the pull that follows a sign-in came back empty-handed. The
+  /// Whether the sync that follows a sign-in came back empty-handed. The
   /// restoring state stays either way; this only decides whether it is still
   /// waiting or asking to be retried.
   bool _restoreFailed = false;
@@ -125,16 +125,16 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     // started campaign.
     await ref.read(seedSnapshotLoaderProvider).loadIfEmpty();
 
-    // Then reconcile, if we can. A failed pull is never fatal — whatever is
+    // Then reconcile, if we can. A failed refresh is never fatal — whatever is
     // cached still works.
     //
     // Non-fatal is not the same as unrecorded, and this catch used to be
-    // `catch (_) {}`. A content pull that threw on every launch — which is what
-    // a duplicate action id did — left the library quietly frozen at whatever
+    // `catch (_) {}`. A content refresh that threw on every launch — which is
+    // what a duplicate action id did — left the library quietly frozen at whatever
     // the bundle shipped, with nothing anywhere to say so. Reporting it keeps
     // launch working while making the failure something a developer can see.
     try {
-      await ref.read(contentRepositoryProvider).pull();
+      await ref.read(contentRepositoryProvider).refresh();
     } catch (error, stack) {
       FlutterError.reportError(
         FlutterErrorDetails(
@@ -142,7 +142,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
           stack: stack,
           library: 'feral', // niche:allow developer diagnostic, never on screen
           context: ErrorDescription(
-            'pulling content on launch', // niche:allow developer diagnostic
+            'refreshing content on launch', // niche:allow developer diagnostic
           ),
         ),
       );

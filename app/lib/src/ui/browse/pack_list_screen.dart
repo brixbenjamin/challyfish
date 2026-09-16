@@ -1,3 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:feral/src/core/utils.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/l10n_ext.dart';
@@ -106,11 +108,13 @@ class _PackBlock extends StatelessWidget {
             if (coverPath != null)
               AspectRatio(
                 aspectRatio: 2,
-                child: Image.asset(
-                  coverPath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                ),
+                child: isValidUrl(coverPath)
+                    ? CachedNetworkImage(imageUrl: coverPath)
+                    : Image.asset(
+                        coverPath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      ),
               ),
             Padding(
               padding: EdgeInsets.fromLTRB(
