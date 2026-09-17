@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/l10n_ext.dart';
@@ -60,6 +61,8 @@ class CampaignDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (campaign.coverPath != null)
+              CachedNetworkImage(imageUrl: campaign.coverPath!),
             if (campaign.subtitle != null) ...[
               Text(
                 campaign.subtitle!,

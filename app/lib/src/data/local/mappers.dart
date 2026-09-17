@@ -16,6 +16,7 @@ Campaign toCampaign(CampaignRow row) => Campaign(
   title: row.title,
   subtitle: row.subtitle,
   introMd: row.introMd,
+  coverPath: row.coverPath,
   lengthDays: row.lengthDays,
   rampDays: row.rampDays,
   difficulty: row.difficulty,

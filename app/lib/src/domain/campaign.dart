@@ -7,6 +7,7 @@ class Campaign {
     required this.title,
     required this.introMd,
     required this.lengthDays,
+    this.coverPath,
     this.subtitle,
     this.rampDays = 0,
     this.difficulty = 1,
@@ -19,6 +20,7 @@ class Campaign {
   final String title;
   final String? subtitle;
   final String introMd;
+  final String? coverPath;
   final int lengthDays;
   final int rampDays;
   final int difficulty;
