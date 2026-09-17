@@ -39,8 +39,8 @@ class CampaignDetailScreen extends StatelessWidget {
   /// its actions stay behind the commit regardless.
   final List<DaySpec> days;
 
-  /// Resolves a day's [DaySpec.primaryArchetypeId] to the [Archetype] its
-  /// preview dot is drawn in. A day carries only the id.
+  /// Resolves the archetype ids in [DaySpec.archetypeWeights] to the
+  /// [Archetype]s a day's preview tag is drawn from. A day carries only ids.
   final Map<String, Archetype> archetypesById;
 
   final bool isUnlocked;
@@ -184,9 +184,14 @@ class _DayPreviewListState extends State<_DayPreviewList> {
             for (final day in shown)
               _DayRow(
                 day: day,
-                archetype: day.primaryArchetypeId == null
-                    ? null
-                    : widget.archetypesById[day.primaryArchetypeId],
+                archetypes: [
+                  // In the order `archetypeWeights` folds them: heaviest drive
+                  // first. An id with no archetype cached is skipped rather
+                  // than shown as a blank -- the same partial-sync degradation
+                  // an uncached action already gets.
+                  for (final id in day.archetypeWeights.keys)
+                    ?widget.archetypesById[id],
+                ],
                 isLast: remaining == 0 && day == shown.last,
                 isRevealed: _DayPreviewList._isRevealed(day.dayIndex),
               ),
@@ -202,27 +207,30 @@ class _DayPreviewListState extends State<_DayPreviewList> {
   }
 }
 
-/// One row of the day preview: position, title, and — only when the day
-/// names a drive — that drive's dot-and-label tag (the Named-Drive Rule). A
-/// rest day carries no [DaySpec.primaryArchetypeId], so it shows no tag
-/// rather than needing a separate "rest" glyph — the rhythm of the campaign
-/// reads through where the dots fall, not through invented iconography.
+/// One row of the day preview: position, title, and the day's drives as a
+/// single dot-and-label tag naming each of them (the Named-Drive Rule). A day
+/// wears every drive its actions carry, heaviest first — nothing picks one
+/// and nothing caps the count (ADR-0041).
+///
+/// A day with no tag is one with nothing to name: its actions have not been
+/// cached yet. That is the only silence here, so a rest day now reads like any
+/// other day of its drive — the campaign's rhythm no longer shows through gaps
+/// in the dots, and a real rest-day treatment is owed by the brief.
 ///
 /// When [isRevealed] is false, the day is fogged (ADR-0037): the number
 /// stays sharp — the countdown itself isn't the mystery — but the title is
-/// rendered through a real blur and the drive tag is withheld, the same
-/// silence a rest day already wears. Screen readers get a stand-in label
-/// naming the day without ever speaking the blurred title.
+/// rendered through a real blur and the drive tag is withheld. Screen readers
+/// get a stand-in label naming the day without ever speaking the blurred title.
 class _DayRow extends StatelessWidget {
   const _DayRow({
     required this.day,
-    required this.archetype,
+    required this.archetypes,
     required this.isLast,
     required this.isRevealed,
   });
 
   final DaySpec day;
-  final Archetype? archetype;
+  final List<Archetype> archetypes;
   final bool isLast;
   final bool isRevealed;
 
@@ -255,9 +263,9 @@ class _DayRow extends StatelessWidget {
                   child: title,
                 ),
         ),
-        if (isRevealed && archetype != null) ...[
+        if (isRevealed && archetypes.isNotEmpty) ...[
           SizedBox(width: tokens.sp12),
-          ArchetypeTag(archetypes: [archetype!]),
+          ArchetypeTag(archetypes: archetypes),
         ],
       ],
     );

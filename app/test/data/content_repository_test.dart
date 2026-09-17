@@ -30,7 +30,6 @@ Map<String, dynamic> dayRow(
   'day_index': dayIndex,
   'title': 'Day $dayIndex',
   'kind': kind,
-  'primary_archetype_id': null,
   'updated_at': updatedAt,
 };
 

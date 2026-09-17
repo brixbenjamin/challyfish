@@ -45,7 +45,7 @@ class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -248,6 +248,27 @@ class FeralDatabase extends _$FeralDatabase {
         // `action_id` becomes nullable, which sqlite cannot do in place: the
         // table is copied across against the current schema, keeping its rows.
         await m.alterTable(TableMigration(dayLogs));
+      }
+
+      if (from < 12) {
+        // ADR-0041 drops `days.primary_archetype_id`: the One Drive Per Loop
+        // Rule is retired, a day's drives are folded from its actions, and no
+        // surface ever read the column.
+        //
+        // The rows are copied across against the current schema rather than
+        // dropped and refilled by the next refresh, which every content step
+        // since v5 would have licensed. A column that nothing reads is not
+        // worth a cache a user who upgrades offline would find empty -- they
+        // would open a campaign with no days in it and nothing to tell them
+        // why. `days` also has no local foreign keys pointing at it, so the
+        // copy cannot take actions or day bodies with it.
+        //
+        // Guarded on the table being there, for the reason the v10 step states:
+        // a table that does not exist has no column to drop, and a migration
+        // that throws on that strands the file it was meant to move.
+        if (await _tableExists(days.actualTableName)) {
+          await m.alterTable(TableMigration(days));
+        }
       }
     },
   );

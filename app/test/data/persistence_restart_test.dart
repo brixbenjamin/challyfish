@@ -103,11 +103,9 @@ void main() {
         isEmpty,
         reason: 'an absent day leaves no row — it is a gap (ADR-0040)',
       );
-      expect(
-        state.absentDates,
-        [DateTime.utc(2026, 6, 2)],
-        reason: 'the 2nd is where the miss actually lives now',
-      );
+      expect(state.absentDates, [
+        DateTime.utc(2026, 6, 2),
+      ], reason: 'the 2nd is where the miss actually lives now');
       expect(state.missCount, 1);
       expect(state.grade, Grade.passed);
 

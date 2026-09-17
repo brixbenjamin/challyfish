@@ -43,7 +43,6 @@ DaySpec toDay(DayRow row, List<ActionSpec> actions, [DayBodyRow? body]) =>
       dayIndex: row.dayIndex,
       title: row.title,
       kind: DayKind.fromKey(row.kind),
-      primaryArchetypeId: row.primaryArchetypeId,
       bodyMd: body?.bodyMd,
       actions: actions,
     );

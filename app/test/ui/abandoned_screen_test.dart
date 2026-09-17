@@ -57,7 +57,9 @@ void main() {
     expect(find.byType(TextButton), findsOneWidget);
   });
 
-  testWidgets('does not console, encourage or mention a streak', (tester) async {
+  testWidgets('does not console, encourage or mention a streak', (
+    tester,
+  ) async {
     await pump(tester);
 
     for (final word in ['streak', 'again', 'try', 'sorry', 'back on track']) {

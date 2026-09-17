@@ -44,8 +44,10 @@ void main() {
     test('a day nobody touched is not resolved — it is an absence', () {
       // This is what replaces `missed`: there is no log to write an outcome
       // on, because the user was never there (ADR-0040).
-      expect(engine.daysNeedingResolution(logs: const [], today: june(5)),
-          isEmpty);
+      expect(
+        engine.daysNeedingResolution(logs: const [], today: june(5)),
+        isEmpty,
+      );
     });
 
     test('a log with no worked-on date is left alone', () {
@@ -102,7 +104,12 @@ void main() {
       final logs = [
         for (var d = 1; d <= 2; d++)
           log(d, outcome: Outcome.done, workedOn: june(d), resolvedOn: june(d)),
-        log(3, outcome: Outcome.skipped, workedOn: june(3), resolvedOn: june(3)),
+        log(
+          3,
+          outcome: Outcome.skipped,
+          workedOn: june(3),
+          resolvedOn: june(3),
+        ),
       ];
       expect(engine.isComplete(logs: logs, lengthDays: 3), isTrue);
     });

@@ -111,7 +111,6 @@ class ContentRepository {
         dayIndex: row['day_index'] as int,
         title: row['title'] as String,
         kind: Value(row['kind'] as String? ?? 'standard'),
-        primaryArchetypeId: Value(row['primary_archetype_id'] as String?),
         updatedAt: _at(row),
       );
       return db

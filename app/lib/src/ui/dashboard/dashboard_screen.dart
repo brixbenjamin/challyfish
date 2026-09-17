@@ -314,9 +314,12 @@ class _MandatoryAction extends StatelessWidget {
   }
 }
 
-/// One optional action: tick, title, points. No body copy inline, and
-/// deliberately no archetype colour — a day can hold four archetypes and the
-/// One Drive Per Loop Rule allows the surface at most one.
+/// One optional action: tick, title, points. No body copy inline, and no
+/// archetype colour — not because a rule forbids it any more (ADR-0041 retired
+/// the One Drive Per Loop Rule) but because nothing has argued for it. The
+/// checklist is carried by the neutral ramp, and whether an action row should
+/// name its own drive is an open item in the multi-action-day brief, to be
+/// decided against a real layout rather than taken because it is now allowed.
 class _OptionalAction extends StatelessWidget {
   const _OptionalAction({
     required this.action,

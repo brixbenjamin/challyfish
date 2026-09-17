@@ -76,10 +76,10 @@ class Days extends Table {
   /// so content authored against a newer app degrades rather than throws.
   TextColumn get kind => text().withDefault(const Constant('standard'))();
 
-  /// The one drive the day's surface wears, under the One Drive Per Loop Rule.
-  /// Null falls back to the mandatory action's dominant drive, which is what
-  /// the surface does today.
-  TextColumn get primaryArchetypeId => text().nullable()();
+  /// No archetype column, deliberately: a day's drives are folded from its
+  /// actions (ADR-0041). `primary_archetype_id` existed to name the one colour
+  /// the One Drive Per Loop Rule allowed a day to wear, and a day may now wear
+  /// every drive its actions carry — see `DaySpec.archetypeWeights`.
   DateTimeColumn get updatedAt => dateTime()();
 
   @override

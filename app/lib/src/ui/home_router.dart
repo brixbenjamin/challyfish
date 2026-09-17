@@ -442,10 +442,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         completed: _Completed(
           grade: grade,
           campaign: campaign,
-          missCount: engine.missCount(
-            logs: logs,
-            absences: absence.absences,
-          ),
+          missCount: engine.missCount(logs: logs, absences: absence.absences),
           missAllowance: engine.missAllowance(campaign.lengthDays),
           marksEarned: grade.earnsMark
               ? await _archetypesFor(campaign.id)

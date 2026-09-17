@@ -363,10 +363,9 @@ void main() {
     test('an in-progress day is dated by when it was worked on', () {
       // Ticked but not yet reported, so it still feeds the radar — the radar
       // reads ticks, and the ticks happened on the day they happened.
-      final result = balanceAt(
-        9,
-        [dated(2, null, workedOn: DateTime.utc(2026, 6, 10))],
-      );
+      final result = balanceAt(9, [
+        dated(2, null, workedOn: DateTime.utc(2026, 6, 10)),
+      ]);
       expect(result['axis-a'], closeTo(1 / 5, 1e-9));
     });
   });

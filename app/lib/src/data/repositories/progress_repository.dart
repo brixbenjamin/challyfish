@@ -162,10 +162,9 @@ class ProgressRepository {
             .getSingleOrNull();
     if (row == null) return null;
 
-    final seen =
-        await (db.select(
-          db.clientState,
-        )..where((s) => s.key.equals(_abandonmentSeenKey))).getSingleOrNull();
+    final seen = await (db.select(
+      db.clientState,
+    )..where((s) => s.key.equals(_abandonmentSeenKey))).getSingleOrNull();
     if (seen?.value == row.id) return null;
 
     return _toRun(row);
@@ -353,6 +352,7 @@ class ProgressRepository {
   Future<void> applyRollover({
     required CampaignRun run,
     required int lengthDays,
+
     /// Null when the day's content has not been cached. Since ADR-0040 that no
     /// longer stops the day being resolved — the column is nullable, and a day
     /// rollover has to skip is a day that silently becomes an absence.
@@ -458,7 +458,8 @@ class ProgressRepository {
             .getSingleOrNull();
 
     // Resolving without being told when means resolving now.
-    final resolved = outcome.present && outcome.value != null && !resolvedOn.present
+    final resolved =
+        outcome.present && outcome.value != null && !resolvedOn.present
         ? Value(today)
         : resolvedOn;
 

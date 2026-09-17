@@ -19,7 +19,10 @@ void main() {
   });
 
   test('resolving a day advances the position by one', () {
-    expect(engine.storyPosition(logs: [log(1, Outcome.done)], lengthDays: 7), 2);
+    expect(
+      engine.storyPosition(logs: [log(1, Outcome.done)], lengthDays: 7),
+      2,
+    );
   });
 
   test('a skipped day is resolved and still advances', () {
@@ -34,11 +37,14 @@ void main() {
     expect(engine.storyPosition(logs: [log(1, null)], lengthDays: 7), 1);
   });
 
-  test('the position is the lowest unresolved day, not the highest plus one', () {
-    // Gaps cannot arise through the app, but a partial sync can deliver one.
-    final logs = [log(1, Outcome.done), log(3, Outcome.done)];
-    expect(engine.storyPosition(logs: logs, lengthDays: 7), 2);
-  });
+  test(
+    'the position is the lowest unresolved day, not the highest plus one',
+    () {
+      // Gaps cannot arise through the app, but a partial sync can deliver one.
+      final logs = [log(1, Outcome.done), log(3, Outcome.done)];
+      expect(engine.storyPosition(logs: logs, lengthDays: 7), 2);
+    },
+  );
 
   test('a run with every day resolved points one past the last day', () {
     final logs = [for (var d = 1; d <= 3; d++) log(d, Outcome.done)];

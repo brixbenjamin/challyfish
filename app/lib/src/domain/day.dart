@@ -33,7 +33,6 @@ class DaySpec {
     required this.dayIndex,
     required this.title,
     this.kind = DayKind.standard,
-    this.primaryArchetypeId,
     this.bodyMd,
     this.actions = const [],
   });
@@ -46,11 +45,6 @@ class DaySpec {
   final int dayIndex;
   final String title;
   final DayKind kind;
-
-  /// The one drive the day's surface wears, under the One Drive Per Loop Rule.
-  /// Null means the surface falls back to the mandatory action's dominant
-  /// drive, which is what it did before a day could say anything for itself.
-  final String? primaryArchetypeId;
 
   /// The framing copy, read before the commit. Null when it is not available:
   /// a locked pack, or an owned pack whose bodies have not been pulled yet
@@ -76,4 +70,47 @@ class DaySpec {
     for (final action in actions)
       if (action.isOptional) action,
   ];
+
+  /// The archetypes this day moves and in what proportion, heaviest first and
+  /// summing to 1 — each action's points spread across its own weights, folded
+  /// together and normalized (ADR-0041).
+  ///
+  /// Derived, never declared: `days.primary_archetype_id` existed only to pick
+  /// the one colour the One Drive Per Loop Rule allowed, and a day may now
+  /// carry as many drives as its actions do. Defined here rather than in the
+  /// surfaces that summarise a day so they cannot disagree about a day's shape.
+  ///
+  /// The same units as the archetype balance, but not the balance: this is one
+  /// day's shape, undecayed and uncapped. Empty when no action carries an
+  /// archetype — a day cached ahead of its actions, or actions cached ahead of
+  /// their archetype rows. That is the partial-sync state a day already
+  /// degrades on, and the caller shows no drive rather than a guessed one.
+  Map<String, double> get archetypeWeights {
+    // Points first, then — only if every action on the day is worth zero, which
+    // authoring permits — an equal share each. Normalizing by a zero total
+    // would hand every surface a NaN.
+    var totals = _fold(byPoints: true);
+    if (totals.isEmpty) totals = _fold(byPoints: false);
+    if (totals.isEmpty) return const {};
+
+    final sum = totals.values.reduce((a, b) => a + b);
+    final ordered = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return {for (final entry in ordered) entry.key: entry.value / sum};
+  }
+
+  /// Sums each archetype's share across the day's actions, weighting by points
+  /// or counting each action once. Drops archetypes that come out at zero, so
+  /// an empty result means "nothing to show" rather than "shares of nothing".
+  Map<String, double> _fold({required bool byPoints}) {
+    final totals = <String, double>{};
+    for (final action in actions) {
+      final points = byPoints ? action.effort.toDouble() : 1.0;
+      action.archetypeWeights.forEach((archetypeId, weight) {
+        totals[archetypeId] = (totals[archetypeId] ?? 0) + weight * points;
+      });
+    }
+    totals.removeWhere((_, value) => value <= 0);
+    return totals;
+  }
 }

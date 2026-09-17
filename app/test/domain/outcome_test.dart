@@ -24,7 +24,6 @@ void main() {
     expect(Outcome.partial.isMiss, isFalse);
   });
 
-
   test('an unknown key throws rather than silently becoming a miss', () {
     expect(() => Outcome.fromKey('completed'), throwsArgumentError);
   });

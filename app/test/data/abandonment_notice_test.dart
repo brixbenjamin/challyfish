@@ -25,11 +25,9 @@ void main() {
   DateTime at(int day) => tz.TZDateTime(berlin, 2026, 6, day, 9).toUtc();
 
   Future<String> abandonedRun() async {
-    final run = await repoAt(at(1)).startRun(
-      userId: 'user-1',
-      campaignId: 'campaign-1',
-      isUnlocked: true,
-    );
+    final run = await repoAt(
+      at(1),
+    ).startRun(userId: 'user-1', campaignId: 'campaign-1', isUnlocked: true);
     await repoAt(at(1)).report(
       run: run,
       dayIndex: 1,
@@ -64,22 +62,18 @@ void main() {
 
   test('a run the user abandoned themselves is never offered', () async {
     // They chose it and saw the warning. Telling them again is nagging.
-    final run = await repoAt(at(1)).startRun(
-      userId: 'user-1',
-      campaignId: 'campaign-1',
-      isUnlocked: true,
-    );
+    final run = await repoAt(
+      at(1),
+    ).startRun(userId: 'user-1', campaignId: 'campaign-1', isUnlocked: true);
     await repoAt(at(1)).abandonRun(run.id);
 
     expect(await repoAt(at(2)).unacknowledgedAbandonment('user-1'), isNull);
   });
 
   test('an active run is never offered', () async {
-    await repoAt(at(1)).startRun(
-      userId: 'user-1',
-      campaignId: 'campaign-1',
-      isUnlocked: true,
-    );
+    await repoAt(
+      at(1),
+    ).startRun(userId: 'user-1', campaignId: 'campaign-1', isUnlocked: true);
     expect(await repoAt(at(2)).unacknowledgedAbandonment('user-1'), isNull);
   });
 

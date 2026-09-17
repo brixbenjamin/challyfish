@@ -63,11 +63,7 @@ void main() {
 
     test('committing stamps worked-on but leaves the day unresolved', () async {
       final run = await startOn(1);
-      await repoAt(at(1)).commitToday(
-        run: run,
-        dayIndex: 1,
-        actionId: 'act-1',
-      );
+      await repoAt(at(1)).commitToday(run: run, dayIndex: 1, actionId: 'act-1');
 
       final log = await db.select(db.dayLogs).getSingle();
       expect(log.workedOn?.toUtc(), date(1));
@@ -78,11 +74,7 @@ void main() {
     test('the worked-on date never moves once set', () async {
       // Committed on the 1st, reported on the 2nd. The day was the 1st's.
       final run = await startOn(1);
-      await repoAt(at(1)).commitToday(
-        run: run,
-        dayIndex: 1,
-        actionId: 'act-1',
-      );
+      await repoAt(at(1)).commitToday(run: run, dayIndex: 1, actionId: 'act-1');
       await repoAt(at(2)).report(
         run: run,
         dayIndex: 1,
@@ -184,11 +176,7 @@ void main() {
       // The old rollover skipped it, because action_id could not be null.
       // A skipped day silently became an absence and could end a run.
       final run = await startOn(1);
-      await repoAt(at(1)).commitToday(
-        run: run,
-        dayIndex: 1,
-        actionId: 'act-1',
-      );
+      await repoAt(at(1)).commitToday(run: run, dayIndex: 1, actionId: 'act-1');
 
       await repoAt(at(2)).applyRollover(
         run: run,
@@ -223,26 +211,29 @@ void main() {
       expect(stored.abandonedOn, isNull);
     });
 
-    test('the third consecutive absent day ends the run, dated to it', () async {
-      final run = await startOn(1);
-      await repoAt(at(1)).report(
-        run: run,
-        dayIndex: 1,
-        mandatoryActionId: 'act-1',
-        outcome: Outcome.done,
-      );
+    test(
+      'the third consecutive absent day ends the run, dated to it',
+      () async {
+        final run = await startOn(1);
+        await repoAt(at(1)).report(
+          run: run,
+          dayIndex: 1,
+          mandatoryActionId: 'act-1',
+          outcome: Outcome.done,
+        );
 
-      await repoAt(at(5)).applyRollover(
-        run: run,
-        lengthDays: 5,
-        mandatoryActionIdForDay: (_) => 'act-1',
-      );
+        await repoAt(at(5)).applyRollover(
+          run: run,
+          lengthDays: 5,
+          mandatoryActionIdForDay: (_) => 'act-1',
+        );
 
-      final stored = await db.select(db.campaignRuns).getSingle();
-      expect(stored.status, RunStatus.abandoned.key);
-      expect(stored.abandonedOn?.toUtc(), date(4));
-      expect(stored.grade, isNull, reason: 'abandoned is not a grade');
-    });
+        final stored = await db.select(db.campaignRuns).getSingle();
+        expect(stored.status, RunStatus.abandoned.key);
+        expect(stored.abandonedOn?.toUtc(), date(4));
+        expect(stored.grade, isNull, reason: 'abandoned is not a grade');
+      },
+    );
 
     test('an abandoned run keeps every day it logged', () async {
       final run = await startOn(1);
@@ -328,28 +319,31 @@ void main() {
   });
 
   group('completion', () {
-    test('a run completes when its last day is resolved, however late', () async {
-      final run = await startOn(1);
-      // Five days of content spread across nine calendar days, never three
-      // absent in a row.
-      const days = [1, 2, 4, 5, 7];
-      for (var i = 0; i < days.length; i++) {
-        await repoAt(at(days[i])).report(
-          run: run,
-          dayIndex: i + 1,
-          mandatoryActionId: 'act-${i + 1}',
-          outcome: Outcome.done,
-        );
-      }
+    test(
+      'a run completes when its last day is resolved, however late',
+      () async {
+        final run = await startOn(1);
+        // Five days of content spread across nine calendar days, never three
+        // absent in a row.
+        const days = [1, 2, 4, 5, 7];
+        for (var i = 0; i < days.length; i++) {
+          await repoAt(at(days[i])).report(
+            run: run,
+            dayIndex: i + 1,
+            mandatoryActionId: 'act-${i + 1}',
+            outcome: Outcome.done,
+          );
+        }
 
-      final grade = await repoAt(
-        at(7),
-      ).completeRunIfFinished(run: run, campaign: campaign);
+        final grade = await repoAt(
+          at(7),
+        ).completeRunIfFinished(run: run, campaign: campaign);
 
-      expect(grade, isNotNull);
-      final stored = await db.select(db.campaignRuns).getSingle();
-      expect(stored.status, RunStatus.completed.key);
-    });
+        expect(grade, isNotNull);
+        final stored = await db.select(db.campaignRuns).getSingle();
+        expect(stored.status, RunStatus.completed.key);
+      },
+    );
 
     test('elapsed calendar time alone does not complete a run', () async {
       final run = await startOn(1);

@@ -2096,17 +2096,6 @@ class $DaysTable extends Days with TableInfo<$DaysTable, DayRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant('standard'),
   );
-  static const VerificationMeta _primaryArchetypeIdMeta =
-      const VerificationMeta('primaryArchetypeId');
-  @override
-  late final GeneratedColumn<String> primaryArchetypeId =
-      GeneratedColumn<String>(
-        'primary_archetype_id',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -2125,7 +2114,6 @@ class $DaysTable extends Days with TableInfo<$DaysTable, DayRow> {
     dayIndex,
     title,
     kind,
-    primaryArchetypeId,
     updatedAt,
   ];
   @override
@@ -2175,15 +2163,6 @@ class $DaysTable extends Days with TableInfo<$DaysTable, DayRow> {
         kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
       );
     }
-    if (data.containsKey('primary_archetype_id')) {
-      context.handle(
-        _primaryArchetypeIdMeta,
-        primaryArchetypeId.isAcceptableOrUnknown(
-          data['primary_archetype_id']!,
-          _primaryArchetypeIdMeta,
-        ),
-      );
-    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -2225,10 +2204,6 @@ class $DaysTable extends Days with TableInfo<$DaysTable, DayRow> {
         DriftSqlType.string,
         data['${effectivePrefix}kind'],
       )!,
-      primaryArchetypeId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}primary_archetype_id'],
-      ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -2259,10 +2234,10 @@ class DayRow extends DataClass implements Insertable<DayRow> {
   /// so content authored against a newer app degrades rather than throws.
   final String kind;
 
-  /// The one drive the day's surface wears, under the One Drive Per Loop Rule.
-  /// Null falls back to the mandatory action's dominant drive, which is what
-  /// the surface does today.
-  final String? primaryArchetypeId;
+  /// No archetype column, deliberately: a day's drives are folded from its
+  /// actions (ADR-0041). `primary_archetype_id` existed to name the one colour
+  /// the One Drive Per Loop Rule allowed a day to wear, and a day may now wear
+  /// every drive its actions carry — see `DaySpec.archetypeWeights`.
   final DateTime updatedAt;
   const DayRow({
     required this.id,
@@ -2270,7 +2245,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
     required this.dayIndex,
     required this.title,
     required this.kind,
-    this.primaryArchetypeId,
     required this.updatedAt,
   });
   @override
@@ -2281,9 +2255,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
     map['day_index'] = Variable<int>(dayIndex);
     map['title'] = Variable<String>(title);
     map['kind'] = Variable<String>(kind);
-    if (!nullToAbsent || primaryArchetypeId != null) {
-      map['primary_archetype_id'] = Variable<String>(primaryArchetypeId);
-    }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -2295,9 +2266,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
       dayIndex: Value(dayIndex),
       title: Value(title),
       kind: Value(kind),
-      primaryArchetypeId: primaryArchetypeId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(primaryArchetypeId),
       updatedAt: Value(updatedAt),
     );
   }
@@ -2313,9 +2281,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
       dayIndex: serializer.fromJson<int>(json['dayIndex']),
       title: serializer.fromJson<String>(json['title']),
       kind: serializer.fromJson<String>(json['kind']),
-      primaryArchetypeId: serializer.fromJson<String?>(
-        json['primaryArchetypeId'],
-      ),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -2328,7 +2293,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
       'dayIndex': serializer.toJson<int>(dayIndex),
       'title': serializer.toJson<String>(title),
       'kind': serializer.toJson<String>(kind),
-      'primaryArchetypeId': serializer.toJson<String?>(primaryArchetypeId),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -2339,7 +2303,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
     int? dayIndex,
     String? title,
     String? kind,
-    Value<String?> primaryArchetypeId = const Value.absent(),
     DateTime? updatedAt,
   }) => DayRow(
     id: id ?? this.id,
@@ -2347,9 +2310,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
     dayIndex: dayIndex ?? this.dayIndex,
     title: title ?? this.title,
     kind: kind ?? this.kind,
-    primaryArchetypeId: primaryArchetypeId.present
-        ? primaryArchetypeId.value
-        : this.primaryArchetypeId,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   DayRow copyWithCompanion(DaysCompanion data) {
@@ -2361,9 +2321,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
       dayIndex: data.dayIndex.present ? data.dayIndex.value : this.dayIndex,
       title: data.title.present ? data.title.value : this.title,
       kind: data.kind.present ? data.kind.value : this.kind,
-      primaryArchetypeId: data.primaryArchetypeId.present
-          ? data.primaryArchetypeId.value
-          : this.primaryArchetypeId,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -2376,22 +2333,14 @@ class DayRow extends DataClass implements Insertable<DayRow> {
           ..write('dayIndex: $dayIndex, ')
           ..write('title: $title, ')
           ..write('kind: $kind, ')
-          ..write('primaryArchetypeId: $primaryArchetypeId, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    campaignId,
-    dayIndex,
-    title,
-    kind,
-    primaryArchetypeId,
-    updatedAt,
-  );
+  int get hashCode =>
+      Object.hash(id, campaignId, dayIndex, title, kind, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2401,7 +2350,6 @@ class DayRow extends DataClass implements Insertable<DayRow> {
           other.dayIndex == this.dayIndex &&
           other.title == this.title &&
           other.kind == this.kind &&
-          other.primaryArchetypeId == this.primaryArchetypeId &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -2411,7 +2359,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
   final Value<int> dayIndex;
   final Value<String> title;
   final Value<String> kind;
-  final Value<String?> primaryArchetypeId;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const DaysCompanion({
@@ -2420,7 +2367,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
     this.dayIndex = const Value.absent(),
     this.title = const Value.absent(),
     this.kind = const Value.absent(),
-    this.primaryArchetypeId = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -2430,7 +2376,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
     required int dayIndex,
     required String title,
     this.kind = const Value.absent(),
-    this.primaryArchetypeId = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -2444,7 +2389,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
     Expression<int>? dayIndex,
     Expression<String>? title,
     Expression<String>? kind,
-    Expression<String>? primaryArchetypeId,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -2454,8 +2398,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
       if (dayIndex != null) 'day_index': dayIndex,
       if (title != null) 'title': title,
       if (kind != null) 'kind': kind,
-      if (primaryArchetypeId != null)
-        'primary_archetype_id': primaryArchetypeId,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2467,7 +2409,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
     Value<int>? dayIndex,
     Value<String>? title,
     Value<String>? kind,
-    Value<String?>? primaryArchetypeId,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -2477,7 +2418,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
       dayIndex: dayIndex ?? this.dayIndex,
       title: title ?? this.title,
       kind: kind ?? this.kind,
-      primaryArchetypeId: primaryArchetypeId ?? this.primaryArchetypeId,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -2501,9 +2441,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
     if (kind.present) {
       map['kind'] = Variable<String>(kind.value);
     }
-    if (primaryArchetypeId.present) {
-      map['primary_archetype_id'] = Variable<String>(primaryArchetypeId.value);
-    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -2521,7 +2458,6 @@ class DaysCompanion extends UpdateCompanion<DayRow> {
           ..write('dayIndex: $dayIndex, ')
           ..write('title: $title, ')
           ..write('kind: $kind, ')
-          ..write('primaryArchetypeId: $primaryArchetypeId, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -10154,7 +10090,6 @@ typedef $$DaysTableCreateCompanionBuilder =
       required int dayIndex,
       required String title,
       Value<String> kind,
-      Value<String?> primaryArchetypeId,
       required DateTime updatedAt,
       Value<int> rowid,
     });
@@ -10165,7 +10100,6 @@ typedef $$DaysTableUpdateCompanionBuilder =
       Value<int> dayIndex,
       Value<String> title,
       Value<String> kind,
-      Value<String?> primaryArchetypeId,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -10200,11 +10134,6 @@ class $$DaysTableFilterComposer extends Composer<_$FeralDatabase, $DaysTable> {
 
   ColumnFilters<String> get kind => $composableBuilder(
     column: $table.kind,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get primaryArchetypeId => $composableBuilder(
-    column: $table.primaryArchetypeId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10248,11 +10177,6 @@ class $$DaysTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get primaryArchetypeId => $composableBuilder(
-    column: $table.primaryArchetypeId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -10284,11 +10208,6 @@ class $$DaysTableAnnotationComposer
 
   GeneratedColumn<String> get kind =>
       $composableBuilder(column: $table.kind, builder: (column) => column);
-
-  GeneratedColumn<String> get primaryArchetypeId => $composableBuilder(
-    column: $table.primaryArchetypeId,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -10327,7 +10246,6 @@ class $$DaysTableTableManager
                 Value<int> dayIndex = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> kind = const Value.absent(),
-                Value<String?> primaryArchetypeId = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DaysCompanion(
@@ -10336,7 +10254,6 @@ class $$DaysTableTableManager
                 dayIndex: dayIndex,
                 title: title,
                 kind: kind,
-                primaryArchetypeId: primaryArchetypeId,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -10347,7 +10264,6 @@ class $$DaysTableTableManager
                 required int dayIndex,
                 required String title,
                 Value<String> kind = const Value.absent(),
-                Value<String?> primaryArchetypeId = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => DaysCompanion.insert(
@@ -10356,7 +10272,6 @@ class $$DaysTableTableManager
                 dayIndex: dayIndex,
                 title: title,
                 kind: kind,
-                primaryArchetypeId: primaryArchetypeId,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

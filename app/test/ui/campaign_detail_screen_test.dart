@@ -35,26 +35,61 @@ const trickster = Archetype(
   sort: 3,
 );
 
-const day1 = DaySpec(
+const beast = Archetype(
+  id: 'a-beast',
+  key: 'beast',
+  name: 'Beast',
+  blurb: 'b',
+  color: '#000',
+  sort: 4,
+);
+
+/// A day's drives are folded from its actions (ADR-0041), so these fixtures
+/// carry actions rather than a declared archetype the day no longer has.
+ActionSpec action(
+  String dayId,
+  Map<String, double> weights, {
+  int effort = 1,
+  bool isOptional = false,
+}) => ActionSpec(
+  id: '$dayId-${isOptional ? 'opt' : 'mand'}',
+  dayId: dayId,
+  title: 'An act',
+  archetypeWeights: weights,
+  effort: effort,
+  isOptional: isOptional,
+);
+
+final day1 = DaySpec(
   id: 'd-1',
   campaignId: 'c-1',
   dayIndex: 1,
   title: 'The Opening Move',
-  primaryArchetypeId: 'a-killer',
+  actions: [
+    action('d-1', const {'a-killer': 1}),
+  ],
 );
-const day2 = DaySpec(
+
+/// Two drives on one day: the case the One Drive Per Loop Rule used to forbid
+/// the surface from showing.
+final day2 = DaySpec(
   id: 'd-2',
   campaignId: 'c-1',
   dayIndex: 2,
-  title: 'Rest',
-  kind: DayKind.rest,
+  title: 'Two Ways',
+  actions: [
+    action('d-2', const {'a-killer': 1}, effort: 3),
+    action('d-2', const {'a-beast': 1}, isOptional: true),
+  ],
 );
+
+/// A day cached ahead of its actions. It has no drives to show and shows none,
+/// rather than guessing one.
 const day3 = DaySpec(
   id: 'd-3',
   campaignId: 'c-1',
   dayIndex: 3,
   title: 'The Last Ask',
-  primaryArchetypeId: 'a-trickster',
 );
 
 void main() {
@@ -69,7 +104,11 @@ void main() {
     targets: const [killer, trickster],
     missAllowance: 1,
     days: days,
-    archetypesById: const {'a-killer': killer, 'a-trickster': trickster},
+    archetypesById: const {
+      'a-killer': killer,
+      'a-trickster': trickster,
+      'a-beast': beast,
+    },
     isUnlocked: true,
     hasActiveRun: false,
     onStart: () {},
@@ -79,13 +118,13 @@ void main() {
   testWidgets('every day preview renders in order, titled, not detailed', (
     tester,
   ) async {
-    await tester.pumpWidget(wrap(buildScreen(days: const [day1, day2, day3])));
+    await tester.pumpWidget(wrap(buildScreen(days: [day1, day2, day3])));
 
     expect(find.text(l10n.campaignDaysHeading), findsOneWidget);
     expect(find.text(l10n.dayPreviewNumber(1)), findsOneWidget);
     expect(find.text('The Opening Move'), findsOneWidget);
     expect(find.text(l10n.dayPreviewNumber(2)), findsOneWidget);
-    expect(find.text('Rest'), findsOneWidget);
+    expect(find.text('Two Ways'), findsOneWidget);
     expect(find.text(l10n.dayPreviewNumber(3)), findsOneWidget);
     expect(find.text('The Last Ask'), findsOneWidget);
 
@@ -94,14 +133,20 @@ void main() {
     expect(find.textContaining('intro text'), findsOneWidget);
   });
 
-  testWidgets('a day names its drive with a tag; a rest day carries none', (
-    tester,
-  ) async {
-    await tester.pumpWidget(wrap(buildScreen(days: const [day1, day2, day3])));
+  testWidgets('a day names every drive its actions carry', (tester) async {
+    await tester.pumpWidget(wrap(buildScreen(days: [day1, day2, day3])));
 
-    // The header's own tag plus one per named day: three ArchetypeTags for
-    // two archetype-bearing days, none for the rest day in between.
+    // The header's own tag plus one per day that has drives: day 3's actions
+    // are not cached, so it names nothing rather than guessing.
     expect(find.byType(ArchetypeTag), findsNWidgets(3));
+
+    // Day 1 is a single drive. Day 2 holds two, heaviest first -- one tag
+    // naming both, not a silent pick between them (ADR-0041).
+    expect(find.text('Killer'), findsOneWidget);
+    expect(
+      find.text('Killer${l10n.archetypeListSeparator}Beast'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('no days cached yet renders no preview section at all', (
@@ -132,10 +177,14 @@ void main() {
           campaignId: 'c-2',
           dayIndex: i,
           title: 'Day title $i',
-          primaryArchetypeId: switch (i) {
-            6 => day6ArchetypeId,
-            10 => day10ArchetypeId,
-            _ => null,
+          actions: switch (i) {
+            6 when day6ArchetypeId != null => [
+              action('d-6', {day6ArchetypeId: 1}),
+            ],
+            10 when day10ArchetypeId != null => [
+              action('d-10', {day10ArchetypeId: 1}),
+            ],
+            _ => const [],
           },
         ),
     ];

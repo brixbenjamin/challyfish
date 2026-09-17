@@ -64,77 +64,66 @@ const _campaign = Campaign(
   lengthDays: 10,
 );
 
-const _days = [
-  DaySpec(
-    id: 'd-1',
-    campaignId: 'c-1',
-    dayIndex: 1,
-    title: 'The Opening Move',
-    primaryArchetypeId: 'a-killer',
+/// A day's drives are folded from its actions (ADR-0041), so the harness
+/// builds days out of actions -- including two that pull on more than one
+/// drive, which is the case this screen could not render before.
+DaySpec _day(
+  int index,
+  String title, {
+  DayKind kind = DayKind.standard,
+  Map<String, double> mandatory = const {},
+  Map<String, double> optional = const {},
+}) => DaySpec(
+  id: 'd-$index',
+  campaignId: 'c-1',
+  dayIndex: index,
+  title: title,
+  kind: kind,
+  actions: [
+    if (mandatory.isNotEmpty)
+      ActionSpec(
+        id: 'a-$index-m',
+        dayId: 'd-$index',
+        title: 'The day\'s act',
+        archetypeWeights: mandatory,
+        effort: 3,
+      ),
+    if (optional.isNotEmpty)
+      ActionSpec(
+        id: 'a-$index-o',
+        dayId: 'd-$index',
+        title: 'If you have the appetite',
+        archetypeWeights: optional,
+        isOptional: true,
+      ),
+  ],
+);
+
+final _days = [
+  _day(1, 'The Opening Move', mandatory: const {'a-killer': 1}),
+  _day(
+    2,
+    'What You Avoid',
+    mandatory: const {'a-beast': 1},
+    optional: const {'a-psycho': 1},
   ),
-  DaySpec(
-    id: 'd-2',
-    campaignId: 'c-1',
-    dayIndex: 2,
-    title: 'What You Avoid',
-    primaryArchetypeId: 'a-beast',
+  _day(3, 'Sit With It', kind: DayKind.rest, mandatory: const {'a-psycho': 1}),
+  _day(4, 'The Long Ask', mandatory: const {'a-trickster': 1}),
+  _day(
+    5,
+    'No Explaining It Away',
+    mandatory: const {'a-psycho': 0.6, 'a-killer': 0.4},
   ),
-  DaySpec(
-    id: 'd-3',
-    campaignId: 'c-1',
-    dayIndex: 3,
-    title: 'Sit With It',
-    kind: DayKind.rest,
+  _day(6, 'The Second Opening', mandatory: const {'a-killer': 1}),
+  _day(7, 'Rest', kind: DayKind.rest, mandatory: const {'a-beast': 1}),
+  _day(8, 'What the Week Actually Cost', mandatory: const {'a-beast': 1}),
+  _day(
+    9,
+    'One More Than You Wanted',
+    mandatory: const {'a-trickster': 1},
+    optional: const {'a-killer': 1},
   ),
-  DaySpec(
-    id: 'd-4',
-    campaignId: 'c-1',
-    dayIndex: 4,
-    title: 'The Long Ask',
-    primaryArchetypeId: 'a-trickster',
-  ),
-  DaySpec(
-    id: 'd-5',
-    campaignId: 'c-1',
-    dayIndex: 5,
-    title: 'No Explaining It Away',
-    primaryArchetypeId: 'a-psycho',
-  ),
-  DaySpec(
-    id: 'd-6',
-    campaignId: 'c-1',
-    dayIndex: 6,
-    title: 'The Second Opening',
-    primaryArchetypeId: 'a-killer',
-  ),
-  DaySpec(
-    id: 'd-7',
-    campaignId: 'c-1',
-    dayIndex: 7,
-    title: 'Rest',
-    kind: DayKind.rest,
-  ),
-  DaySpec(
-    id: 'd-8',
-    campaignId: 'c-1',
-    dayIndex: 8,
-    title: 'What the Week Actually Cost',
-    primaryArchetypeId: 'a-beast',
-  ),
-  DaySpec(
-    id: 'd-9',
-    campaignId: 'c-1',
-    dayIndex: 9,
-    title: 'One More Than You Wanted',
-    primaryArchetypeId: 'a-trickster',
-  ),
-  DaySpec(
-    id: 'd-10',
-    campaignId: 'c-1',
-    dayIndex: 10,
-    title: 'The Last Ask',
-    primaryArchetypeId: 'a-psycho',
-  ),
+  _day(10, 'The Last Ask', mandatory: const {'a-psycho': 1}),
 ];
 
 void main() {

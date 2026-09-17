@@ -109,31 +109,36 @@ void main() {
     expect((await db.select(db.campaignRuns).get()).single.abandonedOn, isNull);
   });
 
-  test('the upgrade lands on the current schema version', () async {
+  test('the upgrade runs the whole ladder, not just v11', () async {
+    // v11 is not the head any more, so this asserts the file is carried all the
+    // way to the current version rather than restating the number this file's
+    // migration happened to introduce.
     final file = await writeV10Database();
     final db = FeralDatabase(NativeDatabase(file));
     addTearDown(db.close);
     await db.customSelect('select 1').get();
 
-    expect(db.schemaVersion, 11);
+    expect(db.schemaVersion, 12);
   });
 
-  test('action_id is nullable, so rollover can resolve an uncached day',
-      () async {
-    final file = await writeV10Database();
-    final db = FeralDatabase(NativeDatabase(file));
-    addTearDown(db.close);
+  test(
+    'action_id is nullable, so rollover can resolve an uncached day',
+    () async {
+      final file = await writeV10Database();
+      final db = FeralDatabase(NativeDatabase(file));
+      addTearDown(db.close);
 
-    await db.customStatement(
-      'INSERT INTO "day_logs" ("id", "user_id", "run_id", "day_index", '
-      '"action_id", "outcome", "updated_at") '
-      "VALUES ('log-3', 'user-1', 'run-1', 3, NULL, 'skipped', 1780000000)",
-    );
+      await db.customStatement(
+        'INSERT INTO "day_logs" ("id", "user_id", "run_id", "day_index", '
+        '"action_id", "outcome", "updated_at") '
+        "VALUES ('log-3', 'user-1', 'run-1', 3, NULL, 'skipped', 1780000000)",
+      );
 
-    final log = (await db.select(
-      db.dayLogs,
-    ).get()).firstWhere((l) => l.dayIndex == 3);
-    expect(log.actionId, isNull);
-    expect(log.outcome, 'skipped');
-  });
+      final log = (await db.select(db.dayLogs).get()).firstWhere(
+        (l) => l.dayIndex == 3,
+      );
+      expect(log.actionId, isNull);
+      expect(log.outcome, 'skipped');
+    },
+  );
 }

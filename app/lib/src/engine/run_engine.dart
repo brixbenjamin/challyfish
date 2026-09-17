@@ -47,10 +47,7 @@ class RunEngine {
   /// at the moment the user acts, the result is a fact rather than a
   /// recomputation, which is what keeps `user-stories.md`'s promise that travel
   /// never retroactively converts a past day into a miss.
-  DateTime localDateOf({
-    required DateTime instant,
-    required tz.Location zone,
-  }) {
+  DateTime localDateOf({required DateTime instant, required tz.Location zone}) {
     final local = tz.TZDateTime.from(instant, zone);
     return DateTime.utc(local.year, local.month, local.day);
   }
@@ -87,10 +84,8 @@ class RunEngine {
   ///
   /// Completion follows the content, not the clock: a run ends when its last
   /// day is reported, however many calendar days that took (ADR-0040).
-  bool isComplete({
-    required Iterable<DayLog> logs,
-    required int lengthDays,
-  }) => storyPosition(logs: logs, lengthDays: lengthDays) > lengthDays;
+  bool isComplete({required Iterable<DayLog> logs, required int lengthDays}) =>
+      storyPosition(logs: logs, lengthDays: lengthDays) > lengthDays;
 
   /// The 1-based day of *content* the run stands on: the lowest day with no
   /// resolved log (ADR-0040).
@@ -104,10 +99,7 @@ class RunEngine {
   ///
   /// Returns `lengthDays + 1` for a run whose every day is resolved, which is
   /// the condition [isComplete] reads.
-  int storyPosition({
-    required Iterable<DayLog> logs,
-    required int lengthDays,
-  }) {
+  int storyPosition({required Iterable<DayLog> logs, required int lengthDays}) {
     final resolved = <int>{
       for (final log in logs)
         if (log.isReported) log.dayIndex,
@@ -146,9 +138,7 @@ class RunEngine {
     /// for. [lastResolvedOn] supplies it for a completed run.
     DateTime? endedOn,
   }) {
-    final present = <DateTime>{
-      for (final log in logs) ...log.presenceDates,
-    };
+    final present = <DateTime>{for (final log in logs) ...log.presenceDates};
 
     final absences = <DateTime>[];
     var consecutive = 0;

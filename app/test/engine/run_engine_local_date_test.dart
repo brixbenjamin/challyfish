@@ -42,10 +42,7 @@ void main() {
       23,
       reason: 'sanity: the DST gap exists',
     );
-    expect(
-      dateOf(next, berlin).difference(dateOf(start, berlin)).inDays,
-      1,
-    );
+    expect(dateOf(next, berlin).difference(dateOf(start, berlin)).inDays, 1);
   });
 
   test('fall back: a 25-hour day is still exactly one date apart', () {
@@ -57,10 +54,7 @@ void main() {
       25,
       reason: 'sanity: the DST overlap exists',
     );
-    expect(
-      dateOf(next, berlin).difference(dateOf(start, berlin)).inDays,
-      1,
-    );
+    expect(dateOf(next, berlin).difference(dateOf(start, berlin)).inDays, 1);
   });
 
   test('travelling west does not advance the date', () {
