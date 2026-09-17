@@ -89,14 +89,24 @@ void main() {
         now: day3,
       );
 
-      expect(state.currentDay, 3);
+      expect(
+        state.storyPosition,
+        2,
+        reason: 'day 2 was never resolved, so the story still stands on it',
+      );
       expect(
         state.logs.firstWhere((l) => l.dayIndex == 1).outcome,
         Outcome.done,
       );
       expect(
-        state.logs.firstWhere((l) => l.dayIndex == 2).outcome,
-        Outcome.missed,
+        state.logs.where((l) => l.dayIndex == 2),
+        isEmpty,
+        reason: 'an absent day leaves no row — it is a gap (ADR-0040)',
+      );
+      expect(
+        state.absentDates,
+        [DateTime.utc(2026, 6, 2)],
+        reason: 'the 2nd is where the miss actually lives now',
       );
       expect(state.missCount, 1);
       expect(state.grade, Grade.passed);

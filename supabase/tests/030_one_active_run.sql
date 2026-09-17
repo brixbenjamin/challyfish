@@ -1,5 +1,5 @@
 begin;
-select plan(3);
+select plan(6);
 
 insert into auth.users (id, email)
 values ('11111111-1111-1111-1111-111111111111', 'a@example.test');
@@ -47,6 +47,38 @@ select throws_ok(
   '23514',
   null,
   'an active run cannot carry a grade'
+);
+
+-- ADR-0040. A run ended for three consecutive absent days has an ending but no
+-- result, so it carries a date and no grade. `grade_only_when_completed`
+-- already enforces the second half, which is why no new constraint was added.
+select lives_ok(
+  $$ update public.campaign_runs
+        set status = 'abandoned', abandoned_on = current_date
+      where status = 'active' $$,
+  'an abandoned run may carry the date it was abandoned on'
+);
+
+select throws_ok(
+  $$ update public.campaign_runs
+        set grade = 'passed'
+      where abandoned_on is not null $$,
+  '23514',
+  null,
+  'an abandoned run cannot carry a grade, however it ended'
+);
+
+-- `missed` is gone: an absent calendar day no longer maps to a day of content,
+-- so there is no row for the product to write an outcome on.
+select throws_ok(
+  $$ insert into public.day_logs (user_id, run_id, day_index, outcome)
+     select '11111111-1111-1111-1111-111111111111', id, 1, 'missed'
+       from public.campaign_runs
+      where user_id = '11111111-1111-1111-1111-111111111111'
+      limit 1 $$,
+  '23514',
+  null,
+  'missed is no longer an outcome the schema accepts'
 );
 
 select * from finish();

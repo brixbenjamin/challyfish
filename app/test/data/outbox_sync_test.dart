@@ -254,7 +254,7 @@ void main() {
               userId: 'u1',
               runId: 'run-1',
               dayIndex: 1,
-              actionId: 'a1',
+              actionId: Value('a1'),
               updatedAt: at,
             ),
           );

@@ -12,6 +12,18 @@
 abstract final class OutboxPayloads {
   static String? iso(DateTime? value) => value?.toUtc().toIso8601String();
 
+  /// A bare local calendar date, for a Postgres `date` column (ADR-0040).
+  ///
+  /// Deliberately not [iso]: these carry no time and no offset, and sending
+  /// them as instants would let a server-side cast move the date by a day for
+  /// anyone east or west of UTC — which is the exact class of bug the stamped
+  /// date exists to prevent.
+  static String? date(DateTime? value) => value == null
+      ? null
+      : '${value.year.toString().padLeft(4, '0')}-'
+            '${value.month.toString().padLeft(2, '0')}-'
+            '${value.day.toString().padLeft(2, '0')}';
+
   static const profiles = 'profiles';
   static const campaignRuns = 'campaign_runs';
   static const dayLogs = 'day_logs';
@@ -39,6 +51,7 @@ abstract final class OutboxPayloads {
     required DateTime startedAt,
     DateTime? completedAt,
     String? grade,
+    DateTime? abandonedOn,
     required DateTime updatedAt,
   }) => {
     'id': id,
@@ -49,6 +62,7 @@ abstract final class OutboxPayloads {
     'started_at': iso(startedAt),
     'completed_at': iso(completedAt),
     'grade': grade,
+    'abandoned_on': date(abandonedOn),
     'updated_at': iso(updatedAt),
   };
 
@@ -57,10 +71,12 @@ abstract final class OutboxPayloads {
     required String userId,
     required String runId,
     required int dayIndex,
-    required String actionId,
+    String? actionId,
     DateTime? committedAt,
     String? outcome,
     String? note,
+    DateTime? workedOn,
+    DateTime? resolvedOn,
     required DateTime updatedAt,
   }) => {
     'id': id,
@@ -71,6 +87,8 @@ abstract final class OutboxPayloads {
     'committed_at': iso(committedAt),
     'outcome': outcome,
     'note': note,
+    'worked_on': date(workedOn),
+    'resolved_on': date(resolvedOn),
     'updated_at': iso(updatedAt),
   };
 

@@ -79,9 +79,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get outcomeSkipped => 'Skipped';
 
   @override
-  String get outcomeMissed => 'Missed';
-
-  @override
   String get backButton => 'Back';
 
   @override
@@ -190,6 +187,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noMarkNote => 'No mark. The days you did still count.';
+
+  @override
+  String get abandonedHeading => 'Abandoned';
+
+  @override
+  String abandonedSummary(String title, String date) {
+    return '$title ended on $date. Three days passed with nothing reported.';
+  }
+
+  @override
+  String abandonedDaysKept(int days) {
+    return '$days days reported. Those points still count.';
+  }
 
   @override
   String get linkPromptBody =>

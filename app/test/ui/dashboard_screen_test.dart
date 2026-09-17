@@ -86,11 +86,28 @@ void main() {
     actions: [action, optional],
   );
 
+  /// Days 1 and 2, resolved on their own calendar days. Since ADR-0040 the
+  /// story position is the next *unresolved* day, so a run cannot stand on day
+  /// 3 unless the two before it are done — and absence is a gap between the
+  /// dates a day was resolved on, so those dates have to be there too.
+  final earlierDays = <DayLog>[
+    for (var d = 1; d <= 2; d++)
+      DayLog(
+        id: 'l$d',
+        runId: 'run-1',
+        dayIndex: d,
+        actionId: 'action-$d',
+        outcome: Outcome.done,
+        workedOn: DateTime.utc(2026, 6, d),
+        resolvedOn: DateTime.utc(2026, 6, d),
+      ),
+  ];
+
   RunState state({List<DayLog> logs = const [], DaySpec? today = day}) =>
       RunState.derive(
         run: run,
         campaign: campaign,
-        logs: logs,
+        logs: [...earlierDays, ...logs],
         today: today,
         actionsById: {
           for (final a in today?.actions ?? const <ActionSpec>[]) a.id: a,
@@ -112,6 +129,8 @@ void main() {
     committedAt: tz.TZDateTime(berlin, 2026, 6, 3, 8).toUtc(),
     outcome: outcome,
     completedActionIds: ticks,
+    workedOn: DateTime.utc(2026, 6, 3),
+    resolvedOn: outcome == null ? null : DateTime.utc(2026, 6, 3),
   );
 
   /// Day 3, already accepted. This is the state every checklist assertion
@@ -254,7 +273,10 @@ void main() {
         logs: const [],
         today: day,
         zone: berlin,
-        now: tz.TZDateTime(berlin, 2026, 6, 3, 10).toUtc(),
+        // The first day of the run, so no calendar day has closed yet and no
+        // absence has been earned — the assertion here is the allowance, not
+        // the miss count.
+        now: tz.TZDateTime(berlin, 2026, 6, 1, 10).toUtc(),
       ),
     );
 

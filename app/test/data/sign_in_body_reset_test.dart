@@ -150,7 +150,7 @@ void main() {
             userId: 'user-1',
             runId: 'run-1',
             dayIndex: 1,
-            actionId: 'action-1',
+            actionId: Value('action-1'),
             updatedAt: DateTime.utc(2026, 6, 1),
           ),
         );

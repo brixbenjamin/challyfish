@@ -12,7 +12,6 @@ String outcomeLabel(AppLocalizations l10n, Outcome outcome) =>
       Outcome.done => l10n.outcomeDone,
       Outcome.partial => l10n.outcomePartial,
       Outcome.skipped => l10n.outcomeSkipped,
-      Outcome.missed => l10n.outcomeMissed,
     };
 
 /// The same shape, for grades. The enum's keys are wire values stored in two

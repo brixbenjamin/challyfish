@@ -49,6 +49,7 @@ OutboxEntry entryForRun(CampaignRunRow row) => (
     startedAt: row.startedAt,
     completedAt: row.completedAt,
     grade: row.grade,
+    abandonedOn: row.abandonedOn,
     updatedAt: row.updatedAt,
   ),
 );
@@ -65,6 +66,8 @@ OutboxEntry entryForDayLog(DayLogRow row) => (
     committedAt: row.committedAt,
     outcome: row.outcome,
     note: row.note,
+    workedOn: row.workedOn,
+    resolvedOn: row.resolvedOn,
     updatedAt: row.updatedAt,
   ),
 );

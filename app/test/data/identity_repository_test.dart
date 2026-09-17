@@ -52,7 +52,7 @@ void main() {
               userId: 'anon-user',
               runId: 'run-1',
               dayIndex: day,
-              actionId: 'action-$day',
+              actionId: Value('action-$day'),
               outcome: const Value('done'),
               updatedAt: DateTime.utc(2026, 6, day),
             ),

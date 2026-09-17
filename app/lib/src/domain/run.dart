@@ -28,6 +28,7 @@ class CampaignRun {
     this.isHardened = false,
     this.completedAt,
     this.grade,
+    this.abandonedOn,
   });
 
   final String id;
@@ -43,4 +44,15 @@ class CampaignRun {
   /// Materialized once at completion for stable querying. Must always equal
   /// what RunEngine computes from the day logs.
   final Grade? grade;
+
+  /// The local date this run ended for three consecutive absent days
+  /// (ADR-0040). Null on every other run, including one the user abandoned
+  /// themselves — which is what tells the two apart.
+  ///
+  /// An abandoned run carries no [grade]: it has no result, only an ending.
+  final DateTime? abandonedOn;
+
+  /// Whether the run ended because the user stopped turning up, rather than
+  /// because they chose to end it.
+  bool get wasAbandonedForAbsence => abandonedOn != null;
 }

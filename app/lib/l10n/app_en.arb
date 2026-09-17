@@ -105,10 +105,6 @@
   "@outcomeSkipped": {
     "description": "Report option. Must read exactly as easy as Done — if skipping feels like a confession, users stop reporting instead of skipping and the record stops being honest (R6)."
   },
-  "outcomeMissed": "Missed",
-  "@outcomeMissed": {
-    "description": "Written by rollover, never chosen by the user."
-  },
   "backButton": "Back",
   "@backButton": {
     "description": "Returns to the previous diagnostic question."
@@ -265,6 +261,31 @@
   "noMarkNote": "No mark. The days you did still count.",
   "@noMarkNote": {
     "description": "[niche] Shown when a Broken run earns no mark. The second sentence is load-bearing."
+  },
+  "abandonedHeading": "Abandoned",
+  "@abandonedHeading": {
+    "description": "[niche] Heading of the screen shown once, on the first open after a run ended for three consecutive days with nothing reported. A statement, not a verdict: an abandoned run has no grade."
+  },
+  "abandonedSummary": "{title} ended on {date}. Three days passed with nothing reported.",
+  "@abandonedSummary": {
+    "description": "[niche] States what happened, in concrete terms: the campaign by name and the date the run ended. No consolation and no offer to start again.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "abandonedDaysKept": "{days} days reported. Those points still count.",
+  "@abandonedDaysKept": {
+    "description": "[niche] How many days of the run were resolved before it ended. Effort is never erased, so the days already done keep feeding the archetype balance.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   },
   "linkPromptBody": "This record lives on this phone only. Attach an identity and it survives losing it.",
   "@linkPromptBody": {

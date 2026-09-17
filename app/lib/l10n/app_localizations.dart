@@ -190,12 +190,6 @@ abstract class AppLocalizations {
   /// **'Skipped'**
   String get outcomeSkipped;
 
-  /// Written by rollover, never chosen by the user.
-  ///
-  /// In en, this message translates to:
-  /// **'Missed'**
-  String get outcomeMissed;
-
   /// Returns to the previous diagnostic question.
   ///
   /// In en, this message translates to:
@@ -363,6 +357,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No mark. The days you did still count.'**
   String get noMarkNote;
+
+  /// [niche] Heading of the screen shown once, on the first open after a run ended for three consecutive days with nothing reported. A statement, not a verdict: an abandoned run has no grade.
+  ///
+  /// In en, this message translates to:
+  /// **'Abandoned'**
+  String get abandonedHeading;
+
+  /// [niche] States what happened, in concrete terms: the campaign by name and the date the run ended. No consolation and no offer to start again.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} ended on {date}. Three days passed with nothing reported.'**
+  String abandonedSummary(String title, String date);
+
+  /// [niche] How many days of the run were resolved before it ended. Effort is never erased, so the days already done keep feeding the archetype balance.
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days reported. Those points still count.'**
+  String abandonedDaysKept(int days);
 
   /// [niche] Shown on the completion screen to a user with no identity attached. Finishing a campaign is the moment they have the most to lose (ADR-0007).
   ///

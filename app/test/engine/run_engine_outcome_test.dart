@@ -68,7 +68,7 @@ void main() {
             mandatoryActionId: 'm',
             completedActionIds: ticks,
           ),
-          isNot(Outcome.missed),
+          isIn(Outcome.values),
         );
       }
     });

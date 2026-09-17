@@ -45,12 +45,27 @@ class FeralDatabase extends _$FeralDatabase {
   FeralDatabase(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
+      // Before the ladder, not inside it (ADR-0040).
+      //
+      // The steps below are not independent of the current schema: drift's
+      // generated `select` lists every column the Dart table declares, so the
+      // moment a later step adds one, every earlier step that reads a user
+      // table starts failing on a column the file does not have yet — which is
+      // what `_enqueueDirtyRowsBeforeDropping` does in the v10 step.
+      //
+      // Bringing the three user tables up to the current column set first
+      // makes the rest of the ladder safe to run at any `from`. Each add is
+      // guarded, so a file that already has the column is left alone.
+      await _addColumnIfMissing(m, dayLogs, dayLogs.workedOn);
+      await _addColumnIfMissing(m, dayLogs, dayLogs.resolvedOn);
+      await _addColumnIfMissing(m, campaignRuns, campaignRuns.abandonedOn);
+
       if (from < 2) {
         // Additive only. campaign_runs and day_logs are never touched:
         // losing a user's honest record to a schema bump is the worst
@@ -218,8 +233,43 @@ class FeralDatabase extends _$FeralDatabase {
         // a retried upgrade must not fail on a table it already dropped.
         await customStatement('drop table if exists sync_state');
       }
+
+      if (from < 11) {
+        // ADR-0040. Purely additive, and deliberately so: the three user
+        // tables are never dropped or recreated, because a user's own record
+        // has no other copy.
+        //
+        // The three date columns were already added above, before the ladder.
+        // They arrive null on every existing row rather than being backfilled
+        // from `started_at + day_index - 1`: that arithmetic is the thing
+        // ADR-0040 found to be wrong, and inventing a date the user never
+        // acted on would put a fiction into the honest record.
+        //
+        // `action_id` becomes nullable, which sqlite cannot do in place: the
+        // table is copied across against the current schema, keeping its rows.
+        await m.alterTable(TableMigration(dayLogs));
+      }
     },
   );
+
+  /// Adds [column] to [table] unless this file already has it.
+  ///
+  /// The ladder's steps are not independent: one that creates a table builds it
+  /// from the *current* schema, so a file arriving from far enough back can
+  /// already carry a column a later step was written to add.
+  Future<void> _addColumnIfMissing(
+    Migrator m,
+    TableInfo<Table, dynamic> table,
+    GeneratedColumn<Object> column,
+  ) async {
+    final existing = await customSelect(
+      'select name from pragma_table_info(?1)',
+      variables: [Variable<String>(table.actualTableName)],
+    ).get();
+    final names = existing.map((row) => row.read<String>('name')).toSet();
+    if (names.contains(column.name)) return;
+    await m.addColumn(table, column);
+  }
 
   /// Whether [table] exists in this file.
   Future<bool> _tableExists(String table) async {
@@ -341,6 +391,8 @@ class FeralDatabase extends _$FeralDatabase {
             committedAt: row.committedAt,
             outcome: row.outcome,
             note: row.note,
+            workedOn: row.workedOn,
+            resolvedOn: row.resolvedOn,
             updatedAt: row.updatedAt,
           ),
         );
@@ -399,17 +451,22 @@ class FeralDatabase extends _$FeralDatabase {
 
     await batch((b) {
       for (final log in logs) {
+        // A day whose content was never cached has no action to have ticked
+        // (ADR-0040 made the column nullable). There is nothing to backfill.
+        final actionId = log.actionId;
+        if (actionId == null) continue;
+
         b.insert(
           dayLogActions,
           DayLogActionsCompanion.insert(
             // Deterministic rather than random: two devices that both upgrade
             // offline derive the same id for the same tick, so the first sync
             // converges instead of racing to adopt one of two uuids.
-            id: '${log.runId}:${log.dayIndex}:${log.actionId}',
+            id: '${log.runId}:${log.dayIndex}:$actionId',
             userId: log.userId,
             runId: log.runId,
             dayIndex: log.dayIndex,
-            actionId: log.actionId,
+            actionId: actionId,
             updatedAt: log.updatedAt,
             // Deliberately not queued for the server. This table is created from
             // the current schema during the upgrade, so it carries no `dirty`

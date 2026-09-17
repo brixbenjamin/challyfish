@@ -171,7 +171,7 @@ void main() {
   });
 
   test(
-    'rollover writes missed for elapsed unreported days and is idempotent',
+    'a four-day absence ends the run rather than writing missed days',
     () async {
       final startRepo = repoAt(day1);
       final run = await startRepo.startRun(
@@ -186,7 +186,7 @@ void main() {
         outcome: Outcome.done,
       );
 
-      // The user returns on day 5.
+      // The user returns on day 5, having been absent on 2, 3 and 4.
       final day5 = tz.TZDateTime(berlin, 2026, 6, 5, 9).toUtc();
       final later = repoAt(day5);
 
@@ -197,14 +197,23 @@ void main() {
       );
 
       final logs = await later.logsFor(run.id);
-      final missed = logs
-          .where((l) => l.outcome == Outcome.missed)
-          .map((l) => l.dayIndex);
-      expect(missed, [2, 3, 4]);
       expect(
-        logs.any((l) => l.dayIndex == 5),
-        isFalse,
-        reason: 'today is never auto-missed',
+        logs,
+        hasLength(1),
+        reason: 'an absence is a gap in the calendar, not a row (ADR-0040)',
+      );
+      expect(logs.single.dayIndex, 1);
+
+      final stored = await later.runById(run.id);
+      expect(
+        stored!.status,
+        RunStatus.abandoned,
+        reason: 'three consecutive absent days end the run',
+      );
+      expect(
+        stored.grade,
+        isNull,
+        reason: 'abandoned is a terminal state, not a grade',
       );
 
       await later.applyRollover(
@@ -214,7 +223,7 @@ void main() {
       );
       expect(
         await later.logsFor(run.id),
-        hasLength(4),
+        hasLength(1),
         reason: 'rollover is idempotent',
       );
     },
@@ -440,7 +449,9 @@ void main() {
       expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.done);
     });
 
-    test('rollover still writes missed for a day with no ticks', () async {
+    test('a day with no ticks at all leaves no row behind', () async {
+      // Before ADR-0040 this wrote `missed`. There is now nothing to write it
+      // on: the user was never there, so the calendar date is simply absent.
       final repo = repoAt(day1);
       final run = await startRun(repo);
 
@@ -451,12 +462,13 @@ void main() {
         mandatoryActionIdForDay: (_) => 'action-1',
       );
 
-      final logs = await repoAt(day3).logsFor(run.id);
-      expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.missed);
+      expect(await repoAt(day3).logsFor(run.id), isEmpty);
     });
 
-    test('an unticked tick row does not rescue a day from missed', () async {
-      // The row exists but says the user did not do it. That is a miss.
+    test('an unticked tick row still resolves the day as skipped', () async {
+      // The row exists but says the user did not do it. They turned up and did
+      // nothing, which is `skipped` — a miss for the grade, but presence, so it
+      // never counts toward abandonment (ADR-0040).
       final repo = repoAt(day1);
       final run = await startRun(repo);
       await repo.setActionCompleted(
@@ -475,7 +487,7 @@ void main() {
       );
 
       final logs = await repoAt(day3).logsFor(run.id);
-      expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.missed);
+      expect(logs.firstWhere((l) => l.dayIndex == 1).outcome, Outcome.skipped);
     });
   });
 }

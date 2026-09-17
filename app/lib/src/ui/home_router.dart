@@ -11,6 +11,7 @@ import '../app/run_state.dart';
 import '../app/sync_state.dart';
 import '../core/l10n_ext.dart';
 import '../data/repositories/diagnostic_repository.dart';
+import '../data/repositories/progress_repository.dart';
 import '../domain/archetype.dart';
 import '../domain/campaign.dart';
 import '../domain/pack.dart';
@@ -18,10 +19,12 @@ import '../domain/diagnostic.dart';
 import '../domain/doctrine.dart';
 import '../domain/grade.dart';
 import '../domain/identity.dart';
+import '../domain/run.dart';
 import '../domain/sync_status.dart';
 import 'browse/campaign_detail_screen.dart';
 import 'browse/pack_list_screen.dart';
 import 'purchase/unlock_sheet.dart';
+import 'completion/abandoned_screen.dart';
 import 'completion/completion_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'doctrine/doctrine_entry_screen.dart';
@@ -95,7 +98,8 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
   /// moment. A phone backgrounded overnight and reopened the next morning would
   /// otherwise still be showing yesterday's day and yesterday's action — which
   /// is precisely the daily loop, not an edge case. Re-deriving on resume also
-  /// runs rollover, so the missed day is written when the user comes back.
+  /// runs rollover, which closes out yesterday's day and applies abandonment
+  /// when the user comes back (ADR-0040).
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
     if (lifecycle != AppLifecycleState.resumed) return;
@@ -384,7 +388,14 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     // recoverable place to be; the run is untouched and reappears when the
     // content arrives.
     if (run == null || campaign == null) {
-      return _Home(browse: await _browse(), balance: await _balance());
+      return _Home(
+        browse: await _browse(),
+        balance: await _balance(),
+        // Only when there is no active run at all. A run that ended while the
+        // user was away must be discovered rather than found already gone, and
+        // a content lag is not the moment to say so.
+        abandoned: run == null ? await _abandonment(progress) : null,
+      );
     }
 
     final days = await content.daysFor(campaign.id);
@@ -412,6 +423,16 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     );
     if (grade != null) {
       final logs = await progress.logsFor(run.id);
+      final zone = ref.read(zoneProvider);
+      final absence = engine.absence(
+        startedOn: engine.localDateOf(instant: run.startedAt, zone: zone),
+        today: engine.localDateOf(
+          instant: ref.read(clockProvider).nowUtc(),
+          zone: zone,
+        ),
+        logs: logs,
+        endedOn: engine.lastResolvedOn(logs),
+      );
       _showLinkPrompt = await ref
           .read(linkPromptStateProvider)
           .shouldPrompt(
@@ -421,7 +442,10 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         completed: _Completed(
           grade: grade,
           campaign: campaign,
-          missCount: engine.missCount(logs),
+          missCount: engine.missCount(
+            logs: logs,
+            absences: absence.absences,
+          ),
           missAllowance: engine.missAllowance(campaign.lengthDays),
           marksEarned: grade.earnsMark
               ? await _archetypesFor(campaign.id)
@@ -441,7 +465,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
       logs: logs,
       zone: zone,
       now: now,
-    ).currentDay;
+    ).storyPosition;
 
     return _Home(
       run: RunState.derive(
@@ -1048,6 +1072,46 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
     );
   }
 
+  /// The notice for a run that ended for absence, or null if there is none to
+  /// show (ADR-0040).
+  ///
+  /// Returns null when the campaign's content is not cached: the notice names
+  /// the campaign, and a notice that cannot say which run ended is worse than
+  /// one deferred to the next open, when the pull has landed.
+  Future<_Abandoned?> _abandonment(ProgressRepository progress) async {
+    final run = await progress.unacknowledgedAbandonment(
+      ref.read(userIdProvider),
+    );
+    if (run == null) return null;
+
+    final campaign = await ref
+        .read(contentRepositoryProvider)
+        .campaignById(run.campaignId);
+    if (campaign == null) return null;
+
+    final logs = await progress.logsFor(run.id);
+    return _Abandoned(
+      run: run,
+      campaign: campaign,
+      abandonedOn: run.abandonedOn!,
+      daysReported: logs.where((l) => l.isReported).length,
+    );
+  }
+
+  Future<void> _acknowledgeAbandonment(String runId) async {
+    await ref.read(progressRepositoryProvider).acknowledgeAbandonment(runId);
+    // The run is over, so nothing is left for the daily reminder to point at.
+    // `rescheduleForActiveRun` has existed since ADR-0011 and was never called
+    // from anywhere; a run that ends while the user is away is exactly the case
+    // it was written for.
+    final scheduler = ref.read(reminderSchedulerProvider);
+    await scheduler.rescheduleForActiveRun(
+      hasActiveRun: false,
+      at: await scheduler.savedTime(),
+    );
+    await _reloadHome();
+  }
+
   Widget _homeScreen() {
     final home = _home;
     if (home == null) {
@@ -1066,6 +1130,16 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
         onLink: _openLinkFlow,
         onDismissLinkPrompt: _dismissLinkPrompt,
         onBrowse: _reloadHome,
+      );
+    }
+
+    final abandoned = home.abandoned;
+    if (abandoned != null) {
+      return AbandonedScreen(
+        campaign: abandoned.campaign,
+        abandonedOn: abandoned.abandonedOn,
+        daysReported: abandoned.daysReported,
+        onBrowse: () => _acknowledgeAbandonment(abandoned.run.id),
       );
     }
 
@@ -1101,7 +1175,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
             .read(progressRepositoryProvider)
             .commitToday(
               run: run.run,
-              dayIndex: run.currentDay,
+              dayIndex: run.storyPosition,
               actionId: action.id,
             );
         _syncSoon();
@@ -1114,7 +1188,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
             .read(progressRepositoryProvider)
             .setActionCompleted(
               run: run.run,
-              dayIndex: run.currentDay,
+              dayIndex: run.storyPosition,
               mandatoryActionId: mandatory.id,
               actionId: actionId,
               completed: completed,
@@ -1130,7 +1204,7 @@ class _HomeRouterState extends ConsumerState<HomeRouter>
             .read(progressRepositoryProvider)
             .report(
               run: run.run,
-              dayIndex: run.currentDay,
+              dayIndex: run.storyPosition,
               mandatoryActionId: action.id,
               // Derived by the engine from what was ticked, never chosen.
               outcome: outcome,
@@ -1152,12 +1226,31 @@ class _Home {
     required this.balance,
     this.run,
     this.completed,
+    this.abandoned,
   });
 
   final RunState? run;
   final BalanceState? balance;
   final _Completed? completed;
+
+  /// A run that ended for absence and has not been shown yet (ADR-0040). It is
+  /// already closed by the time this is built; the screen is a notice.
+  final _Abandoned? abandoned;
   final List<PackView> browse;
+}
+
+class _Abandoned {
+  const _Abandoned({
+    required this.run,
+    required this.campaign,
+    required this.abandonedOn,
+    required this.daysReported,
+  });
+
+  final CampaignRun run;
+  final Campaign campaign;
+  final DateTime abandonedOn;
+  final int daysReported;
 }
 
 class _Completed {

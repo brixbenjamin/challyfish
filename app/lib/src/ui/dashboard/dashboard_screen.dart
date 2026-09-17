@@ -104,7 +104,7 @@ class DashboardScreen extends StatelessWidget {
                 // The run's own line, and it reads the same in both phases:
                 // which day this is, what it has cost, what it has earned.
                 Text(
-                  l10n.dayOfLength(state.currentDay, state.lengthDays),
+                  l10n.dayOfLength(state.storyPosition, state.lengthDays),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: tokens.mutedInk,
                   ),

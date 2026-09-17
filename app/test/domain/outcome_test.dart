@@ -8,21 +8,22 @@ void main() {
     }
   });
 
-  test('wire keys are exactly the four the schema allows', () {
+  test('wire keys are exactly the three the schema allows', () {
     expect(Outcome.values.map((o) => o.key).toSet(), {
       'done',
       'partial',
       'skipped',
-      'missed',
     });
   });
 
-  test('skipped and missed are misses; done and partial are not', () {
+  test('skipped is the only outcome that is a miss', () {
+    // ADR-0040 removed `missed`: an absent day has no outcome to carry,
+    // because it has no day log at all.
     expect(Outcome.skipped.isMiss, isTrue);
-    expect(Outcome.missed.isMiss, isTrue);
     expect(Outcome.done.isMiss, isFalse);
     expect(Outcome.partial.isMiss, isFalse);
   });
+
 
   test('an unknown key throws rather than silently becoming a miss', () {
     expect(() => Outcome.fromKey('completed'), throwsArgumentError);

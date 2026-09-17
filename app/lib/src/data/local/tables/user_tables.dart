@@ -18,6 +18,16 @@ class CampaignRuns extends Table {
 
   /// Materialized once at completion only. Null while the run is active.
   TextColumn get grade => text().nullable()();
+
+  /// The local date a run ended for three consecutive absent days (ADR-0040).
+  /// Null unless the run was abandoned that way — a user-initiated abandon
+  /// leaves it null, which is what tells the two apart.
+  ///
+  /// Materialized for the same reason [grade] is: a terminal run's result
+  /// should be stable and queryable rather than recomputed on every read. It
+  /// carries the same caveat — it must always equal what RunEngine derives.
+  /// This is not the live pointer the class doc rules out.
+  DateTimeColumn get abandonedOn => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override
@@ -30,10 +40,21 @@ class DayLogs extends Table {
   TextColumn get userId => text()();
   TextColumn get runId => text()();
   IntColumn get dayIndex => integer()();
-  TextColumn get actionId => text()();
+
+  /// The day's *mandatory* action. Nullable since ADR-0040: a day whose content
+  /// was never cached has no action id to offer, and rollover must still be
+  /// able to resolve it — a day it has to skip is a day that silently becomes
+  /// an absence and can end a run the user was present for.
+  TextColumn get actionId => text().nullable()();
   DateTimeColumn get committedAt => dateTime().nullable()();
   TextColumn get outcome => text().nullable()();
   TextColumn get note => text().nullable()();
+
+  /// Local calendar dates, stamped when the user acts (ADR-0040). Bare dates,
+  /// never instants: absence is counted in local days, and re-deriving one
+  /// after a flight would move the user's day underneath them.
+  DateTimeColumn get workedOn => dateTime().nullable()();
+  DateTimeColumn get resolvedOn => dateTime().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override

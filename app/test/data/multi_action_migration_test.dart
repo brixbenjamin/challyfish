@@ -37,7 +37,7 @@ void main() {
           userId: 'user-1',
           runId: 'run-1',
           dayIndex: day,
-          actionId: 'action-$day',
+          actionId: Value('action-$day'),
           outcome: Value(outcome),
           updatedAt: DateTime.utc(2026, 6, day),
         ),

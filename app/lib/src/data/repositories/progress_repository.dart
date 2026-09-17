@@ -129,6 +129,58 @@ class ProgressRepository {
     });
   }
 
+  /// The key this device remembers the last acknowledged abandonment under.
+  ///
+  /// Device-local rather than a column on the run, because it records what this
+  /// device has *shown*, not something about the run. `client_state` was given
+  /// a key/value shape for exactly this (see its table doc), and it is cleared
+  /// when the account changes, so a new user never inherits the flag.
+  static const _abandonmentSeenKey = 'abandonment_seen_run';
+
+  /// A run that ended for absence and has not yet been shown to the user.
+  ///
+  /// `activeRun` filters on status, so without this an auto-abandoned run just
+  /// disappears and the user is dropped back to the shelf with no explanation.
+  /// A run the user abandoned themselves is never returned: they chose it, they
+  /// saw the warning, and repeating it is nagging (ADR-0040).
+  Future<CampaignRun?> unacknowledgedAbandonment(String userId) async {
+    final row =
+        await (db.select(db.campaignRuns)
+              ..where(
+                (r) =>
+                    r.userId.equals(userId) &
+                    r.status.equals(RunStatus.abandoned.key) &
+                    r.abandonedOn.isNotNull(),
+              )
+              ..orderBy([
+                (r) => OrderingTerm(
+                  expression: r.abandonedOn,
+                  mode: OrderingMode.desc,
+                ),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
+    if (row == null) return null;
+
+    final seen =
+        await (db.select(
+          db.clientState,
+        )..where((s) => s.key.equals(_abandonmentSeenKey))).getSingleOrNull();
+    if (seen?.value == row.id) return null;
+
+    return _toRun(row);
+  }
+
+  /// Records that the user has seen the notice. It never returns.
+  Future<void> acknowledgeAbandonment(String runId) => db
+      .into(db.clientState)
+      .insertOnConflictUpdate(
+        ClientStateCompanion.insert(
+          key: _abandonmentSeenKey,
+          value: Value(runId),
+        ),
+      );
+
   /// Every run the user has, in any status. The balance and the marks both
   /// span the user's whole history, not just the active run.
   Future<List<CampaignRun>> allRuns(String userId) async {
@@ -187,7 +239,7 @@ class ProgressRepository {
   }) => _upsertLog(
     run: run,
     dayIndex: dayIndex,
-    actionId: actionId,
+    actionId: Value(actionId),
     committedAt: Value(clock.nowUtc()),
   );
 
@@ -219,7 +271,7 @@ class ProgressRepository {
       await _upsertLog(
         run: run,
         dayIndex: dayIndex,
-        actionId: mandatoryActionId,
+        actionId: Value(mandatoryActionId),
       );
 
       final existing =
@@ -260,12 +312,8 @@ class ProgressRepository {
     });
   }
 
-  /// Records the outcome derived from the day's ticks.
-  ///
-  /// `outcome` must be `done`, `partial`, or `skipped` — never `missed`.
-  /// `missed` is written only by [applyRollover]; this method writes whatever
-  /// it is given unchanged, so passing `Outcome.missed` here would be a
-  /// call-site bug, not a caught one.
+  /// Records the outcome derived from the day's ticks, and stamps the local
+  /// date it was resolved on (ADR-0040).
   ///
   /// Takes the day's mandatory action rather than an arbitrary one: the
   /// outcome is derived by the engine before it gets here, and the day row
@@ -279,75 +327,140 @@ class ProgressRepository {
   }) => _upsertLog(
     run: run,
     dayIndex: dayIndex,
-    actionId: mandatoryActionId,
+    actionId: Value(mandatoryActionId),
     outcome: Value(outcome.key),
     note: Value(note),
   );
 
-  /// Resolves every elapsed day left unreported. Idempotent: safe to call on
-  /// every app open, and it never touches a day that has an outcome.
+  /// Closes out everything the calendar has decided since the last app open.
   ///
-  /// A day with no ticks gets `missed`. A day the user demonstrably acted on
-  /// resolves to what those ticks derive instead — writing `missed` over it
-  /// would be a dishonest record, which ADR-0003 forbids.
+  /// Two jobs, in order (ADR-0040):
+  ///
+  /// 1. **Resolve a day the user worked on but never reported.** It takes the
+  ///    outcome its ticks derive, stamped with the date it was *worked on* —
+  ///    never today. A day ticked on Monday and resolved by Wednesday's app
+  ///    open is still Monday's day, and dating it Wednesday would charge the
+  ///    user an absence for a day they showed up for.
+  /// 2. **End a run left untouched for three consecutive days**, dated to the
+  ///    third. Computed rather than scheduled, so a user away for a week gets
+  ///    the same answer on return that they would have got each morning.
+  ///
+  /// A day nobody touched is deliberately left with no row at all. That is an
+  /// absence — a gap between the dates the user was present — and it is what
+  /// replaced the `missed` outcome this method used to write.
+  ///
+  /// Idempotent: safe to call on every app open.
   Future<void> applyRollover({
     required CampaignRun run,
     required int lengthDays,
-    // Nullable since ADR-0034: a day whose content has not been cached has no
-    // mandatory action id to offer, and day_logs.action_id is not nullable.
+    /// Null when the day's content has not been cached. Since ADR-0040 that no
+    /// longer stops the day being resolved — the column is nullable, and a day
+    /// rollover has to skip is a day that silently becomes an absence.
     required String? Function(int dayIndex) mandatoryActionIdForDay,
   }) async {
-    final today = engine.currentDay(
-      startedAt: run.startedAt,
-      zone: zone,
-      now: clock.nowUtc(),
-      lengthDays: lengthDays,
-    );
+    if (run.status != RunStatus.active) return;
 
-    final logs = await logsFor(run.id);
-    final pending = engine.daysNeedingMissed(currentDay: today, logs: logs);
-    final ticksByDay = {
-      for (final log in logs) log.dayIndex: log.completedActionIds,
-    };
+    final today = _today;
+    var logs = await logsFor(run.id);
 
-    for (final day in pending) {
-      final mandatory = mandatoryActionIdForDay(day);
-      // Left unresolved rather than written with another day's action id. The
-      // record stays honest (ADR-0003) and the next open, after the pull, sees
-      // the day still pending and resolves it properly.
-      if (mandatory == null) continue;
-      final ticks = ticksByDay[day] ?? const <String>{};
+    final due = engine.daysNeedingResolution(logs: logs, today: today);
+    final logsByDay = {for (final log in logs) log.dayIndex: log};
 
-      final outcome = ticks.isEmpty
-          ? Outcome.missed
+    for (final day in due) {
+      final log = logsByDay[day]!;
+      final mandatory = mandatoryActionIdForDay(day) ?? log.actionId;
+
+      // With no mandatory action to compare against, no tick can be the one
+      // that counted — which is exactly what `skipped` means. The day is
+      // resolved rather than left to rot into an absence the user did not earn.
+      final outcome = mandatory == null
+          ? Outcome.skipped
           : engine.deriveOutcome(
               mandatoryActionId: mandatory,
-              completedActionIds: ticks,
+              completedActionIds: log.completedActionIds,
             );
 
       await _upsertLog(
         run: run,
         dayIndex: day,
-        actionId: mandatory,
+        actionId: Value(mandatory),
         outcome: Value(outcome.key),
+        resolvedOn: Value(log.workedOn),
+        // The app is closing the day, not the user attending it. The presence
+        // date was earned when they ticked, and is already stamped.
+        marksPresence: false,
       );
     }
+
+    if (due.isNotEmpty) logs = await logsFor(run.id);
+
+    // A run whose content is finished cannot be abandoned. It is waiting to be
+    // completed and graded, which the caller does next.
+    if (engine.isComplete(logs: logs, lengthDays: lengthDays)) return;
+
+    final absence = engine.absence(
+      startedOn: engine.localDateOf(instant: run.startedAt, zone: zone),
+      today: today,
+      logs: logs,
+    );
+    final abandonedOn = absence.abandonedOn;
+    if (abandonedOn != null) await _abandonForAbsence(run, abandonedOn);
   }
+
+  /// Ends a run the user stopped turning up for.
+  ///
+  /// Distinct from [abandonRun], which the user asks for: this one carries the
+  /// date, which is what tells the two apart afterwards and what the screen on
+  /// the next app open reads. No grade is written — an abandoned run has no
+  /// result, and the server's `grade_only_when_completed` check agrees.
+  Future<void> _abandonForAbsence(CampaignRun run, DateTime abandonedOn) async {
+    await db.transaction(() async {
+      await (db.update(
+        db.campaignRuns,
+      )..where((r) => r.id.equals(run.id))).write(
+        CampaignRunsCompanion(
+          status: Value(RunStatus.abandoned.key),
+          abandonedOn: Value(abandonedOn),
+          updatedAt: Value(clock.nowUtc()),
+        ),
+      );
+      await _queueRun(run.id);
+    });
+  }
+
+  /// Today's local calendar date, as the day log records it (ADR-0040).
+  DateTime get _today =>
+      engine.localDateOf(instant: clock.nowUtc(), zone: zone);
 
   Future<void> _upsertLog({
     required CampaignRun run,
     required int dayIndex,
-    required String actionId,
+    Value<String?> actionId = const Value.absent(),
     Value<DateTime?> committedAt = const Value.absent(),
     Value<String?> outcome = const Value.absent(),
     Value<String?> note = const Value.absent(),
+
+    /// The date to record the day as resolved on. Rollover passes the day's
+    /// own `workedOn`; the ordinary report path leaves it absent and takes
+    /// today.
+    Value<DateTime?> resolvedOn = const Value.absent(),
+
+    /// False only for rollover, which is the app acting rather than the user.
+    /// A rollover must never stamp a presence date the user did not earn.
+    bool marksPresence = true,
   }) async {
     final now = clock.nowUtc();
+    final today = _today;
     final existing =
         await (db.select(db.dayLogs)..where(
               (l) => l.runId.equals(run.id) & l.dayIndex.equals(dayIndex),
             ))
             .getSingleOrNull();
+
+    // Resolving without being told when means resolving now.
+    final resolved = outcome.present && outcome.value != null && !resolvedOn.present
+        ? Value(today)
+        : resolvedOn;
 
     if (existing == null) {
       await db
@@ -362,6 +475,8 @@ class ProgressRepository {
               committedAt: committedAt,
               outcome: outcome,
               note: note,
+              workedOn: marksPresence ? Value(today) : const Value.absent(),
+              resolvedOn: resolved,
               updatedAt: now,
             ),
           );
@@ -370,9 +485,18 @@ class ProgressRepository {
         db.dayLogs,
       )..where((l) => l.id.equals(existing.id))).write(
         DayLogsCompanion(
+          // An optional tick must not rewrite the day's mandatory action, so
+          // this is only ever set when it is actually supplied.
+          actionId: actionId,
           committedAt: committedAt,
           outcome: outcome,
           note: note,
+          // Never moved once set: the day belongs to the date the user first
+          // touched it, not to the date they got round to reporting it.
+          workedOn: marksPresence && existing.workedOn == null
+              ? Value(today)
+              : const Value.absent(),
+          resolvedOn: resolved,
           updatedAt: Value(now),
         ),
       );
@@ -401,22 +525,30 @@ class ProgressRepository {
     final stored = await runById(run.id);
     if (stored == null || stored.status != RunStatus.active) return null;
 
-    final current = engine.currentDay(
-      startedAt: stored.startedAt,
-      zone: zone,
-      now: clock.nowUtc(),
-      lengthDays: campaign.lengthDays,
-    );
-    if (current < campaign.lengthDays) return null;
-
     final logs = await logsFor(stored.id);
 
-    // Elapsing is not enough: the user still has the final day until it is
-    // reported, or until rollover resolves it.
-    final finalDay = logs.where((l) => l.dayIndex == campaign.lengthDays);
-    if (finalDay.isEmpty || !finalDay.first.isReported) return null;
+    // Completion follows the content, not the clock (ADR-0040): a run ends
+    // when its last day is reported, however many calendar days that took.
+    // The old rule also required the calendar to have reached `lengthDays`,
+    // which after the pointer split would have completed a user out of a
+    // campaign they still had days of content left in.
+    if (!engine.isComplete(logs: logs, lengthDays: campaign.lengthDays)) {
+      return null;
+    }
 
-    final grade = engine.grade(logs, lengthDays: campaign.lengthDays);
+    // Absence is counted only up to the day the last day was resolved. A user
+    // who finished on Tuesday and next opened the app on Friday did not miss
+    // Wednesday and Thursday — the run was already over.
+    final absence = engine.absence(
+      startedOn: engine.localDateOf(instant: stored.startedAt, zone: zone),
+      today: _today,
+      logs: logs,
+      endedOn: engine.lastResolvedOn(logs),
+    );
+    final grade = engine.grade(
+      missCount: engine.missCount(logs: logs, absences: absence.absences),
+      lengthDays: campaign.lengthDays,
+    );
     final now = clock.nowUtc();
 
     await db.transaction(() async {
@@ -496,6 +628,7 @@ class ProgressRepository {
     isHardened: row.isHardened,
     completedAt: row.completedAt == null ? null : _asUtc(row.completedAt!),
     grade: row.grade == null ? null : Grade.fromKey(row.grade!),
+    abandonedOn: row.abandonedOn == null ? null : _asUtc(row.abandonedOn!),
   );
 
   DayLog _toLog(DayLogRow row, Set<String> completedActionIds) => DayLog(
@@ -507,5 +640,10 @@ class ProgressRepository {
     outcome: row.outcome == null ? null : Outcome.fromKey(row.outcome!),
     note: row.note,
     completedActionIds: completedActionIds,
+    // Bare dates rather than instants. Drift hands them back in the device's
+    // local zone, so they are normalised here — two dates stamped in different
+    // zones have to compare equal, or absence would count a day twice.
+    workedOn: row.workedOn == null ? null : _asUtc(row.workedOn!),
+    resolvedOn: row.resolvedOn == null ? null : _asUtc(row.resolvedOn!),
   );
 }

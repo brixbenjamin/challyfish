@@ -99,10 +99,9 @@ void main() {
     expect(b['axis-a'], closeTo(a['axis-a']!, 1e-9));
   });
 
-  test('skipped, missed and unreported days count for nothing', () {
+  test('skipped and unreported days count for nothing', () {
     final result = balanceAt(0, [
       log(1, 'a-axis-a', Outcome.skipped),
-      log(2, 'a-axis-a', Outcome.missed),
       log(3, 'a-axis-a', null),
     ]);
     expect(result['axis-a'], isNull);
@@ -235,7 +234,7 @@ void main() {
       log(2, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
       log(3, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
       log(3, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a', 'a-axis-b'}),
-      log(4, 'a-axis-a', Outcome.missed, ticks: const {'a-axis-a'}),
+      log(4, 'a-axis-a', Outcome.skipped, ticks: const {'a-axis-a'}),
       log(32, 'a-axis-a', Outcome.done, ticks: const {'a-axis-a'}),
     ]);
     expect(balance['axis-a'], greaterThan(0));
@@ -315,8 +314,8 @@ void main() {
     final result = balanceAt(0, [
       log(1, 'a-axis-a', Outcome.done),
       log(2, 'a-axis-b', Outcome.done),
-      log(3, 'a-axis-a', Outcome.missed),
-      log(4, 'a-axis-a', Outcome.missed),
+      log(3, 'a-axis-a', Outcome.skipped),
+      log(4, 'a-axis-a', Outcome.skipped),
       log(5, 'a-axis-a', Outcome.skipped),
     ]);
     expect(result.keys.toSet(), {'axis-a', 'axis-b'});
@@ -330,6 +329,46 @@ void main() {
 
   test('no logs produce an empty balance, not a crash', () {
     expect(balanceAt(0, const []), isEmpty);
+  });
+
+  group('dating a day (ADR-0040)', () {
+    DayLog dated(int index, DateTime? resolvedOn, {DateTime? workedOn}) =>
+        DayLog(
+          id: 'log-$index',
+          runId: 'run-1',
+          dayIndex: index,
+          actionId: 'a-axis-a',
+          outcome: resolvedOn == null ? null : Outcome.done,
+          completedActionIds: const {'a-axis-a'},
+          workedOn: workedOn ?? resolvedOn,
+          resolvedOn: resolvedOn,
+        );
+
+    test('a day counts from when it was resolved, not from its index', () {
+      // After an absence the story position trails the calendar, so an index
+      // no longer says when a day happened. Day 2 resolved on the 10th was
+      // acted on the 10th, and evaluated that same day it has not decayed.
+      final result = balanceAt(9, [dated(2, DateTime.utc(2026, 6, 10))]);
+      expect(result['axis-a'], closeTo(1 / 5, 1e-9));
+    });
+
+    test('a stretched run decays by calendar days, not by day count', () {
+      // Day 2 resolved on the 10th — nine days into the run — and read one
+      // half-life after that, on 25 July. Dating it by its index would put it
+      // 53 days back instead of 45 and read the axis low.
+      final result = balanceAt(54, [dated(2, DateTime.utc(2026, 6, 10))]);
+      expect(result['axis-a'], closeTo(0.5 / 5, 1e-9));
+    });
+
+    test('an in-progress day is dated by when it was worked on', () {
+      // Ticked but not yet reported, so it still feeds the radar — the radar
+      // reads ticks, and the ticks happened on the day they happened.
+      final result = balanceAt(
+        9,
+        [dated(2, null, workedOn: DateTime.utc(2026, 6, 10))],
+      );
+      expect(result['axis-a'], closeTo(1 / 5, 1e-9));
+    });
   });
 
   test('the half-life is injectable', () {

@@ -17,8 +17,9 @@ class RunState {
   const RunState({
     required this.run,
     required this.campaign,
-    required this.currentDay,
+    required this.storyPosition,
     required this.missCount,
+    this.absentDates = const [],
     required this.missAllowance,
     required this.grade,
     required this.logs,
@@ -43,20 +44,33 @@ class RunState {
     Map<String, ActionSpec> actionsById = const {},
     RunEngine engine = const RunEngine(),
   }) {
-    final day = engine.currentDay(
-      startedAt: run.startedAt,
-      zone: zone,
-      now: now,
+    // Two pointers since ADR-0040, doing different jobs. The story position is
+    // where the *content* stands and advances only when a day is resolved; the
+    // calendar is what absence is counted in. Conflating them is what used to
+    // let an absence skip a day of the campaign.
+    final todayDate = engine.localDateOf(instant: now, zone: zone);
+    final position = engine.dayOnScreen(
+      logs: logs,
       lengthDays: campaign.lengthDays,
+      today: todayDate,
+    );
+    final absence = engine.absence(
+      startedOn: engine.localDateOf(instant: run.startedAt, zone: zone),
+      today: todayDate,
+      logs: logs,
     );
 
     return RunState(
       run: run,
       campaign: campaign,
-      currentDay: day,
-      missCount: engine.missCount(logs),
+      storyPosition: position,
+      absentDates: absence.absences,
+      missCount: engine.missCount(logs: logs, absences: absence.absences),
       missAllowance: engine.missAllowance(campaign.lengthDays),
-      grade: engine.grade(logs, lengthDays: campaign.lengthDays),
+      grade: engine.grade(
+        missCount: engine.missCount(logs: logs, absences: absence.absences),
+        lengthDays: campaign.lengthDays,
+      ),
       logs: logs,
       today: today,
       actionsById: actionsById,
@@ -66,7 +80,17 @@ class RunState {
 
   final CampaignRun run;
   final Campaign campaign;
-  final int currentDay;
+
+  /// The 1-based day of *content* the run stands on — the next unresolved day,
+  /// not the number of days since it started (ADR-0040).
+  ///
+  /// A day resolved today holds this for the rest of that day, so reporting
+  /// does not hand the user tomorrow's day the same evening.
+  final int storyPosition;
+
+  /// The local dates the run was live and the user resolved nothing. The
+  /// calendar half of the record, and what the miss count is drawn from.
+  final List<DateTime> absentDates;
   final int missCount;
 
   /// How many misses this campaign tolerates before Broken. Differs per
@@ -100,7 +124,7 @@ class RunState {
 
   DayLog? get todayLog {
     for (final log in logs) {
-      if (log.dayIndex == currentDay) return log;
+      if (log.dayIndex == storyPosition) return log;
     }
     return null;
   }
@@ -152,7 +176,7 @@ class RunState {
 
   bool get isReportedToday => todayLog?.isReported ?? false;
 
-  bool get isFinalDay => currentDay >= lengthDays;
+  bool get isFinalDay => storyPosition >= lengthDays;
 
   /// The final day has both arrived and been resolved, so the run is ready to
   /// be completed and graded. Elapsing alone is not enough — the user still has

@@ -193,7 +193,7 @@ Future<Harness> seededHarness({
             userId: 'u1',
             runId: 'run1',
             dayIndex: day,
-            actionId: 'aPaid',
+            actionId: Value('aPaid'),
             outcome: const Value('done'),
             updatedAt: at,
           ),

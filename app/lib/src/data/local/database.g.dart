@@ -5885,6 +5885,17 @@ class $CampaignRunsTable extends CampaignRuns
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _abandonedOnMeta = const VerificationMeta(
+    'abandonedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> abandonedOn = GeneratedColumn<DateTime>(
+    'abandoned_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -5906,6 +5917,7 @@ class $CampaignRunsTable extends CampaignRuns
     startedAt,
     completedAt,
     grade,
+    abandonedOn,
     updatedAt,
   ];
   @override
@@ -5978,6 +5990,15 @@ class $CampaignRunsTable extends CampaignRuns
         grade.isAcceptableOrUnknown(data['grade']!, _gradeMeta),
       );
     }
+    if (data.containsKey('abandoned_on')) {
+      context.handle(
+        _abandonedOnMeta,
+        abandonedOn.isAcceptableOrUnknown(
+          data['abandoned_on']!,
+          _abandonedOnMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -6027,6 +6048,10 @@ class $CampaignRunsTable extends CampaignRuns
         DriftSqlType.string,
         data['${effectivePrefix}grade'],
       ),
+      abandonedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}abandoned_on'],
+      ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -6051,6 +6076,16 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
 
   /// Materialized once at completion only. Null while the run is active.
   final String? grade;
+
+  /// The local date a run ended for three consecutive absent days (ADR-0040).
+  /// Null unless the run was abandoned that way — a user-initiated abandon
+  /// leaves it null, which is what tells the two apart.
+  ///
+  /// Materialized for the same reason [grade] is: a terminal run's result
+  /// should be stable and queryable rather than recomputed on every read. It
+  /// carries the same caveat — it must always equal what RunEngine derives.
+  /// This is not the live pointer the class doc rules out.
+  final DateTime? abandonedOn;
   final DateTime updatedAt;
   const CampaignRunRow({
     required this.id,
@@ -6061,6 +6096,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     required this.startedAt,
     this.completedAt,
     this.grade,
+    this.abandonedOn,
     required this.updatedAt,
   });
   @override
@@ -6077,6 +6113,9 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     }
     if (!nullToAbsent || grade != null) {
       map['grade'] = Variable<String>(grade);
+    }
+    if (!nullToAbsent || abandonedOn != null) {
+      map['abandoned_on'] = Variable<DateTime>(abandonedOn);
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -6096,6 +6135,9 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
       grade: grade == null && nullToAbsent
           ? const Value.absent()
           : Value(grade),
+      abandonedOn: abandonedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(abandonedOn),
       updatedAt: Value(updatedAt),
     );
   }
@@ -6114,6 +6156,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
       startedAt: serializer.fromJson<DateTime>(json['startedAt']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       grade: serializer.fromJson<String?>(json['grade']),
+      abandonedOn: serializer.fromJson<DateTime?>(json['abandonedOn']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -6129,6 +6172,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
       'startedAt': serializer.toJson<DateTime>(startedAt),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'grade': serializer.toJson<String?>(grade),
+      'abandonedOn': serializer.toJson<DateTime?>(abandonedOn),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -6142,6 +6186,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     DateTime? startedAt,
     Value<DateTime?> completedAt = const Value.absent(),
     Value<String?> grade = const Value.absent(),
+    Value<DateTime?> abandonedOn = const Value.absent(),
     DateTime? updatedAt,
   }) => CampaignRunRow(
     id: id ?? this.id,
@@ -6152,6 +6197,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     startedAt: startedAt ?? this.startedAt,
     completedAt: completedAt.present ? completedAt.value : this.completedAt,
     grade: grade.present ? grade.value : this.grade,
+    abandonedOn: abandonedOn.present ? abandonedOn.value : this.abandonedOn,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   CampaignRunRow copyWithCompanion(CampaignRunsCompanion data) {
@@ -6170,6 +6216,9 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
           ? data.completedAt.value
           : this.completedAt,
       grade: data.grade.present ? data.grade.value : this.grade,
+      abandonedOn: data.abandonedOn.present
+          ? data.abandonedOn.value
+          : this.abandonedOn,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -6185,6 +6234,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('grade: $grade, ')
+          ..write('abandonedOn: $abandonedOn, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -6200,6 +6250,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
     startedAt,
     completedAt,
     grade,
+    abandonedOn,
     updatedAt,
   );
   @override
@@ -6214,6 +6265,7 @@ class CampaignRunRow extends DataClass implements Insertable<CampaignRunRow> {
           other.startedAt == this.startedAt &&
           other.completedAt == this.completedAt &&
           other.grade == this.grade &&
+          other.abandonedOn == this.abandonedOn &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -6226,6 +6278,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
   final Value<DateTime> startedAt;
   final Value<DateTime?> completedAt;
   final Value<String?> grade;
+  final Value<DateTime?> abandonedOn;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const CampaignRunsCompanion({
@@ -6237,6 +6290,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     this.startedAt = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.grade = const Value.absent(),
+    this.abandonedOn = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -6249,6 +6303,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     required DateTime startedAt,
     this.completedAt = const Value.absent(),
     this.grade = const Value.absent(),
+    this.abandonedOn = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -6266,6 +6321,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     Expression<DateTime>? startedAt,
     Expression<DateTime>? completedAt,
     Expression<String>? grade,
+    Expression<DateTime>? abandonedOn,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -6278,6 +6334,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
       if (startedAt != null) 'started_at': startedAt,
       if (completedAt != null) 'completed_at': completedAt,
       if (grade != null) 'grade': grade,
+      if (abandonedOn != null) 'abandoned_on': abandonedOn,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -6292,6 +6349,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     Value<DateTime>? startedAt,
     Value<DateTime?>? completedAt,
     Value<String?>? grade,
+    Value<DateTime?>? abandonedOn,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -6304,6 +6362,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
       grade: grade ?? this.grade,
+      abandonedOn: abandonedOn ?? this.abandonedOn,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -6336,6 +6395,9 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
     if (grade.present) {
       map['grade'] = Variable<String>(grade.value);
     }
+    if (abandonedOn.present) {
+      map['abandoned_on'] = Variable<DateTime>(abandonedOn.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -6356,6 +6418,7 @@ class CampaignRunsCompanion extends UpdateCompanion<CampaignRunRow> {
           ..write('startedAt: $startedAt, ')
           ..write('completedAt: $completedAt, ')
           ..write('grade: $grade, ')
+          ..write('abandonedOn: $abandonedOn, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -6413,9 +6476,9 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
   late final GeneratedColumn<String> actionId = GeneratedColumn<String>(
     'action_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _committedAtMeta = const VerificationMeta(
     'committedAt',
@@ -6448,6 +6511,28 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _workedOnMeta = const VerificationMeta(
+    'workedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> workedOn = GeneratedColumn<DateTime>(
+    'worked_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _resolvedOnMeta = const VerificationMeta(
+    'resolvedOn',
+  );
+  @override
+  late final GeneratedColumn<DateTime> resolvedOn = GeneratedColumn<DateTime>(
+    'resolved_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -6469,6 +6554,8 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
     committedAt,
     outcome,
     note,
+    workedOn,
+    resolvedOn,
     updatedAt,
   ];
   @override
@@ -6517,8 +6604,6 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
         _actionIdMeta,
         actionId.isAcceptableOrUnknown(data['action_id']!, _actionIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_actionIdMeta);
     }
     if (data.containsKey('committed_at')) {
       context.handle(
@@ -6539,6 +6624,18 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
       context.handle(
         _noteMeta,
         note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('worked_on')) {
+      context.handle(
+        _workedOnMeta,
+        workedOn.isAcceptableOrUnknown(data['worked_on']!, _workedOnMeta),
+      );
+    }
+    if (data.containsKey('resolved_on')) {
+      context.handle(
+        _resolvedOnMeta,
+        resolvedOn.isAcceptableOrUnknown(data['resolved_on']!, _resolvedOnMeta),
       );
     }
     if (data.containsKey('updated_at')) {
@@ -6581,7 +6678,7 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
       actionId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}action_id'],
-      )!,
+      ),
       committedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}committed_at'],
@@ -6593,6 +6690,14 @@ class $DayLogsTable extends DayLogs with TableInfo<$DayLogsTable, DayLogRow> {
       note: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}note'],
+      ),
+      workedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}worked_on'],
+      ),
+      resolvedOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resolved_on'],
       ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -6612,20 +6717,33 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
   final String userId;
   final String runId;
   final int dayIndex;
-  final String actionId;
+
+  /// The day's *mandatory* action. Nullable since ADR-0040: a day whose content
+  /// was never cached has no action id to offer, and rollover must still be
+  /// able to resolve it — a day it has to skip is a day that silently becomes
+  /// an absence and can end a run the user was present for.
+  final String? actionId;
   final DateTime? committedAt;
   final String? outcome;
   final String? note;
+
+  /// Local calendar dates, stamped when the user acts (ADR-0040). Bare dates,
+  /// never instants: absence is counted in local days, and re-deriving one
+  /// after a flight would move the user's day underneath them.
+  final DateTime? workedOn;
+  final DateTime? resolvedOn;
   final DateTime updatedAt;
   const DayLogRow({
     required this.id,
     required this.userId,
     required this.runId,
     required this.dayIndex,
-    required this.actionId,
+    this.actionId,
     this.committedAt,
     this.outcome,
     this.note,
+    this.workedOn,
+    this.resolvedOn,
     required this.updatedAt,
   });
   @override
@@ -6635,7 +6753,9 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     map['user_id'] = Variable<String>(userId);
     map['run_id'] = Variable<String>(runId);
     map['day_index'] = Variable<int>(dayIndex);
-    map['action_id'] = Variable<String>(actionId);
+    if (!nullToAbsent || actionId != null) {
+      map['action_id'] = Variable<String>(actionId);
+    }
     if (!nullToAbsent || committedAt != null) {
       map['committed_at'] = Variable<DateTime>(committedAt);
     }
@@ -6644,6 +6764,12 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     }
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
+    }
+    if (!nullToAbsent || workedOn != null) {
+      map['worked_on'] = Variable<DateTime>(workedOn);
+    }
+    if (!nullToAbsent || resolvedOn != null) {
+      map['resolved_on'] = Variable<DateTime>(resolvedOn);
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -6655,7 +6781,9 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
       userId: Value(userId),
       runId: Value(runId),
       dayIndex: Value(dayIndex),
-      actionId: Value(actionId),
+      actionId: actionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actionId),
       committedAt: committedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(committedAt),
@@ -6663,6 +6791,12 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
           ? const Value.absent()
           : Value(outcome),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      workedOn: workedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(workedOn),
+      resolvedOn: resolvedOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolvedOn),
       updatedAt: Value(updatedAt),
     );
   }
@@ -6677,10 +6811,12 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
       userId: serializer.fromJson<String>(json['userId']),
       runId: serializer.fromJson<String>(json['runId']),
       dayIndex: serializer.fromJson<int>(json['dayIndex']),
-      actionId: serializer.fromJson<String>(json['actionId']),
+      actionId: serializer.fromJson<String?>(json['actionId']),
       committedAt: serializer.fromJson<DateTime?>(json['committedAt']),
       outcome: serializer.fromJson<String?>(json['outcome']),
       note: serializer.fromJson<String?>(json['note']),
+      workedOn: serializer.fromJson<DateTime?>(json['workedOn']),
+      resolvedOn: serializer.fromJson<DateTime?>(json['resolvedOn']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -6692,10 +6828,12 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
       'userId': serializer.toJson<String>(userId),
       'runId': serializer.toJson<String>(runId),
       'dayIndex': serializer.toJson<int>(dayIndex),
-      'actionId': serializer.toJson<String>(actionId),
+      'actionId': serializer.toJson<String?>(actionId),
       'committedAt': serializer.toJson<DateTime?>(committedAt),
       'outcome': serializer.toJson<String?>(outcome),
       'note': serializer.toJson<String?>(note),
+      'workedOn': serializer.toJson<DateTime?>(workedOn),
+      'resolvedOn': serializer.toJson<DateTime?>(resolvedOn),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -6705,20 +6843,24 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     String? userId,
     String? runId,
     int? dayIndex,
-    String? actionId,
+    Value<String?> actionId = const Value.absent(),
     Value<DateTime?> committedAt = const Value.absent(),
     Value<String?> outcome = const Value.absent(),
     Value<String?> note = const Value.absent(),
+    Value<DateTime?> workedOn = const Value.absent(),
+    Value<DateTime?> resolvedOn = const Value.absent(),
     DateTime? updatedAt,
   }) => DayLogRow(
     id: id ?? this.id,
     userId: userId ?? this.userId,
     runId: runId ?? this.runId,
     dayIndex: dayIndex ?? this.dayIndex,
-    actionId: actionId ?? this.actionId,
+    actionId: actionId.present ? actionId.value : this.actionId,
     committedAt: committedAt.present ? committedAt.value : this.committedAt,
     outcome: outcome.present ? outcome.value : this.outcome,
     note: note.present ? note.value : this.note,
+    workedOn: workedOn.present ? workedOn.value : this.workedOn,
+    resolvedOn: resolvedOn.present ? resolvedOn.value : this.resolvedOn,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   DayLogRow copyWithCompanion(DayLogsCompanion data) {
@@ -6733,6 +6875,10 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
           : this.committedAt,
       outcome: data.outcome.present ? data.outcome.value : this.outcome,
       note: data.note.present ? data.note.value : this.note,
+      workedOn: data.workedOn.present ? data.workedOn.value : this.workedOn,
+      resolvedOn: data.resolvedOn.present
+          ? data.resolvedOn.value
+          : this.resolvedOn,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -6748,6 +6894,8 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
           ..write('committedAt: $committedAt, ')
           ..write('outcome: $outcome, ')
           ..write('note: $note, ')
+          ..write('workedOn: $workedOn, ')
+          ..write('resolvedOn: $resolvedOn, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -6763,6 +6911,8 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
     committedAt,
     outcome,
     note,
+    workedOn,
+    resolvedOn,
     updatedAt,
   );
   @override
@@ -6777,6 +6927,8 @@ class DayLogRow extends DataClass implements Insertable<DayLogRow> {
           other.committedAt == this.committedAt &&
           other.outcome == this.outcome &&
           other.note == this.note &&
+          other.workedOn == this.workedOn &&
+          other.resolvedOn == this.resolvedOn &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -6785,10 +6937,12 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
   final Value<String> userId;
   final Value<String> runId;
   final Value<int> dayIndex;
-  final Value<String> actionId;
+  final Value<String?> actionId;
   final Value<DateTime?> committedAt;
   final Value<String?> outcome;
   final Value<String?> note;
+  final Value<DateTime?> workedOn;
+  final Value<DateTime?> resolvedOn;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const DayLogsCompanion({
@@ -6800,6 +6954,8 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     this.committedAt = const Value.absent(),
     this.outcome = const Value.absent(),
     this.note = const Value.absent(),
+    this.workedOn = const Value.absent(),
+    this.resolvedOn = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -6808,17 +6964,18 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     required String userId,
     required String runId,
     required int dayIndex,
-    required String actionId,
+    this.actionId = const Value.absent(),
     this.committedAt = const Value.absent(),
     this.outcome = const Value.absent(),
     this.note = const Value.absent(),
+    this.workedOn = const Value.absent(),
+    this.resolvedOn = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        userId = Value(userId),
        runId = Value(runId),
        dayIndex = Value(dayIndex),
-       actionId = Value(actionId),
        updatedAt = Value(updatedAt);
   static Insertable<DayLogRow> custom({
     Expression<String>? id,
@@ -6829,6 +6986,8 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     Expression<DateTime>? committedAt,
     Expression<String>? outcome,
     Expression<String>? note,
+    Expression<DateTime>? workedOn,
+    Expression<DateTime>? resolvedOn,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -6841,6 +7000,8 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
       if (committedAt != null) 'committed_at': committedAt,
       if (outcome != null) 'outcome': outcome,
       if (note != null) 'note': note,
+      if (workedOn != null) 'worked_on': workedOn,
+      if (resolvedOn != null) 'resolved_on': resolvedOn,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -6851,10 +7012,12 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     Value<String>? userId,
     Value<String>? runId,
     Value<int>? dayIndex,
-    Value<String>? actionId,
+    Value<String?>? actionId,
     Value<DateTime?>? committedAt,
     Value<String?>? outcome,
     Value<String?>? note,
+    Value<DateTime?>? workedOn,
+    Value<DateTime?>? resolvedOn,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -6867,6 +7030,8 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
       committedAt: committedAt ?? this.committedAt,
       outcome: outcome ?? this.outcome,
       note: note ?? this.note,
+      workedOn: workedOn ?? this.workedOn,
+      resolvedOn: resolvedOn ?? this.resolvedOn,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -6899,6 +7064,12 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (workedOn.present) {
+      map['worked_on'] = Variable<DateTime>(workedOn.value);
+    }
+    if (resolvedOn.present) {
+      map['resolved_on'] = Variable<DateTime>(resolvedOn.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -6919,6 +7090,8 @@ class DayLogsCompanion extends UpdateCompanion<DayLogRow> {
           ..write('committedAt: $committedAt, ')
           ..write('outcome: $outcome, ')
           ..write('note: $note, ')
+          ..write('workedOn: $workedOn, ')
+          ..write('resolvedOn: $resolvedOn, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -12065,6 +12238,7 @@ typedef $$CampaignRunsTableCreateCompanionBuilder =
       required DateTime startedAt,
       Value<DateTime?> completedAt,
       Value<String?> grade,
+      Value<DateTime?> abandonedOn,
       required DateTime updatedAt,
       Value<int> rowid,
     });
@@ -12078,6 +12252,7 @@ typedef $$CampaignRunsTableUpdateCompanionBuilder =
       Value<DateTime> startedAt,
       Value<DateTime?> completedAt,
       Value<String?> grade,
+      Value<DateTime?> abandonedOn,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -12128,6 +12303,11 @@ class $$CampaignRunsTableFilterComposer
 
   ColumnFilters<String> get grade => $composableBuilder(
     column: $table.grade,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get abandonedOn => $composableBuilder(
+    column: $table.abandonedOn,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12186,6 +12366,11 @@ class $$CampaignRunsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get abandonedOn => $composableBuilder(
+    column: $table.abandonedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -12231,6 +12416,11 @@ class $$CampaignRunsTableAnnotationComposer
   GeneratedColumn<String> get grade =>
       $composableBuilder(column: $table.grade, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get abandonedOn => $composableBuilder(
+    column: $table.abandonedOn,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
@@ -12274,6 +12464,7 @@ class $$CampaignRunsTableTableManager
                 Value<DateTime> startedAt = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<String?> grade = const Value.absent(),
+                Value<DateTime?> abandonedOn = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CampaignRunsCompanion(
@@ -12285,6 +12476,7 @@ class $$CampaignRunsTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 grade: grade,
+                abandonedOn: abandonedOn,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -12298,6 +12490,7 @@ class $$CampaignRunsTableTableManager
                 required DateTime startedAt,
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<String?> grade = const Value.absent(),
+                Value<DateTime?> abandonedOn = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => CampaignRunsCompanion.insert(
@@ -12309,6 +12502,7 @@ class $$CampaignRunsTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
                 grade: grade,
+                abandonedOn: abandonedOn,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -12343,10 +12537,12 @@ typedef $$DayLogsTableCreateCompanionBuilder =
       required String userId,
       required String runId,
       required int dayIndex,
-      required String actionId,
+      Value<String?> actionId,
       Value<DateTime?> committedAt,
       Value<String?> outcome,
       Value<String?> note,
+      Value<DateTime?> workedOn,
+      Value<DateTime?> resolvedOn,
       required DateTime updatedAt,
       Value<int> rowid,
     });
@@ -12356,10 +12552,12 @@ typedef $$DayLogsTableUpdateCompanionBuilder =
       Value<String> userId,
       Value<String> runId,
       Value<int> dayIndex,
-      Value<String> actionId,
+      Value<String?> actionId,
       Value<DateTime?> committedAt,
       Value<String?> outcome,
       Value<String?> note,
+      Value<DateTime?> workedOn,
+      Value<DateTime?> resolvedOn,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -12410,6 +12608,16 @@ class $$DayLogsTableFilterComposer
 
   ColumnFilters<String> get note => $composableBuilder(
     column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get workedOn => $composableBuilder(
+    column: $table.workedOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get resolvedOn => $composableBuilder(
+    column: $table.resolvedOn,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12468,6 +12676,16 @@ class $$DayLogsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get workedOn => $composableBuilder(
+    column: $table.workedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get resolvedOn => $composableBuilder(
+    column: $table.resolvedOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -12509,6 +12727,14 @@ class $$DayLogsTableAnnotationComposer
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get workedOn =>
+      $composableBuilder(column: $table.workedOn, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get resolvedOn => $composableBuilder(
+    column: $table.resolvedOn,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
@@ -12548,10 +12774,12 @@ class $$DayLogsTableTableManager
                 Value<String> userId = const Value.absent(),
                 Value<String> runId = const Value.absent(),
                 Value<int> dayIndex = const Value.absent(),
-                Value<String> actionId = const Value.absent(),
+                Value<String?> actionId = const Value.absent(),
                 Value<DateTime?> committedAt = const Value.absent(),
                 Value<String?> outcome = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<DateTime?> workedOn = const Value.absent(),
+                Value<DateTime?> resolvedOn = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DayLogsCompanion(
@@ -12563,6 +12791,8 @@ class $$DayLogsTableTableManager
                 committedAt: committedAt,
                 outcome: outcome,
                 note: note,
+                workedOn: workedOn,
+                resolvedOn: resolvedOn,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -12572,10 +12802,12 @@ class $$DayLogsTableTableManager
                 required String userId,
                 required String runId,
                 required int dayIndex,
-                required String actionId,
+                Value<String?> actionId = const Value.absent(),
                 Value<DateTime?> committedAt = const Value.absent(),
                 Value<String?> outcome = const Value.absent(),
                 Value<String?> note = const Value.absent(),
+                Value<DateTime?> workedOn = const Value.absent(),
+                Value<DateTime?> resolvedOn = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => DayLogsCompanion.insert(
@@ -12587,6 +12819,8 @@ class $$DayLogsTableTableManager
                 committedAt: committedAt,
                 outcome: outcome,
                 note: note,
+                workedOn: workedOn,
+                resolvedOn: resolvedOn,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

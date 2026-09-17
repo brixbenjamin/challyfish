@@ -63,15 +63,23 @@ void main() {
         actions: actions,
       );
 
-  DayLog log(int day, Outcome? outcome, {Set<String> ticks = const {}}) =>
-      DayLog(
-        id: 'log-$day',
-        runId: 'run-1',
-        dayIndex: day,
-        actionId: 'action-$day',
-        outcome: outcome,
-        completedActionIds: ticks,
-      );
+  /// A day of the run, dated to the calendar day of the same number — the
+  /// ordinary case where the user has not fallen behind, so the story position
+  /// and the calendar still line up. Absence is a gap in these dates now, so a
+  /// log without them reads as a day the user was never there for (ADR-0040).
+  DayLog log(int day, Outcome? outcome, {Set<String> ticks = const {}}) {
+    final date = DateTime.utc(2026, 6, day);
+    return DayLog(
+      id: 'log-$day',
+      runId: 'run-1',
+      dayIndex: day,
+      actionId: 'action-$day',
+      outcome: outcome,
+      completedActionIds: ticks,
+      workedOn: date,
+      resolvedOn: outcome == null ? null : date,
+    );
+  }
 
   RunState stateOn(DateTime now, List<DayLog> logs) => RunState.derive(
     run: run,
@@ -91,10 +99,15 @@ void main() {
     Set<String> ticks = const {},
     Map<String, ActionSpec>? actionsById,
     List<DayLog> otherLogs = const [],
+    Set<String> dayOneTicks = const {},
   }) => RunState.derive(
     run: run,
     campaign: campaign,
     logs: [
+      // Days 1 and 2 resolved on their own calendar days, so the story stands
+      // on day 3 — which is what every case in this group is about.
+      log(1, Outcome.done, ticks: dayOneTicks),
+      log(2, Outcome.done),
       ...otherLogs,
       log(3, null, ticks: ticks),
     ],
@@ -113,7 +126,7 @@ void main() {
         log(2, Outcome.skipped),
       ]);
 
-      expect(state.currentDay, 3);
+      expect(state.storyPosition, 3);
       expect(state.lengthDays, 7);
       expect(state.missCount, 1);
       expect(state.missAllowance, 1, reason: 'max(1, round(7 / 10))');
@@ -127,16 +140,43 @@ void main() {
   });
 
   test('a second miss breaks this 7-day run, because it allows only one', () {
+    // Absent on the 1st and the 2nd — two misses, and never three in a row, so
+    // the run survives — then day 1 resolved on the 3rd and day 2 on the 4th.
     final now = tz.TZDateTime(berlin, 2026, 6, 5, 10).toUtc();
-    final state = stateOn(now, [
-      log(1, Outcome.missed),
-      log(2, Outcome.missed),
-      log(3, Outcome.skipped),
-      log(4, Outcome.done),
-    ]);
+    final state = RunState.derive(
+      run: run,
+      campaign: campaign,
+      logs: [
+        DayLog(
+          id: 'log-1',
+          runId: 'run-1',
+          dayIndex: 1,
+          actionId: 'action-1',
+          outcome: Outcome.done,
+          workedOn: DateTime.utc(2026, 6, 3),
+          resolvedOn: DateTime.utc(2026, 6, 3),
+        ),
+        DayLog(
+          id: 'log-2',
+          runId: 'run-1',
+          dayIndex: 2,
+          actionId: 'action-2',
+          outcome: Outcome.done,
+          workedOn: DateTime.utc(2026, 6, 4),
+          resolvedOn: DateTime.utc(2026, 6, 4),
+        ),
+      ],
+      zone: berlin,
+      now: now,
+    );
 
+    expect(state.missCount, 2);
     expect(state.grade, Grade.broken);
-    expect(state.currentDay, 5, reason: 'a Broken run runs to its final day');
+    expect(
+      state.storyPosition,
+      3,
+      reason: 'a Broken run still runs on, and the story never skips ahead',
+    );
   });
 
   test('todayLog is the log for the current day, or null if untouched', () {
@@ -258,9 +298,7 @@ void main() {
         actions: [action('m', effort: 2)],
         ticks: const {'m'},
         actionsById: {'m': action('m', effort: 2), 'action-1': earlier},
-        otherLogs: [
-          log(1, Outcome.done, ticks: const {'action-1'}),
-        ],
+        dayOneTicks: const {'action-1'},
       );
 
       expect(state.runPoints, 6);

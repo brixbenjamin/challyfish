@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:feral/src/data/local/database.dart';
 import 'package:test/test.dart';
@@ -36,7 +37,7 @@ void main() {
             userId: 'user-1',
             runId: 'run-1',
             dayIndex: 1,
-            actionId: 'action-1',
+            actionId: Value('action-1'),
             updatedAt: DateTime.utc(2026, 6, 1, 9),
           ),
         );
@@ -71,7 +72,7 @@ void main() {
               userId: 'user-1',
               runId: 'run-1',
               dayIndex: 1,
-              actionId: 'action-1',
+              actionId: Value('action-1'),
               updatedAt: DateTime.utc(2026, 6, 1, 9),
             ),
           );

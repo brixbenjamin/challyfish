@@ -51,12 +51,18 @@ class BalanceCalculator {
       final startedAt = runStartedAt[log.runId];
       if (startedAt == null) continue;
 
-      // The log's calendar date is the run's start date plus dayIndex - 1.
-      // Working in bare dates keeps DST out of the arithmetic entirely.
-      final logDate = _localDate(
-        startedAt,
-        zone,
-      ).add(Duration(days: log.dayIndex - 1));
+      // The date the user actually acted, stamped when they did (ADR-0040).
+      // It cannot be derived from the day index any more: once a run has an
+      // absence in it, the story position trails the calendar for the rest of
+      // the run, and day 2 may well have happened three weeks in.
+      //
+      // Falling back to the run's start plus dayIndex - 1 covers a log with no
+      // stamped date, which is the pre-ADR-0040 shape. Working in bare dates
+      // keeps DST out of the arithmetic entirely either way.
+      final logDate =
+          log.resolvedOn ??
+          log.workedOn ??
+          _localDate(startedAt, zone).add(Duration(days: log.dayIndex - 1));
 
       // Clock skew or travel can date a log ahead of today. Clamp at zero so a
       // future log counts full weight rather than more than full weight.

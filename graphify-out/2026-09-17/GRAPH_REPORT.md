@@ -1,16 +1,16 @@
-# Graph Report - feral-build  (2026-09-17)
+# Graph Report - feral-build  (2026-09-16)
 
 ## Corpus Check
-- 269 files · ~275,158 words
+- 261 files · ~265,172 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3529 nodes · 4816 edges · 217 communities (159 shown, 33 thin omitted)
+- 3534 nodes · 4823 edges · 221 communities (164 shown, 32 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ad3c115f`
+- Built from commit: `2c404bd7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -36,28 +36,28 @@
 - diagnostic_result_screen.dart
 - purchase.dart
 - progress_repository.dart
-- FeralDatabase
+- package:feral/src/core/clock.dart
 - Compiling C Code into Code Assets with Native Assets Hooks
 - diagnostic_repository.dart
 - fake_purchase_gateway.dart
 - balance_state.dart
 - userIdProvider
 - generate_seed_snapshot.dart
-- run_state_test.dart
+- package:timezone/timezone.dart
 - day.dart
 - entitlement_repository.dart
-- delete_account_screen_test.dart
+- email_link_test.dart
 - purchase_delivery_test.dart
 - two_device_test.dart
 - identity_repository.dart
-- package:feral/src/data/local/database.dart
-- package:flutter_test/flutter_test.dart
+- package:test/test.dart
+- ../support/pump.dart
 - settings_screen_test.dart
 - reminder_scheduler.dart
 - package:drift/drift.dart
 - run.dart
 - 2. Syntax Reference
-- unlock_refreshes_detail_test.dart
+- app_sync_wiring_test.dart
 - delete_account_screen.dart
 - seed_snapshot.dart
 - run_state.dart
@@ -76,24 +76,24 @@
 - dashboard_screen.dart
 - Internationalizing Flutter Applications
 - auth_gateway.dart
-- package:test/test.dart
-- pack_list_screen_debug_test.dart
+- unlock_refreshes_detail_test.dart
+- SyncRepository
 - Feral (Flutter + Supabase app)
 - archetype_radar.dart
 - pack_list_screen.dart
 - AppDelegate
-- AppLocalizations
+- browse_screen_test.dart
 - Implementing Routing and Deep Linking
 - balance_scenario.dart
 - repositories/outbox.dart
 - diagnostic_scorer_test.dart
 - String?
 - balance.dart
-- List
+- static const
 - link_flow_test.dart
 - balance_presets.dart
 - paid_content_boundary_test.dart
-- first_run_offline_test.dart
+- FeralDatabase
 - Implementing Dart and Flutter Test Coverage
 - purchase_gateway.dart
 - Writing Dart API Documentation
@@ -105,7 +105,7 @@
 - Resolving Dart Static Analysis Errors
 - campaign.dart
 - package:feral/src/engine/run_reconciler.dart
-- pack_list_screen_test.dart
+- body_purge_test.dart
 - 0001_content_schema.sql
 - Money path integration test
 - Architecting Flutter Applications
@@ -115,7 +115,7 @@
 - run_engine.dart
 - main.dart
 - day_log.dart
-- package:timezone/timezone.dart
+- completion_test.dart
 - Testing and Mocking Dart Applications
 - Implementing Flutter Integration Tests
 - tokens.dart
@@ -142,17 +142,17 @@
 - Using Examples in Dartdoc
 - Implementing Flutter Networking
 - balance_state_test.dart
-- ../../core/l10n_ext.dart
+- package:flutter/material.dart
 - link_flow.dart
-- diagnostic_scorer.dart
+- diagnostic_repository_test.dart
 - entitlement.dart
-- email_link_test.dart
+- package:supabase_flutter/supabase_flutter.dart
 - fake_content_api.dart
 - progress_api.dart
 - identity_repository_test.dart
 - State
-- diagnostic_screen.dart
-- archetype_radar_test.dart
+- List
+- package:flutter_test/flutter_test.dart
 - day_panel.dart
 - l10n_ext.dart
 - backoff.dart
@@ -160,33 +160,37 @@
 - theme.dart
 - grade_thresholds.dart
 - report_sheet.dart
-- marks_test.dart
+- sign_in_from_start_test.dart
 - unlock_sheet_test.dart
 - purchase_controller_test.dart
-- Map
+- package:feral/src/data/local/database.dart
 - outbox_payloads.dart
 - theme_context.dart
-- ../../domain/run.dart
-- dart:async
+- progress_repository_lock_test.dart
+- campaign_detail_screen_test.dart
 - fake_auth_gateway.dart
 - sync_status.dart
 - clock.dart
-- package:flutter/material.dart
+- diagnostic_screen_test.dart
 - fake_sync.dart
 - PurchaseComplete
-- browse_screen_test.dart
+- pack_list_screen_debug_test.dart
 - _buildHome
 - PurchaseDelivering
 - PurchaseIdle
 - PurchaseProblem
 - settings_restore_test.dart
 - l10n/app_localizations.dart
-- _AppLocalizationsDelegate
+- link_prompt_state.dart
 - fake_progress_api.dart
 - tables/outbox.dart
 - archetype_tag.dart
+- sync_state.dart
 - ../domain/campaign.dart
+- completion_screen_test.dart
 - utils.dart
+- grade.dart
+- _RadarPainter
 - _openUnlockSheet
 - 0009_content_version.sql
 - AccountApi
@@ -215,10 +219,10 @@
 4. `ContentApi` - 14 edges
 5. `AppLocalizations` - 13 edges
 6. `Key Syntax Differences and Pitfalls` - 11 edges
-7. `Migrating Dart Tests to Package Checks` - 10 edges
-8. `ProgressApi` - 10 edges
-9. `Compiling C Code into Code Assets with Native Assets Hooks` - 10 edges
-10. `FakeAuthGateway` - 10 edges
+7. `ProgressApi` - 10 edges
+8. `FakeAuthGateway` - 10 edges
+9. `Migrating Dart Tests to Package Checks` - 10 edges
+10. `Compiling C Code into Code Assets with Native Assets Hooks` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `CI app job (format, analyze, test)` --implements--> `Strict Dart static analysis config`  [INFERRED]
@@ -240,7 +244,7 @@
 - **CI pipeline: app, database, and functions jobs** — _github_workflows_ci_app_job, _github_workflows_ci_database_job, _github_workflows_ci_functions_job [EXTRACTED 1.00]
 - **RevenueCat money path verification** — _github_workflows_ci_money_path_integration_test, _github_workflows_ci_webhook_mapping_test, app_pubspec_revenuecat_purchases [INFERRED 0.80]
 
-## Communities (217 total, 33 thin omitted)
+## Communities (221 total, 32 thin omitted)
 
 ### Community 0 - "local/database.dart"
 Cohesion: 0.01
@@ -267,8 +271,8 @@ Cohesion: 0.03
 Nodes (60): accountApiProvider, androidKey, authGatewayProvider, campaignsByPack, clockProvider, connectivityGateProvider, content, contentRepositoryProvider (+52 more)
 
 ### Community 6 - "email_code_screen.dart"
-Cohesion: 0.07
-Nodes (30): build, _busy, _canResend, changeEmailKey, _code, CodeAccepted, codeFieldKey, codeLength (+22 more)
+Cohesion: 0.05
+Nodes (39): build, _busy, _canResend, changeEmailKey, _code, CodeAccepted, codeFieldKey, codeLength (+31 more)
 
 ### Community 7 - "sync_repository.dart"
 Cohesion: 0.06
@@ -300,11 +304,11 @@ Nodes (37): 10. Dynamic Map / JSON Lookup Casting, 1. Collection Equality Pitfal
 
 ### Community 14 - "settings_screen.dart"
 Cohesion: 0.07
-Nodes (30): _askForTime, _at, build, _changeTime, createState, deleteRowKey, _enabled, _formattedTime (+22 more)
+Nodes (28): _askForTime, _at, build, _changeTime, createState, deleteRowKey, _enabled, _formattedTime (+20 more)
 
 ### Community 15 - "content_repository.dart"
-Cohesion: 0.06
-Nodes (32): actionsFor, api, applyRows, archetypeIdsFor, archetypesById, _at, cachedVersion, campaignById (+24 more)
+Cohesion: 0.05
+Nodes (39): actionsFor, api, applyRows, archetypeIdsFor, archetypesById, _at, cachedVersion, campaignById (+31 more)
 
 ### Community 16 - "purchase_state.dart"
 Cohesion: 0.10
@@ -326,9 +330,9 @@ Nodes (16): error, id, message, ownedProductIds, priceString, PurchaseAlreadyOwn
 Cohesion: 0.07
 Nodes (29): abandonRun, activeRun, allDayLogs, allRuns, applyRollover, _asUtc, campaignId, clock (+21 more)
 
-### Community 21 - "FeralDatabase"
-Cohesion: 0.05
-Nodes (38): _, @DriftDatabase, FeralDatabase, api, apiThrows, asked, at, db (+30 more)
+### Community 21 - "package:feral/src/core/clock.dart"
+Cohesion: 0.09
+Nodes (21): main, api, at, db, main, queue, seedRun, sync (+13 more)
 
 ### Community 22 - "Compiling C Code into Code Assets with Native Assets Hooks"
 Cohesion: 0.07
@@ -343,8 +347,8 @@ Cohesion: 0.08
 Nodes (25): catalogue, _changes, configure, configureCalls, currentUserId, dispose, failSwitchUser, forgetUser (+17 more)
 
 ### Community 25 - "balance_state.dart"
-Cohesion: 0.15
-Nodes (12): allTimePoints, archetypes, balance, BalanceState, load, marks, marksFor, maxValue (+4 more)
+Cohesion: 0.12
+Nodes (15): allTimePoints, archetypes, balance, BalanceState, load, marks, marksFor, maxValue (+7 more)
 
 ### Community 26 - "userIdProvider"
 Cohesion: 0.22
@@ -354,9 +358,9 @@ Nodes (13): _archetypesFor, browse, _isCampaignUnlocked, _linkWithEmail, _openDo
 Cohesion: 0.13
 Nodes (14): close, connection, file, leaked, main, paidActionIds, paidActions, paidDayIds (+6 more)
 
-### Community 28 - "run_state_test.dart"
-Cohesion: 0.08
-Nodes (24): action, berlin, campaign, day3, log, main, mandatory, run (+16 more)
+### Community 28 - "package:timezone/timezone.dart"
+Cohesion: 0.07
+Nodes (29): deviceZone, info, action, berlin, campaign, day3, log, main (+21 more)
 
 ### Community 29 - "day.dart"
 Cohesion: 0.12
@@ -366,9 +370,9 @@ Nodes (15): actions, bodyMd, campaignId, dayIndex, DayKind, DaySpec, fromKey, id
 Cohesion: 0.10
 Nodes (19): clock, db, error, gateway, isUnlocked, recordLocalGrant, resolver, restore (+11 more)
 
-### Community 31 - "delete_account_screen_test.dart"
-Cohesion: 0.11
-Nodes (16): allText, arm, cancels, deleted, main, pump, serverSucceeds, allText (+8 more)
+### Community 31 - "email_link_test.dart"
+Cohesion: 0.18
+Nodes (10): client, codeSentTo, freshAddress, gateway, mailpit, mailpitJson, main, messagesTo (+2 more)
 
 ### Community 32 - "purchase_delivery_test.dart"
 Cohesion: 0.11
@@ -382,13 +386,13 @@ Nodes (19): a, actionIdFor, api, b, backdate, campaignId, client, close (+11 mor
 Cohesion: 0.09
 Nodes (21): attach, auth, completeSignIn, confirmEmailReplacement, db, entitlements, isLinked, linkedIdentity (+13 more)
 
-### Community 35 - "package:feral/src/data/local/database.dart"
+### Community 35 - "package:test/test.dart"
 Cohesion: 0.08
 Nodes (24): main, db, ddl, dirty, main, probe, raw, _schemaStatementsFor (+16 more)
 
-### Community 36 - "package:flutter_test/flutter_test.dart"
-Cohesion: 0.08
-Nodes (25): main, dismissals, links, main, pump, campaign, killer, l10n (+17 more)
+### Community 36 - "../support/pump.dart"
+Cohesion: 0.06
+Nodes (34): dismissals, links, main, pump, allText, arm, cancels, deleted (+26 more)
 
 ### Community 37 - "settings_screen_test.dart"
 Cohesion: 0.10
@@ -399,8 +403,8 @@ Cohesion: 0.11
 Nodes (18): disable, enable, _enabledKey, _hourKey, isEnabled, LocalReminderScheduler, _minuteKey, _notificationId (+10 more)
 
 ### Community 39 - "package:drift/drift.dart"
-Cohesion: 0.07
-Nodes (29): DiagnosticRepository, db, fetchAll, fetchVersion, main, seed, fetchAll, fetchVersion (+21 more)
+Cohesion: 0.11
+Nodes (19): db, fetchAll, fetchVersion, main, seed, fetchAll, fetchVersion, main (+11 more)
 
 ### Community 40 - "run.dart"
 Cohesion: 0.14
@@ -410,9 +414,9 @@ Nodes (13): campaignId, CampaignRun, completedAt, fromKey, grade, id, isHardened
 Cohesion: 0.08
 Nodes (23): 1. Overview, 2.1 Basic Class Header Syntax, 2.2 Declaring, Initializing, and Plain Parameters, 2.3 Constant Primary Constructors, 2.4 Extension Types, 2.5 Empty Body Semicolon Shorthand (`;`), 2.6 The In-Body Part of a Primary Constructor (`this ...`), 2.7 Abbreviated Concise Constructor Syntax (+15 more)
 
-### Community 42 - "unlock_refreshes_detail_test.dart"
-Cohesion: 0.04
-Nodes (63): _key, LinkPromptState, markDismissed, _prefs, reset, shouldPrompt, SyncRepository, auth (+55 more)
+### Community 42 - "app_sync_wiring_test.dart"
+Cohesion: 0.10
+Nodes (20): auth, db, gate, main, prefs, pumpApp, runner, scheduler (+12 more)
 
 ### Community 43 - "delete_account_screen.dart"
 Cohesion: 0.11
@@ -420,7 +424,7 @@ Nodes (17): _armed, build, _busy, cancelKey, confirmKey, confirmWord, createStat
 
 ### Community 44 - "seed_snapshot.dart"
 Cohesion: 0.25
-Nodes (7): content, db, loadIfEmpty, ContentRepository, ../local/database.dart, package:flutter/services.dart, ../repositories/content_repository.dart
+Nodes (7): content, db, loadIfEmpty, SeedSnapshotLoader, ../local/database.dart, package:flutter/services.dart, ../repositories/content_repository.dart
 
 ### Community 45 - "run_state.dart"
 Cohesion: 0.08
@@ -459,8 +463,8 @@ Cohesion: 0.15
 Nodes (13): main, owned, gateway, main, fake_purchase_gateway.dart, package:feral/src/data/remote/revenuecat_gateway.dart, package:feral/src/domain/purchase.dart, package:purchases_flutter/purchases_flutter.dart (+5 more)
 
 ### Community 54 - "sign_in_restore_test.dart"
-Cohesion: 0.07
-Nodes (28): authenticated, main, nextResult, pump, reachCodeStep, sent, auth, consumeNotices (+20 more)
+Cohesion: 0.10
+Nodes (19): auth, consumeNotices, db, gate, l10n, main, now, prefs (+11 more)
 
 ### Community 55 - "completion_screen.dart"
 Cohesion: 0.12
@@ -486,13 +490,13 @@ Nodes (19): 1. Add Dependencies, 1. Define ARB Files, 2. Enable Code Generation,
 Cohesion: 0.15
 Nodes (13): AuthGateway, _client, currentUserId, linkedIdentity, linkIdentity, _oauth, sendEmailCode, signIn (+5 more)
 
-### Community 61 - "package:test/test.dart"
-Cohesion: 0.12
-Nodes (14): main, berlin, campaign, dbFile, dir, main, open, b (+6 more)
+### Community 61 - "unlock_refreshes_detail_test.dart"
+Cohesion: 0.11
+Nodes (18): FakeAuthGateway, auth, consumeNotices, db, fetchAllFor, gate, l10n, main (+10 more)
 
-### Community 62 - "pack_list_screen_debug_test.dart"
-Cohesion: 0.13
-Nodes (14): _beast, _c1, _c2, _c3, _c4, _c5, _c6, _core (+6 more)
+### Community 62 - "SyncRepository"
+Cohesion: 0.40
+Nodes (5): SyncRepository, FakeSync, RestoringSync, QuietSync, SyncRunner
 
 ### Community 63 - "Feral (Flutter + Supabase app)"
 Cohesion: 0.16
@@ -510,9 +514,9 @@ Nodes (22): archetypesByCampaign, build, campaign, _CampaignRow, campaigns, isLa
 Cohesion: 0.11
 Nodes (14): Any, AppDelegate, SceneDelegate, RunnerTests, Bool, Flutter, FlutterAppDelegate, FlutterImplicitEngineBridge (+6 more)
 
-### Community 67 - "AppLocalizations"
-Cohesion: 0.20
-Nodes (10): AppLocalizations, AppLocalizationsEn, of, entries, groups, l10n, main, package:feral/src/domain/doctrine.dart (+2 more)
+### Community 67 - "browse_screen_test.dart"
+Cohesion: 0.10
+Nodes (19): AppLocalizations, _AppLocalizationsDelegate, AppLocalizationsEn, of, corePack, killer, l10n, long (+11 more)
 
 ### Community 68 - "Implementing Routing and Deep Linking"
 Cohesion: 0.11
@@ -538,13 +542,13 @@ Nodes (9): blurb, bodyMd, DoctrineGroup, groupId, id, relatedArchetypeId, sort, 
 Cohesion: 0.17
 Nodes (11): BalanceCalculator, BalanceWeights, compute, fullAxisValue, halfLifeDays, _localDate, pointsPerFullDay, standard (+3 more)
 
-### Community 74 - "List"
-Cohesion: 0.07
-Nodes (25): build, dismiss, SyncNoticeNotifier, syncNoticeProvider, syncStatusProvider, watch, appName, Brand (+17 more)
+### Community 74 - "static const"
+Cohesion: 0.11
+Nodes (16): appName, Brand, build, dismissKey, _message, messageKey, notices, status (+8 more)
 
 ### Community 75 - "link_flow_test.dart"
-Cohesion: 0.07
-Nodes (33): auth, confirmAnswer, confirmations, db, flow, identity, labelShown, main (+25 more)
+Cohesion: 0.06
+Nodes (36): auth, confirmAnswer, confirmations, db, flow, identity, labelShown, main (+28 more)
 
 ### Community 76 - "balance_presets.dart"
 Cohesion: 0.12
@@ -554,9 +558,9 @@ Nodes (15): all, BalancePreset, blurb, cap, capBuster, days, even, fullAxis (+7 
 Cohesion: 0.07
 Nodes (27): client, close, configure, content, corePack, db, Device, entitlements (+19 more)
 
-### Community 78 - "first_run_offline_test.dart"
-Cohesion: 0.06
-Nodes (31): SeedSnapshotLoader, main, actionArchetypeRow, actionRow, archetypeRow, dayRow, db, main (+23 more)
+### Community 78 - "FeralDatabase"
+Cohesion: 0.07
+Nodes (29): _, @DriftDatabase, FeralDatabase, ContentRepository, actionArchetypeRow, actionRow, archetypeRow, dayRow (+21 more)
 
 ### Community 79 - "Implementing Dart and Flutter Test Coverage"
 Cohesion: 0.12
@@ -592,11 +596,11 @@ Nodes (12): Contents, Core Concepts & Guidelines, Error Handling, Example: Fixin
 
 ### Community 88 - "campaign.dart"
 Cohesion: 0.10
-Nodes (20): ActionSpec, archetypeWeights, archetypeWeightsFromShares, bodyMd, coverPath, dayId, difficulty, effort (+12 more)
+Nodes (19): ActionSpec, archetypeWeights, archetypeWeightsFromShares, bodyMd, dayId, difficulty, effort, id (+11 more)
 
-### Community 90 - "pack_list_screen_test.dart"
-Cohesion: 0.20
-Nodes (9): buildScreen, _c1, _c2, _c3, _core, _edge, l10n, main (+1 more)
+### Community 90 - "body_purge_test.dart"
+Cohesion: 0.12
+Nodes (16): api, apiThrows, asked, at, db, fetchAllFor, Harness, main (+8 more)
 
 ### Community 91 - "0001_content_schema.sql"
 Cohesion: 0.35
@@ -619,8 +623,8 @@ Cohesion: 0.18
 Nodes (10): first, main, open, read, second, tap, package:feral/src/dev/balance_playground.dart, package:feral/src/dev/balance_presets.dart (+2 more)
 
 ### Community 96 - "dashboard_screen_test.dart"
-Cohesion: 0.07
-Nodes (26): _archetypesById, _beast, _campaign, _days, _killer, main, _psycho, _trickster (+18 more)
+Cohesion: 0.11
+Nodes (17): action, archetypes, balance, berlin, campaign, committed, day, dayLog (+9 more)
 
 ### Community 97 - "run_engine.dart"
 Cohesion: 0.13
@@ -634,9 +638,9 @@ Nodes (13): build, ensureAnonymousSession, FeralApp, initializeSupabase, main, p
 Cohesion: 0.17
 Nodes (11): actionId, committedAt, completedActionIds, dayIndex, DayLog, id, isReported, note (+3 more)
 
-### Community 100 - "package:timezone/timezone.dart"
+### Community 100 - "completion_test.dart"
 Cohesion: 0.08
-Nodes (24): deviceZone, info, ProgressRepository, berlin, campaign, day1, dayN, db (+16 more)
+Nodes (22): berlin, campaign, day1, dayN, db, main, repoAt, runAllDays (+14 more)
 
 ### Community 101 - "Testing and Mocking Dart Applications"
 Cohesion: 0.17
@@ -663,8 +667,8 @@ Cohesion: 0.67
 Nodes (3): ADR-0016 (code-only email, no link to tap), Brand-free email wording (name unsettled in Q1), OTP six-digit code email template
 
 ### Community 112 - "balance_test.dart"
-Cohesion: 0.17
-Nodes (11): action, actions, balanceAt, berlin, calculator, log, main, nowPlus (+3 more)
+Cohesion: 0.09
+Nodes (22): main, action, actions, balanceAt, berlin, calculator, log, main (+14 more)
 
 ### Community 113 - "Previewing Flutter Widgets"
 Cohesion: 0.17
@@ -718,25 +722,25 @@ Nodes (8): Background Parsing, Configuration & Permissions, Contents, Examples, 
 Cohesion: 0.12
 Nodes (15): actions, archetypes, berlin, build, log, main, run, start (+7 more)
 
-### Community 149 - "../../core/l10n_ext.dart"
+### Community 149 - "package:flutter/material.dart"
 Cohesion: 0.09
-Nodes (20): LocalProgressSummary, accountLabel, build, cancelKey, confirmKey, onCancel, onConfirm, ReplaceConfirmScreen (+12 more)
+Nodes (23): main, LocalProgressSummary, accountLabel, build, cancelKey, confirmKey, onCancel, onConfirm (+15 more)
 
 ### Community 150 - "link_flow.dart"
 Cohesion: 0.20
 Nodes (9): attach, identity, _link, LinkFlow, sendEmailCode, verifyEmailCode, IdentityRepository, ../data/repositories/identity_repository.dart (+1 more)
 
-### Community 151 - "diagnostic_scorer.dart"
-Cohesion: 0.25
-Nodes (7): DiagnosticOutcome, DiagnosticScorer, score, scores, _weakest, weakestArchetypeId, ../domain/diagnostic.dart
+### Community 151 - "diagnostic_repository_test.dart"
+Cohesion: 0.18
+Nodes (10): DiagnosticRepository, db, fetchAll, fetchVersion, main, now, repo, seedArchetype (+2 more)
 
 ### Community 152 - "entitlement.dart"
 Cohesion: 0.22
 Nodes (8): acquiredAt, Entitlement, EntitlementSource, fromKey, key, packId, source, userId
 
-### Community 153 - "email_link_test.dart"
-Cohesion: 0.08
-Nodes (26): client, codeSentTo, freshAddress, gateway, mailpit, mailpitJson, main, messagesTo (+18 more)
+### Community 153 - "package:supabase_flutter/supabase_flutter.dart"
+Cohesion: 0.16
+Nodes (12): AccountApi, _client, deleteAccount, message, SupabaseAccountApi, toString, _client, fetchAll (+4 more)
 
 ### Community 154 - "fake_content_api.dart"
 Cohesion: 0.12
@@ -747,16 +751,16 @@ Cohesion: 0.14
 Nodes (14): OfflineApi, _client, _conflictTargets, fetchAllFor, _pageSize, ProgressApi, SupabaseProgressApi, upsert (+6 more)
 
 ### Community 157 - "State"
-Cohesion: 0.24
-Nodes (11): BalancePlayground, _BalancePlaygroundState, _DayPreviewList, _DayPreviewListState, ArchetypeRadar, _ArchetypeRadarState, DeleteAccountScreen, _DeleteAccountScreenState (+3 more)
+Cohesion: 0.18
+Nodes (15): BalancePlayground, _BalancePlaygroundState, _DayPreviewList, _DayPreviewListState, ArchetypeRadar, _ArchetypeRadarState, DiagnosticScreen, _DiagnosticScreenState (+7 more)
 
-### Community 158 - "diagnostic_screen.dart"
-Cohesion: 0.25
-Nodes (8): build, _choose, createState, DiagnosticScreen, _DiagnosticScreenState, _index, _picks, questions
-
-### Community 159 - "archetype_radar_test.dart"
+### Community 158 - "List"
 Cohesion: 0.12
-Nodes (15): archetypes, figure, l10n, main, pump, pumpChange, pumpScaled, state (+7 more)
+Nodes (15): SyncNoticeNotifier, build, DoctrineListScreen, entriesByGroup, groups, build, _choose, createState (+7 more)
+
+### Community 159 - "package:flutter_test/flutter_test.dart"
+Cohesion: 0.08
+Nodes (26): pumpUntil, wrap, archetypes, figure, l10n, main, pump, pumpChange (+18 more)
 
 ### Community 160 - "day_panel.dart"
 Cohesion: 0.22
@@ -771,12 +775,12 @@ Cohesion: 0.29
 Nodes (6): Backoff, base, delayFor, max, standard, Duration
 
 ### Community 163 - "bool get"
-Cohesion: 0.18
-Nodes (9): earnsMark, fromKey, Grade, key, fromKey, isMiss, key, Outcome (+1 more)
+Cohesion: 0.33
+Nodes (5): fromKey, isMiss, key, Outcome, bool get
 
 ### Community 164 - "theme.dart"
 Cohesion: 0.25
-Nodes (7): appDarkTheme, base, copyWith, scheme, text, tokens, package:google_fonts/google_fonts.dart
+Nodes (7): appDarkTheme, base, copyWith, scheme, text, tokens, archetype_palette.dart
 
 ### Community 165 - "grade_thresholds.dart"
 Cohesion: 0.29
@@ -786,61 +790,61 @@ Nodes (6): allowanceFor, daysPerAllowedMiss, gradeFor, GradeThresholds, standard
 Cohesion: 0.18
 Nodes (11): build, _controller, createState, dispose, outcome, ReportResult, ReportSheet, _ReportSheetState (+3 more)
 
-### Community 167 - "marks_test.dart"
-Cohesion: 0.25
-Nodes (7): earnedFor, main, marks, run, targets, package:feral/src/domain/run.dart, package:feral/src/engine/marks.dart
+### Community 167 - "sign_in_from_start_test.dart"
+Cohesion: 0.12
+Nodes (15): main, auth, db, gate, main, now, prefs, pumpApp (+7 more)
 
 ### Community 168 - "unlock_sheet_test.dart"
-Cohesion: 0.17
-Nodes (11): buys, campaigns, closes, edge, l10n, main, pump, restores (+3 more)
+Cohesion: 0.09
+Nodes (21): buildScreen, _c1, _c2, _c3, _core, _edge, l10n, main (+13 more)
 
 ### Community 169 - "purchase_controller_test.dart"
 Cohesion: 0.15
 Nodes (12): PurchaseController, controller, core, db, edge, fetchAll, fetchAllFor, fetchVersion (+4 more)
 
-### Community 170 - "Map"
-Cohesion: 0.29
-Nodes (6): build, DoctrineListScreen, entriesByGroup, groups, ../domain/doctrine.dart, Map
+### Community 170 - "package:feral/src/data/local/database.dart"
+Cohesion: 0.14
+Nodes (13): main, db, main, berlin, day1, db, main, repoAt (+5 more)
 
 ### Community 171 - "outbox_payloads.dart"
 Cohesion: 0.13
 Nodes (14): campaignRuns, dayLog, dayLogActions, dayLogs, diagnostic, diagnosticResults, iso, keyForDayLog (+6 more)
 
 ### Community 172 - "theme_context.dart"
-Cohesion: 0.25
-Nodes (10): @immutable, ArchetypePalette, archetypePalette, tokens, AppTokens, AppTokens get, archetype_palette.dart, ArchetypePalette get (+2 more)
+Cohesion: 0.29
+Nodes (9): @immutable, ArchetypePalette, archetypePalette, tokens, AppTokens, AppTokens get, ArchetypePalette get, ThemeExtension (+1 more)
 
-### Community 173 - "../../domain/run.dart"
-Cohesion: 0.50
-Nodes (3): earned, MarkCalculator, ../../domain/run.dart
+### Community 173 - "progress_repository_lock_test.dart"
+Cohesion: 0.20
+Nodes (9): AccountDeletionFailed, PackLocked, ProgressRepository, IdentityAlreadyAttached, db, main, repo, Exception (+1 more)
 
-### Community 176 - "dart:async"
-Cohesion: 0.50
-Nodes (3): testExecutable, testMain, dart:async
+### Community 176 - "campaign_detail_screen_test.dart"
+Cohesion: 0.10
+Nodes (19): _archetypesById, _beast, _campaign, _days, _killer, main, _psycho, _trickster (+11 more)
 
 ### Community 177 - "fake_auth_gateway.dart"
 Cohesion: 0.13
 Nodes (14): addressTaken, calls, codeIsWrong, currentUserId, identity, identityTaken, linkedIdentity, linkIdentity (+6 more)
 
 ### Community 178 - "sync_status.dart"
-Cohesion: 0.29
-Nodes (6): kind, message, occurredAt, SyncNotice, SyncNoticeKind, SyncStatus
+Cohesion: 0.25
+Nodes (7): kind, message, occurredAt, SyncNotice, SyncNoticeKind, SyncStatus, DateTime
 
 ### Community 179 - "clock.dart"
-Cohesion: 0.32
-Nodes (7): Clock, delay, FixedClock, _instant, nowUtc, SystemClock, DateTime
+Cohesion: 0.38
+Nodes (6): Clock, delay, FixedClock, _instant, nowUtc, SystemClock
 
-### Community 180 - "package:flutter/material.dart"
-Cohesion: 0.07
-Nodes (27): main, pumpUntil, wrap, buildScreen, campaign, day1, day2, day3 (+19 more)
+### Community 180 - "diagnostic_screen_test.dart"
+Cohesion: 0.18
+Nodes (10): l10n, main, pair, questions, l10n, main, package:feral/src/domain/diagnostic.dart, package:feral/src/ui/onboarding/diagnostic_screen.dart (+2 more)
 
 ### Community 181 - "fake_sync.dart"
 Cohesion: 0.13
 Nodes (14): calls, consumeNotices, _controller, delay, dispose, goOffline, goOnline, isOnline (+6 more)
 
-### Community 183 - "browse_screen_test.dart"
+### Community 183 - "pack_list_screen_debug_test.dart"
 Cohesion: 0.06
-Nodes (36): core, edge, free, killer, main, paid, trickster, views (+28 more)
+Nodes (31): core, edge, free, killer, main, paid, trickster, views (+23 more)
 
 ### Community 185 - "_buildHome"
 Cohesion: 0.47
@@ -848,11 +852,15 @@ Nodes (6): balance, _buildHome, _startRun, clockProvider, progressRepositoryProv
 
 ### Community 189 - "settings_restore_test.dart"
 Cohesion: 0.15
-Nodes (13): RestoreSummary, deletes, links, main, pump, l10n, main, pump (+5 more)
+Nodes (11): RestoreSummary, testExecutable, testMain, l10n, main, pump, restoreCalls, dart:async (+3 more)
 
 ### Community 190 - "l10n/app_localizations.dart"
 Cohesion: 0.17
 Nodes (10): balanceSummary, bandFor, bands, distribution, earned, radarSummary, purchaseProblemText, ../app/purchase_state.dart (+2 more)
+
+### Community 191 - "link_prompt_state.dart"
+Cohesion: 0.17
+Nodes (10): _key, LinkPromptState, markDismissed, _prefs, reset, shouldPrompt, main, package:feral/src/app/link_prompt_state.dart (+2 more)
 
 ### Community 192 - "fake_progress_api.dart"
 Cohesion: 0.18
@@ -863,37 +871,53 @@ Cohesion: 0.20
 Nodes (9): id, Outbox, payload, queuedAt, remoteTable, rowKey, uniqueKeys, DateTimeColumn get (+1 more)
 
 ### Community 194 - "archetype_tag.dart"
-Cohesion: 0.17
-Nodes (11): _RadarPainter, _ArchetypeDots, archetypes, ArchetypeTag, build, paint, palette, shouldRepaint (+3 more)
+Cohesion: 0.22
+Nodes (8): archetypes, ArchetypeTag, build, paint, palette, shouldRepaint, ArchetypePalette, theme_context.dart
+
+### Community 195 - "sync_state.dart"
+Cohesion: 0.25
+Nodes (7): build, dismiss, syncNoticeProvider, syncStatusProvider, watch, package:flutter_riverpod/flutter_riverpod.dart, providers.dart
 
 ### Community 196 - "../domain/campaign.dart"
 Cohesion: 0.29
-Nodes (6): toAction, toCampaign, toDay, database.dart, ../../domain/campaign.dart, ../../domain/day.dart
+Nodes (6): toAction, toCampaign, toDay, database.dart, ../domain/campaign.dart, ../../domain/day.dart
+
+### Community 197 - "completion_screen_test.dart"
+Cohesion: 0.33
+Nodes (5): campaign, killer, l10n, main, pump
 
 ### Community 198 - "utils.dart"
 Cohesion: 0.40
 Nodes (4): isValidUrl, true, uri, return
+
+### Community 199 - "grade.dart"
+Cohesion: 0.40
+Nodes (4): earnsMark, fromKey, Grade, key
+
+### Community 200 - "_RadarPainter"
+Cohesion: 0.67
+Nodes (3): _RadarPainter, _ArchetypeDots, CustomPainter
 
 ### Community 201 - "_openUnlockSheet"
 Cohesion: 0.67
 Nodes (3): _configurePurchases, _openUnlockSheet, purchaseGatewayProvider
 
 ## Knowledge Gaps
-- **2431 isolated node(s):** `toCampaign`, `toDay`, `toAction`, `ActionSpec`, `id` (+2426 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2720 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **33 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **2435 isolated node(s):** `Device`, `ownedProductChanges`, `client`, `userId`, `db` (+2430 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 2725 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `FeralDatabase` connect `FeralDatabase` to `local/database.dart`, `sync_repository.dart`, `account_deletion_test.dart`, `money_path_test.dart`, `content_repository.dart`, `progress_repository.dart`, `diagnostic_repository.dart`, `entitlement_repository.dart`, `two_device_test.dart`, `identity_repository.dart`, `package:feral/src/data/local/database.dart`, `package:drift/drift.dart`, `purchase_controller_test.dart`, `unlock_refreshes_detail_test.dart`, `seed_snapshot.dart`, `sign_in_restore_test.dart`, `repositories/outbox.dart`, `link_flow_test.dart`, `paid_content_boundary_test.dart`, `first_run_offline_test.dart`, `package:timezone/timezone.dart`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
-- **Why does `AppLocalizations` connect `AppLocalizations` to `app_localizations.dart`, `package:flutter_test/flutter_test.dart`, `settings_screen_test.dart`, `package:flutter/material.dart`, `browse_screen_test.dart`, `settings_restore_test.dart`, `_AppLocalizationsDelegate`?**
-  _High betweenness centrality (0.024) - this node is a cross-community bridge._
-- **Why does `Grade` connect `bool get` to `run.dart`, `completion_screen.dart`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **What connects `toCampaign`, `toDay`, `toAction` to the rest of the system?**
-  _2431 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `FeralDatabase` connect `FeralDatabase` to `local/database.dart`, `sync_repository.dart`, `account_deletion_test.dart`, `money_path_test.dart`, `content_repository.dart`, `progress_repository.dart`, `package:feral/src/core/clock.dart`, `diagnostic_repository.dart`, `diagnostic_repository_test.dart`, `entitlement_repository.dart`, `two_device_test.dart`, `identity_repository.dart`, `package:test/test.dart`, `package:drift/drift.dart`, `sign_in_from_start_test.dart`, `purchase_controller_test.dart`, `app_sync_wiring_test.dart`, `package:feral/src/data/local/database.dart`, `seed_snapshot.dart`, `progress_repository_lock_test.dart`, `sign_in_restore_test.dart`, `unlock_refreshes_detail_test.dart`, `repositories/outbox.dart`, `link_flow_test.dart`, `paid_content_boundary_test.dart`, `body_purge_test.dart`?**
+  _High betweenness centrality (0.049) - this node is a cross-community bridge._
+- **Why does `AppLocalizations` connect `browse_screen_test.dart` to `app_localizations.dart`, `completion_screen_test.dart`, `settings_screen_test.dart`, `diagnostic_screen_test.dart`, `settings_restore_test.dart`, `package:flutter_test/flutter_test.dart`?**
+  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+- **Why does `AppLocalizationsEn` connect `browse_screen_test.dart` to `app_localizations_en.dart`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **What connects `Device`, `ownedProductChanges`, `client` to the rest of the system?**
+  _2435 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `local/database.dart` be split into smaller, more focused modules?**
   _Cohesion score 0.011904761904761904 - nodes in this community are weakly interconnected._
 - **Should `app_localizations.dart` be split into smaller, more focused modules?**
